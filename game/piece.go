@@ -32,8 +32,12 @@ var (
 
 type Piece int
 
-type MovablePiece interface {
+// GamePiece defines functionality a piece should implement.
+type GamePiece interface {
+	// GetMoves returns a list of moves the peice could make.
 	GetMoves(board *Board, from Square) []Move
+	// GetStrength returns an estimate of the piece's strength depending on its position and # of pieces left on the board.
+	GetStrength(board *Board, square Square, piecesLeft int) float64
 }
 
 // New creates a new Piece.
@@ -49,10 +53,6 @@ func (p Piece) GetKind() PieceKind {
 	return PieceKind(p & pieceBitMask)
 }
 
-func (p Piece) GetMoves(board *Board, from Square) []Move {
-	return nil
-}
-
 func (p Piece) String() string {
 	mark := " "
 	if p.GetPlayer()&2 == 2 {
@@ -61,7 +61,7 @@ func (p Piece) String() string {
 	return fmt.Sprintf(" %v%v", printMap[p.GetKind()][p.GetPlayer().GetTeam()], mark)
 }
 
-func (p Piece) Cast() MovablePiece {
+func (p Piece) GetGamePiece() GamePiece {
 	switch p.GetKind() {
 	case pawn:
 		return Pawn(p)
@@ -76,6 +76,6 @@ func (p Piece) Cast() MovablePiece {
 	case king:
 		return King(p)
 	default:
-		return p
+		panic("unsupported piece")
 	}
 }

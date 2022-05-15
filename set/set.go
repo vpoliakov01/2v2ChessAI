@@ -47,3 +47,7 @@ func (s *Set) Size() int {
 func (s *Set) IsEmpty() bool {
 	return s.Size() == 0
 }
+
+func (s Set) Copy() *Set {
+	return New(s.Elements()...)
+}

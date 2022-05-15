@@ -2,7 +2,7 @@ package game
 
 type Pawn Piece
 
-var _ MovablePiece = (*Pawn)(nil)
+var _ GamePiece = (*Pawn)(nil)
 
 func (p Pawn) GetMoves(board *Board, from Square) []Move {
 	player := Piece(board.Get(from)).GetPlayer()
@@ -18,18 +18,18 @@ func (p Pawn) GetMoves(board *Board, from Square) []Move {
 
 	// Move forward by 1.
 	to := from.Add(dirs[0][0], dirs[0][1])
-	if board.IsEmpty(to) {
+	if to.IsValid() && board.IsEmpty(to) {
 		moves = append(moves, Move{from, to})
 
 		// Move forward by 2.
 		to = from.Add(2*dirs[0][0], 2*dirs[0][1])
-		if board.IsEmpty(to) {
+		if to.IsValid() && board.IsEmpty(to) {
 			// Since pawns capture sideways, they can end up on other players' pawns' starting positions.
 			// Therefore, it's not enough to just check if the pawn is on rank 1, file 1, etc.
 			if (player == 0 && from.Rank == 1) ||
 				(player == 1 && from.File == 1) ||
-				(player == 2 && from.Rank == boardSize-2) ||
-				(player == 3 && from.File == boardSize-2) {
+				(player == 2 && from.Rank == BoardSize-2) ||
+				(player == 3 && from.File == BoardSize-2) {
 				moves = append(moves, Move{from, to})
 			}
 		}
@@ -47,7 +47,33 @@ func (p Pawn) GetMoves(board *Board, from Square) []Move {
 		}
 	}
 
-	// TODO: add en passant.
+	// TODO: add en passant and promotions.
 
 	return moves
+}
+
+func (p Pawn) GetStrength(board *Board, square Square, piecesLeft int) float64 {
+	// Check pawn structure.
+	player := Piece(p).GetPlayer()
+	dirs := [][][]int{
+		{{-1, -1}, {-1, 1}},
+		{{-1, -1}, {1, -1}},
+		{{1, -1}, {1, 1}},
+		{{-1, 1}, {1, 1}},
+	}[player]
+
+	coef := 0.5
+	for _, dir := range dirs {
+		behind := square.Add(dir[0], dir[1])
+		if !behind.IsValid() || board.IsEmpty(behind) {
+			continue
+		}
+
+		pieceBehind := Piece(board.Get(behind))
+		if Piece(p) == pieceBehind { // If there is same player's pawn behind.
+			coef += 0.5
+		}
+	}
+
+	return PawnStrength * coef
 }

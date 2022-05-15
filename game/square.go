@@ -21,10 +21,10 @@ func (s *Square) IsValid() bool {
 }
 
 func (s Square) String() string {
-	return fmt.Sprintf("%v%v", string(int('A')+s.File), s.Rank+1)
+	return fmt.Sprintf("%v%v", fmt.Sprintf("%c", int('A')+s.File), s.Rank+1)
 }
 
 func IsSquareValid(rank, file int) bool {
-	return !((file < cornerSize || file >= boardSize-cornerSize) && (rank < cornerSize || rank >= boardSize-cornerSize)) &&
-		(file >= 0 && file < boardSize && rank >= 0 && rank < boardSize)
+	return !((file < cornerSize || file >= BoardSize-cornerSize) && (rank < cornerSize || rank >= BoardSize-cornerSize)) &&
+		(file >= 0 && file < BoardSize && rank >= 0 && rank < BoardSize)
 }

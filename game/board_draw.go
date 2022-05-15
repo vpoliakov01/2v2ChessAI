@@ -3,22 +3,21 @@ package game
 import "fmt"
 
 func (b *Board) Draw() {
-	for rank := boardSize - 1; rank >= 0; rank-- {
+	for rank := BoardSize - 1; rank >= 0; rank-- {
 		fmt.Print("   ---------------------------------------------------------\n")
 
 		fmt.Printf("%-3v", rank+1)
-		for file := 0; file < boardSize; file++ {
-			fmt.Printf("|%v", SquareStringValue(b[rank][file]))
+		for file := 0; file < BoardSize; file++ {
+			fmt.Printf("|%v", SquareStringValue(b.Get(NewSquare(rank, file))))
 		}
 
 		fmt.Print("|\n")
 	}
-
 	fmt.Print("   ---------------------------------------------------------\n")
 
 	fmt.Print("    ")
-	for file := 0; file < boardSize; file++ {
-		fmt.Printf(" %v  ", string(int('A')+file))
+	for file := 0; file < BoardSize; file++ {
+		fmt.Printf(" %v  ", fmt.Sprintf("%c", int('A')+file))
 	}
 
 	fmt.Println()
