@@ -2,10 +2,12 @@ package ai
 
 import (
 	"errors"
+	"fmt"
 	"math"
+	"runtime"
 	"sort"
 
-	"github.com/vpoliakov01/2v2ChessAI/game" // TODO: remove dot importing.
+	"github.com/vpoliakov01/2v2ChessAI/game"
 )
 
 var (
@@ -13,14 +15,25 @@ var (
 	ErrNoMoves   = errors.New("no move can be made in this position")
 )
 
-type evaluation struct {
+type gameScore struct {
 	game  *game.Game
 	score float64
+}
+
+type playerStrength struct {
+	player   game.Player
+	strength float64
 }
 
 type AI struct {
 	Depth int
 	Cache map[uint64]float64 // Stores scores of evalutated positions.
+}
+
+func init() {
+	cpus := runtime.NumCPU()
+	fmt.Printf("Running on %v CPUs\n", cpus)
+	runtime.GOMAXPROCS(cpus)
 }
 
 func New(depth int) *AI {
@@ -57,12 +70,12 @@ func (ai *AI) Negamax(g *game.Game, depth int, alpha, beta float64) (nextMove *g
 		return nil, 0
 	}
 
-	moveEvalEstimates := map[game.Move]evaluation{}
+	moveEvalEstimates := map[game.Move]gameScore{}
 
 	for i := range moves {
 		gameCopy := g.Copy()
 		gameCopy.Play(moves[i])
-		moveEvalEstimates[moves[i]] = evaluation{gameCopy, ai.EvaluateCurrent(gameCopy)}
+		moveEvalEstimates[moves[i]] = gameScore{gameCopy, ai.EvaluateCurrent(gameCopy)}
 	}
 
 	// Sort to process "immediately stronger" moves first.
@@ -89,28 +102,38 @@ func (ai *AI) Negamax(g *game.Game, depth int, alpha, beta float64) (nextMove *g
 
 // EvaluateCurrent returns the difference between the team making the move and the other team.
 func (ai *AI) EvaluateCurrent(g *game.Game) float64 {
-	playerStrength := map[game.Player]float64{}
+	playerStrengths := map[game.Player]float64{}
 	piecesLeft := 0
 
 	for player := range g.Board.PieceSquares {
 		piecesLeft += g.Board.PieceSquares[player].Size()
 	}
 
+	c := make(chan playerStrength, piecesLeft)
+
 	for player := range g.Board.PieceSquares {
 		for _, sq := range g.Board.PieceSquares[player].Elements() {
-			square := sq.(game.Square)
-			piece := game.Piece(g.Board.Get(square)).GetGamePiece()
-			playerStrength[player] += piece.GetStrength(g.Board, square, piecesLeft)
+			go func(player game.Player, square game.Square) {
+				piece := game.Piece(g.Board.Get(square)).GetGamePiece()
+				c <- playerStrength{player, piece.GetStrength(g.Board, square, piecesLeft)}
+			}(player, sq.(game.Square))
 		}
+	}
 
-		// Account for the advantage of having a balanced pieces distribution between teammates.
-		if playerStrength[player] > 0 {
-			playerStrength[player] = math.Pow(playerStrength[player], 0.8)
+	for ; piecesLeft > 0; piecesLeft-- {
+		ps := <-c
+		playerStrengths[ps.player] += ps.strength
+	}
+
+	// Account for the advantage of having a balanced pieces distribution between teammates.
+	for player := range g.Board.PieceSquares {
+		if playerStrengths[player] > 0 {
+			playerStrengths[player] = math.Pow(playerStrengths[player], 0.8)
 		}
 	}
 
 	side := g.ActivePlayer.GetTeam().Side()
-	score := float64(side) * (playerStrength[0] + playerStrength[2] - playerStrength[1] - playerStrength[3])
+	score := float64(side) * (playerStrengths[0] + playerStrengths[2] - playerStrengths[1] - playerStrengths[3])
 
 	return score
 }
