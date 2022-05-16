@@ -13,5 +13,5 @@ func (p Queen) GetMoves(board *Board, from Square) []Move {
 func (p Queen) GetStrength(board *Board, square Square, piecesLeft int) float64 {
 	moves := len(p.GetMoves(board, square))
 	progression := 1 - float64(piecesLeft)/PiecesAtTheStart
-	return Strength[KindQueen] * CalculateCoef(moves, 2, 30, GetCenterBonus(square)*(1-progression)+GetBalanceBonus(square)*progression)
+	return Strength[KindQueen] * CalculateBonusCoef(moves, 2, 30, GetCenterBonus(square)*(1-progression)+GetBalanceBonus(square)*progression)
 }

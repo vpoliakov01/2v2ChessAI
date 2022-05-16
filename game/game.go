@@ -4,7 +4,7 @@ package game
 type Game struct {
 	ActivePlayer Player
 	Board        *Board
-	Score        Side // 1: white win, 0: game is ongoing, -1: black win.
+	Score        Team // Red/Yellow win: 1, Blue/Green win: -1.
 }
 
 // New creates a new Game.
@@ -36,7 +36,7 @@ func (g *Game) Play(move Move) {
 	if !g.Board.IsEmpty(move.To) {
 		capturedPiece := Piece(g.Board.Get(move.To))
 		if capturedPiece.GetKind() == KindKing {
-			g.Score = g.ActivePlayer.GetTeam().Side()
+			g.Score = g.ActivePlayer.GetTeam()
 		}
 	}
 

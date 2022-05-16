@@ -2,7 +2,6 @@ package ai_test
 
 import (
 	"fmt"
-	"math/rand"
 	"testing"
 	"time"
 
@@ -31,7 +30,7 @@ func (s *TestSuite) TestGetBestMove() {
 		move, err := ai.GetBestMove(g)
 		if err != nil {
 			if err == ErrGameEnded {
-				fmt.Printf("%v: Team %v won!\n", i, g.Score.Team())
+				fmt.Printf("%v: Team %v won!\n", i, g.Score)
 			} else {
 				fmt.Println(err)
 			}
@@ -54,34 +53,6 @@ func (s *TestSuite) TestGetBestMove() {
 	g.Board.Draw()
 	fmt.Println(ai.EvaluateCurrent(g))
 	fmt.Println(time.Since(startTime))
-}
-
-func (s *TestSuite) TestGetMoves() {
-	ai := New(24)
-
-	g := game.New()
-	startTime := time.Now()
-
-	for i := 0; i < 1000; i++ {
-		if g.HasEnded() {
-			break
-		}
-
-		moves := g.GetMoves()
-
-		if (len(moves)) == 0 {
-			break
-		}
-
-		move := moves[rand.Intn(len(moves))]
-		g.Play(move)
-
-		fmt.Println(i, move)
-		fmt.Println(ai.EvaluateCurrent(g))
-	}
-
-	fmt.Println(time.Since(startTime))
-	g.Board.Draw()
 }
 
 func (s *TestSuite) TestPosition() {
@@ -113,15 +84,16 @@ func (s *TestSuite) TestPosition() {
 
 	for i := 0; i < 30; i++ {
 		move, err := ai.GetBestMove(g)
-		fmt.Println(move)
 		if err != nil {
 			if err == ErrGameEnded {
-				fmt.Printf("%v: Team %v won!\n", i, g.Score.Team())
+				fmt.Printf("%v: Team %v won!\n", i, g.Score)
 			} else {
 				fmt.Println(err)
 			}
 			break
 		}
+
+		fmt.Println(move)
 
 		if !g.Board.IsEmpty(move.To) {
 			capturedPiece := game.Piece(g.Board.Get(move.To))

@@ -12,9 +12,9 @@ const (
 	pieceBitMask   = 7 // 2^4-1.
 )
 
-type Piece int
+type Piece uint8
 
-type PieceKind int
+type PieceKind uint8
 
 const (
 	EmptySquare Piece = iota

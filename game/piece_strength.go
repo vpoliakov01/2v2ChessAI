@@ -38,6 +38,6 @@ func GetBalanceBonus(s Square) float64 {
 	return (math.Pow(GetCenterBonus(s), 2) + math.Pow(GetEdgeBonus(s), 2) - 1) / -.5
 }
 
-func CalculateCoef(moves, movesMin, movesMax int, positionCef float64) float64 {
+func CalculateBonusCoef(moves, movesMin, movesMax int, positionCef float64) float64 {
 	return 0.5 + (2*float64(moves-movesMin)/float64(movesMax-movesMin)+positionCef)/3
 }

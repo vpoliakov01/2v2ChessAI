@@ -132,8 +132,7 @@ func (ai *AI) EvaluateCurrent(g *game.Game) float64 {
 		}
 	}
 
-	side := g.ActivePlayer.GetTeam().Side()
-	score := float64(side) * (playerStrengths[0] + playerStrengths[2] - playerStrengths[1] - playerStrengths[3])
+	score := float64(g.ActivePlayer.GetTeam()) * (playerStrengths[0] + playerStrengths[2] - playerStrengths[1] - playerStrengths[3])
 
 	return score
 }
