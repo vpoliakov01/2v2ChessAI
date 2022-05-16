@@ -1,19 +1,23 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/vpoliakov01/2v2ChessAI/color"
+)
 
 func (b *Board) Draw() {
 	for rank := BoardSize - 1; rank >= 0; rank-- {
-		fmt.Print("   ---------------------------------------------------------\n")
+		fmt.Println(color.Reset, "  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+")
 
 		fmt.Printf("%-3v", rank+1)
 		for file := 0; file < BoardSize; file++ {
-			fmt.Printf("|%v", SquareStringValue(b.Get(NewSquare(rank, file))))
+			fmt.Printf("|%v", b.Get(NewSquare(rank, file)))
 		}
 
-		fmt.Print("|\n")
+		fmt.Println("|")
 	}
-	fmt.Print("   ---------------------------------------------------------\n")
+	fmt.Println(color.Reset, "  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+")
 
 	fmt.Print("    ")
 	for file := 0; file < BoardSize; file++ {
@@ -21,15 +25,4 @@ func (b *Board) Draw() {
 	}
 
 	fmt.Println()
-}
-
-func SquareStringValue(v int) string {
-	switch v {
-	case inactiveSquare:
-		return "███"
-	case emptySquare:
-		return "   "
-	default:
-		return Piece(v).String()
-	}
 }

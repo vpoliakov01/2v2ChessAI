@@ -11,6 +11,6 @@ func (p Knight) GetMoves(board *Board, from Square) []Move {
 }
 
 func (p Knight) GetStrength(board *Board, square Square, piecesLeft int) float64 {
-	coef := 0.5 + GetBalanceBonus(square)
-	return KnightStrength * coef
+	moves := len(p.GetMoves(board, square))
+	return Strength[KindKnight] * CalculateCoef(moves, 2, 6, GetBalanceBonus(square))
 }

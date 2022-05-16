@@ -25,6 +25,6 @@ func (s Square) String() string {
 }
 
 func IsSquareValid(rank, file int) bool {
-	return !((file < cornerSize || file >= BoardSize-cornerSize) && (rank < cornerSize || rank >= BoardSize-cornerSize)) &&
+	return !((file < CornerSize || file >= BoardSize-CornerSize) && (rank < CornerSize || rank >= BoardSize-CornerSize)) &&
 		(file >= 0 && file < BoardSize && rank >= 0 && rank < BoardSize)
 }

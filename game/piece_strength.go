@@ -3,17 +3,18 @@ package game
 import "math"
 
 const (
-	PawnStrength   = 1.0
-	KnightStrength = 2.0
-	BishopStrength = 4.0
-	RookStrength   = 4.0
-	QueenStrength  = 10.0
-
-	// In 2v2 chess it's possible to lose the king as opponent1 can
-	// move away from the opponent2's piece and open a lane of attack.
-	KingStrength = 100.0
-
 	PiecesAtTheStart = 64
+)
+
+var (
+	Strength = map[PieceKind]float64{
+		KindPawn:   1.0,
+		KindKnight: 2.2,
+		KindBishop: 4.5,
+		KindRook:   4.5,
+		KindQueen:  12.0,
+		KindKing:   5.0,
+	}
 )
 
 // GetCenterBonus returns a value between 0 and 1.
@@ -35,4 +36,8 @@ func GetEdgeBonus(s Square) float64 {
 // The coefficients are for scaling the result to (0, 1) range.
 func GetBalanceBonus(s Square) float64 {
 	return (math.Pow(GetCenterBonus(s), 2) + math.Pow(GetEdgeBonus(s), 2) - 1) / -.5
+}
+
+func CalculateCoef(moves, movesMin, movesMax int, positionCef float64) float64 {
+	return 0.5 + (2*float64(moves-movesMin)/float64(movesMax-movesMin)+positionCef)/3
 }

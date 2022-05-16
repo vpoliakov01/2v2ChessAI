@@ -75,5 +75,5 @@ func (p Pawn) GetStrength(board *Board, square Square, piecesLeft int) float64 {
 		}
 	}
 
-	return PawnStrength * coef
+	return Strength[KindPawn] * coef
 }

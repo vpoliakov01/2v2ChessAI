@@ -1,6 +1,10 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/vpoliakov01/2v2ChessAI/color"
+)
 
 const (
 	// Store the piece as ppkkk (last 3 bits specify the kind, 2 bits before them specify the player).
@@ -8,29 +12,37 @@ const (
 	pieceBitMask   = 7 // 2^4-1.
 )
 
+type Piece int
+
 type PieceKind int
 
 const (
-	pawn PieceKind = 1 + iota
-	knight
-	bishop
-	rook
-	queen
-	king
+	EmptySquare Piece = iota
+	InactiveSquare
+	KindPawn PieceKind = iota
+	KindKnight
+	KindBishop
+	KindRook
+	KindQueen
+	KindKing
 )
 
 var (
-	printMap = map[PieceKind][]string{
-		pawn:   {"♟", "♙"},
-		knight: {"♞", "♘"},
-		bishop: {"♝", "♗"},
-		rook:   {"♜", "♖"},
-		queen:  {"♛", "♕"},
-		king:   {"♚", "♔"},
+	printMap = map[PieceKind]string{
+		KindPawn:   "♟",
+		KindKnight: "♞",
+		KindBishop: "♝",
+		KindRook:   "♜",
+		KindQueen:  "♛",
+		KindKing:   "♚",
+	}
+	colorMap = map[Player]color.Color{
+		0: color.Red,
+		1: color.Blue,
+		2: color.Yellow,
+		3: color.Green,
 	}
 )
-
-type Piece int
 
 // GamePiece defines functionality a piece should implement.
 type GamePiece interface {
@@ -54,26 +66,29 @@ func (p Piece) GetKind() PieceKind {
 }
 
 func (p Piece) String() string {
-	mark := " "
-	if p.GetPlayer()&2 == 2 {
-		mark = "."
+	switch p {
+	case InactiveSquare:
+		return "███"
+	case EmptySquare:
+		return "   "
+	default:
+		return fmt.Sprintf(" %v%v%v ", colorMap[p.GetPlayer()], printMap[p.GetKind()], color.Reset)
 	}
-	return fmt.Sprintf(" %v%v", printMap[p.GetKind()][p.GetPlayer().GetTeam()], mark)
 }
 
 func (p Piece) GetGamePiece() GamePiece {
 	switch p.GetKind() {
-	case pawn:
+	case KindPawn:
 		return Pawn(p)
-	case knight:
+	case KindKnight:
 		return Knight(p)
-	case bishop:
+	case KindBishop:
 		return Bishop(p)
-	case rook:
+	case KindRook:
 		return Rook(p)
-	case queen:
+	case KindQueen:
 		return Queen(p)
-	case king:
+	case KindKing:
 		return King(p)
 	default:
 		panic("unsupported piece")

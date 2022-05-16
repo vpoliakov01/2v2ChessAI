@@ -5,87 +5,91 @@ import (
 	"math"
 	"sort"
 
-	. "github.com/vpoliakov01/2v2ChessAI/game" // TODO: remove dot importing.
+	"github.com/vpoliakov01/2v2ChessAI/game" // TODO: remove dot importing.
 )
 
 var (
 	ErrGameEnded = errors.New("the game has ended")
 	ErrNoMoves   = errors.New("no move can be made in this position")
-
-	depth = 4
 )
 
-func GetBestMove(g *Game) (*Move, error) {
+type evaluation struct {
+	game  *game.Game
+	score float64
+}
+
+type AI struct {
+	Depth int
+	Cache map[uint64]float64 // Stores scores of evalutated positions.
+}
+
+func New(depth int) *AI {
+	return &AI{
+		Depth: depth,
+	}
+}
+
+func (ai *AI) GetBestMove(g *game.Game) (*game.Move, error) {
 	if g.HasEnded() {
 		return nil, ErrGameEnded
 	}
 
-	moves := g.GetMoves()
-	if (len(moves)) == 0 {
-		return nil, ErrNoMoves
-	}
-
-	bestScore := math.Inf(-1)
-	var bestMove *Move
-
-	for i := range moves {
-		gameCopy := g.Copy()
-		gameCopy.Play(moves[i])
-		score := -Negamax(gameCopy, depth, math.Inf(1), math.Inf(-1))
-
-		if score > bestScore {
-			bestScore = score
-			bestMove = &moves[i]
-		}
+	bestMove, _ := ai.Negamax(g, 0, math.Inf(-1), math.Inf(1))
+	if bestMove == nil {
+		return nil, ErrGameEnded
 	}
 
 	return bestMove, nil
 }
 
-func Negamax(g *Game, depth int, alpha, beta float64) float64 {
-	if depth == 0 {
-		return EvaluateCurrent(g)
+func (ai *AI) Negamax(g *game.Game, depth int, alpha, beta float64) (nextMove *game.Move, score float64) {
+	if depth == ai.Depth {
+		return nil, ai.EvaluateCurrent(g)
+	}
+
+	if !g.HasKing(g.ActivePlayer) {
+		// Prefer finishing the game for the winner and prolonging it for the loser.
+		return nil, float64(math.MinInt32 + depth)
 	}
 
 	moves := g.GetMoves()
-	// If the active player cannot make a move, treat it as a loss.
 	if len(moves) == 0 {
-		if g.HasKing(g.ActivePlayer) {
-			return 0
-		}
-		return -KingStrength
+		return nil, 0
 	}
 
-	type evaluation struct {
-		game  *Game
-		score float64
-	}
-
-	moveEvalEstimates := map[Move]evaluation{}
+	moveEvalEstimates := map[game.Move]evaluation{}
 
 	for i := range moves {
 		gameCopy := g.Copy()
 		gameCopy.Play(moves[i])
-		moveEvalEstimates[moves[i]] = evaluation{gameCopy, EvaluateCurrent(gameCopy)}
+		moveEvalEstimates[moves[i]] = evaluation{gameCopy, ai.EvaluateCurrent(gameCopy)}
 	}
 
+	// Sort to process "immediately stronger" moves first.
 	sort.Slice(moves, func(a, b int) bool {
-		return moveEvalEstimates[moves[b]].score-moveEvalEstimates[moves[a]].score < 0
+		return moveEvalEstimates[moves[a]].score < moveEvalEstimates[moves[b]].score
 	})
 
-	for _, move := range moves {
-		score := -Negamax(moveEvalEstimates[move].game, depth-1, -beta, -alpha)
+	for i := range moves {
+		_, opponentScore := ai.Negamax(moveEvalEstimates[moves[i]].game, depth+1, -beta, -alpha)
+		score := -opponentScore
+
 		if score >= beta {
-			return beta
+			return &moves[i], beta
 		}
-		alpha = math.Max(score, alpha)
+
+		if score > alpha {
+			alpha = score
+			nextMove = &moves[i]
+		}
 	}
 
-	return alpha
+	return nextMove, alpha
 }
 
-func EvaluateCurrent(g *Game) float64 {
-	playerStrength := map[Player]float64{}
+// EvaluateCurrent returns the difference between the team making the move and the other team.
+func (ai *AI) EvaluateCurrent(g *game.Game) float64 {
+	playerStrength := map[game.Player]float64{}
 	piecesLeft := 0
 
 	for player := range g.Board.PieceSquares {
@@ -94,17 +98,19 @@ func EvaluateCurrent(g *Game) float64 {
 
 	for player := range g.Board.PieceSquares {
 		for _, sq := range g.Board.PieceSquares[player].Elements() {
-			square := sq.(Square)
-			piece := Piece(g.Board.Get(square)).GetGamePiece()
+			square := sq.(game.Square)
+			piece := game.Piece(g.Board.Get(square)).GetGamePiece()
 			playerStrength[player] += piece.GetStrength(g.Board, square, piecesLeft)
 		}
 
-		playerStrength[player] -= KingStrength
-		// Account for the advantage of having a balanced pieces distribution over the teammates.
-		playerStrength[player] = math.Pow(playerStrength[player], 0.8)
+		// Account for the advantage of having a balanced pieces distribution between teammates.
+		if playerStrength[player] > 0 {
+			playerStrength[player] = math.Pow(playerStrength[player], 0.8)
+		}
 	}
 
 	side := g.ActivePlayer.GetTeam().Side()
+	score := float64(side) * (playerStrength[0] + playerStrength[2] - playerStrength[1] - playerStrength[3])
 
-	return float64(side) * (playerStrength[0] + playerStrength[2] - playerStrength[1] - playerStrength[3])
+	return score
 }

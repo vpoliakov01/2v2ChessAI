@@ -11,7 +11,7 @@ func (p Rook) GetMoves(board *Board, from Square) []Move {
 }
 
 func (p Rook) GetStrength(board *Board, square Square, piecesLeft int) float64 {
+	moves := len(p.GetMoves(board, square))
 	progression := 1 - float64(piecesLeft)/PiecesAtTheStart
-	coef := 0.5 + GetEdgeBonus(square)*(1-progression) + progression
-	return RookStrength * coef
+	return Strength[KindRook] * CalculateCoef(moves, 2, 20, GetEdgeBonus(square)*(1-progression)+progression)
 }

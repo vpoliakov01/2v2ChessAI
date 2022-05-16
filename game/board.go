@@ -5,20 +5,18 @@ import (
 )
 
 const (
-	BoardSize      = 14
-	cornerSize     = 3 // 2v2 chess board has corners (3 x 3) cut out.
-	emptySquare    = 0
-	inactiveSquare = 1 << 10 // TODO: change value
+	BoardSize  = 14
+	CornerSize = 3 // 2v2 chess board has corners (3 x 3) cut out.
 )
 
 type Board struct {
-	b            [BoardSize][BoardSize]int
+	Grid         [BoardSize][BoardSize]Piece
 	PieceSquares map[Player]*set.Set
 }
 
 func NewBoard() *Board {
 	b := Board{
-		b:            [BoardSize][BoardSize]int{},
+		Grid:         [BoardSize][BoardSize]Piece{},
 		PieceSquares: map[Player]*set.Set{},
 	}
 
@@ -27,11 +25,11 @@ func NewBoard() *Board {
 	}
 
 	for rank := 0; rank < BoardSize; rank++ {
-		b.b[rank] = [BoardSize]int{}
+		b.Grid[rank] = [BoardSize]Piece{}
 
 		for file := 0; file < BoardSize; file++ {
 			if !IsSquareValid(rank, file) {
-				b.b[rank][file] = inactiveSquare
+				b.Grid[rank][file] = Piece(InactiveSquare)
 			}
 		}
 	}
@@ -39,18 +37,28 @@ func NewBoard() *Board {
 	return &b
 }
 
-func (b *Board) Get(s Square) int {
-	return b.b[s.Rank][s.File]
+func (b *Board) Get(s Square) Piece {
+	return b.Grid[s.Rank][s.File]
 }
 
 func (b *Board) IsEmpty(s Square) bool {
-	return b.b[s.Rank][s.File] == emptySquare
+	return b.Grid[s.Rank][s.File] == Piece(EmptySquare)
+}
+
+func (b *Board) Clear() {
+	newBoard := NewBoard()
+	*b = *newBoard
+}
+
+func (b *Board) PlacePiece(piece Piece, square Square) {
+	b.Grid[square.Rank][square.File] = piece
+	b.PieceSquares[piece.GetPlayer()].Add(square)
 }
 
 func (b *Board) SetStartingPosition() {
 	pieces := [][]PieceKind{
-		{pawn, pawn, pawn, pawn, pawn, pawn, pawn, pawn},
-		{rook, knight, bishop, queen, king, bishop, knight, rook},
+		{KindPawn, KindPawn, KindPawn, KindPawn, KindPawn, KindPawn, KindPawn, KindPawn},
+		{KindRook, KindKnight, KindBishop, KindQueen, KindKing, KindBishop, KindKnight, KindRook},
 	}
 
 	for row := range pieces {
@@ -66,8 +74,7 @@ func (b *Board) SetStartingPosition() {
 				player := Player(i)
 				rank := playerPositions[i][0]
 				file := playerPositions[i][1]
-				b.b[rank][file] = int(NewPiece(player, kind))
-				b.PieceSquares[player].Add(NewSquare(rank, file))
+				b.PlacePiece(NewPiece(player, kind), NewSquare(rank, file))
 			}
 		}
 	}
@@ -97,6 +104,6 @@ func (b *Board) Move(move Move) {
 	b.PieceSquares[player].Delete(move.From)
 	b.PieceSquares[player].Add(move.To)
 
-	b.b[move.To.Rank][move.To.File] = b.b[move.From.Rank][move.From.File]
-	b.b[move.From.Rank][move.From.File] = emptySquare
+	b.Grid[move.To.Rank][move.To.File] = b.Grid[move.From.Rank][move.From.File]
+	b.Grid[move.From.Rank][move.From.File] = Piece(EmptySquare)
 }

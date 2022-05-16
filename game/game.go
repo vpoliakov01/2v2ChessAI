@@ -17,15 +17,6 @@ func New() *Game {
 
 	game.Board.SetStartingPosition()
 
-	for rank := 0; rank < BoardSize; rank++ {
-		for file := 0; file < BoardSize; file++ {
-			v := game.Board.Get(NewSquare(rank, file))
-			if v == emptySquare || v == inactiveSquare {
-				continue
-			}
-		}
-	}
-
 	return &game
 }
 
@@ -44,7 +35,7 @@ func (g *Game) GetMoves() []Move {
 func (g *Game) Play(move Move) {
 	if !g.Board.IsEmpty(move.To) {
 		capturedPiece := Piece(g.Board.Get(move.To))
-		if capturedPiece.GetKind() == king {
+		if capturedPiece.GetKind() == KindKing {
 			g.Score = g.ActivePlayer.GetTeam().Side()
 		}
 	}
@@ -57,7 +48,7 @@ func (g *Game) HasKing(player Player) bool {
 	for _, sq := range g.Board.PieceSquares[player].Elements() {
 		square := sq.(Square)
 		piece := Piece(g.Board.Get(square))
-		if piece.GetKind() == king {
+		if piece.GetKind() == KindKing {
 			return true
 		}
 	}
