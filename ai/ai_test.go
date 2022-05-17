@@ -21,14 +21,15 @@ func Test(t *testing.T) {
 }
 
 func (s *TestSuite) TestGetBestMove() {
-	ai := New(3)
+	ai := New(4)
 
 	startTime := time.Now()
 
 	g := game.New()
 
-	for i := 0; i < 10; i++ {
-		// for i := 0; !g.HasEnded(); i++ {
+	runtime.GOMAXPROCS(8)
+	// for i := 0; i < 10; i++ {
+	for i := 0; !g.HasEnded(); i++ {
 		move, err := ai.GetBestMove(g)
 		if err != nil {
 			if err == ErrGameEnded {
