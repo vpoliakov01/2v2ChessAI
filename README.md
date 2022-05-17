@@ -33,3 +33,6 @@ Some more positions reached by the engine playing itself:
 ![image](https://user-images.githubusercontent.com/53489500/168729637-f39da27a-744d-4229-9807-efcd3c516a0c.png)
 ![image](https://user-images.githubusercontent.com/53489500/168729546-68150198-a880-42b3-b38d-a92300a6f5b2.png)
 ![image](https://user-images.githubusercontent.com/53489500/168729819-535f804d-3136-4240-95c9-c1947319d8fa.png)
+
+## To play against the AI:
+`go build -o cmd/ai cmd/main.go && ./cmd/ai`
