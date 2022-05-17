@@ -4,6 +4,7 @@ type King Piece
 
 var _ GamePiece = (*King)(nil)
 
+// GetMoves returns the moves the piece can make.
 func (p King) GetMoves(board *Board, from Square) []Move {
 	dirs := [][]int{{-1, 0}, {0, -1}, {0, 1}, {1, 0}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}}
 	moves := GetEnumeratedMoves(board, from, dirs)
@@ -13,6 +14,7 @@ func (p King) GetMoves(board *Board, from Square) []Move {
 	return moves
 }
 
+// GetStrength returns an estimate of the piece's strength.
 func (p King) GetStrength(board *Board, square Square, piecesLeft int) float64 {
 	moves := len(p.GetMoves(board, square))
 	progression := 1 - float64(piecesLeft)/PiecesAtTheStart

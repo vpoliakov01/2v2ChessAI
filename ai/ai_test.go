@@ -2,6 +2,7 @@ package ai_test
 
 import (
 	"fmt"
+	"runtime"
 	"testing"
 	"time"
 
@@ -20,13 +21,15 @@ func Test(t *testing.T) {
 }
 
 func (s *TestSuite) TestGetBestMove() {
-	ai := New(3)
+	ai := New(4)
 
 	startTime := time.Now()
 
 	g := game.New()
 
-	for i := 0; i < 20; i++ {
+	runtime.GOMAXPROCS(8)
+	// for i := 0; i < 10; i++ {
+	for i := 0; !g.HasEnded(); i++ {
 		move, err := ai.GetBestMove(g)
 		if err != nil {
 			if err == ErrGameEnded {
@@ -38,10 +41,10 @@ func (s *TestSuite) TestGetBestMove() {
 		}
 
 		if !g.Board.IsEmpty(move.To) {
-			capturedPiece := game.Piece(g.Board.Get(move.To))
-			opponent := capturedPiece.GetPlayer()
-			piece := game.Piece(g.Board.Get(move.From))
-			player := piece.GetPlayer()
+			capturedPiece := game.Piece(g.Board.GetPiece(move.To))
+			opponent := capturedPiece.Player()
+			piece := game.Piece(g.Board.GetPiece(move.From))
+			player := piece.Player()
 			fmt.Printf("%v: P%v's %v takes P%v's %v after %v\n", i, player, piece, opponent, capturedPiece, move)
 			g.Board.Draw()
 		}
@@ -50,9 +53,28 @@ func (s *TestSuite) TestGetBestMove() {
 		g.Board.Draw()
 	}
 
-	g.Board.Draw()
-	fmt.Println(ai.EvaluateCurrent(g))
+	fmt.Println("Evaluation: ", ai.EvaluateCurrent(g))
 	fmt.Println(time.Since(startTime))
+}
+
+func (s *TestSuite) TestMultithreading() {
+	cpus := runtime.NumCPU()
+	times := []time.Duration{}
+
+	for i := 1; i <= cpus; i++ {
+		runtime.GOMAXPROCS(i)
+
+		startTime := time.Now()
+		s.TestGetBestMove()
+
+		times = append(times, time.Since(startTime))
+	}
+
+	for i, t := range times {
+		fmt.Printf("%v CPU: %v\n", i+1, t)
+	}
+
+	s.Require().Less(times[len(times)-1], times[0])
 }
 
 func (s *TestSuite) TestPosition() {
@@ -96,10 +118,10 @@ func (s *TestSuite) TestPosition() {
 		fmt.Println(move)
 
 		if !g.Board.IsEmpty(move.To) {
-			capturedPiece := game.Piece(g.Board.Get(move.To))
-			opponent := capturedPiece.GetPlayer()
-			piece := game.Piece(g.Board.Get(move.From))
-			player := piece.GetPlayer()
+			capturedPiece := game.Piece(g.Board.GetPiece(move.To))
+			opponent := capturedPiece.Player()
+			piece := game.Piece(g.Board.GetPiece(move.From))
+			player := piece.Player()
 			fmt.Printf("%v: P%v's %v takes P%v's %v after %v\n", i, player, piece, opponent, capturedPiece, move)
 		}
 

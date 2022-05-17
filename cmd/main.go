@@ -19,6 +19,7 @@ var flg flags
 func main() {
 	flag.IntVar(&flg.Depth, "depth", 4, "depth of the engine")
 	flag.IntVar(&flg.Moves, "moves", 100, "the number of moves to play")
+	// TODO: add an option for playing against the ai.
 
 	engine := ai.New(flg.Depth)
 
@@ -38,10 +39,10 @@ func main() {
 		}
 
 		if !g.Board.IsEmpty(move.To) {
-			capturedPiece := game.Piece(g.Board.Get(move.To))
-			opponent := capturedPiece.GetPlayer()
-			piece := game.Piece(g.Board.Get(move.From))
-			player := piece.GetPlayer()
+			capturedPiece := game.Piece(g.Board.GetPiece(move.To))
+			opponent := capturedPiece.Player()
+			piece := game.Piece(g.Board.GetPiece(move.From))
+			player := piece.Player()
 			fmt.Printf("%v: P%v's %v takes P%v's %v after %v\n", i, player, piece, opponent, capturedPiece, move)
 			g.Board.Draw()
 		}
