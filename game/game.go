@@ -1,5 +1,7 @@
 package game
 
+import "fmt"
+
 // MoveMap represents
 type MoveMap map[Square][]Square
 
@@ -79,6 +81,22 @@ func (g *Game) Copy() *Game {
 	newGame := *g
 	newGame.Board = g.Board.Copy()
 	return &newGame
+}
+
+// ValidateMove validates the move.
+func (g *Game) ValidateMove(move *Move) error {
+	if move == nil || !move.From.IsValid() || !move.To.IsValid() {
+		return fmt.Errorf("move %v is invalid", move)
+	}
+
+	moves := g.GetMoves()
+	for _, to := range moves[move.From] {
+		if to == move.To {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("move %v is not available to the player", move)
 }
 
 // Flatten transforms MoveMap into []Move.

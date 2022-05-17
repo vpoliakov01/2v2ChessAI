@@ -27,8 +27,8 @@ func (s *TestSuite) TestGetBestMove() {
 
 	g := game.New()
 
-	for i := 0; i < 10; i++ {
-		// for i := 0; !g.HasEnded(); i++ {
+	// for i := 0; i < 10; i++ {
+	for i := 0; !g.HasEnded(); i++ {
 		move, err := engine.GetBestMove(g)
 		if err != nil {
 			if err == ErrGameEnded {
@@ -39,13 +39,12 @@ func (s *TestSuite) TestGetBestMove() {
 			break
 		}
 
+		piece := game.Piece(g.Board.GetPiece(move.From))
 		if !g.Board.IsEmpty(move.To) {
 			capturedPiece := game.Piece(g.Board.GetPiece(move.To))
-			opponent := capturedPiece.Player()
-			piece := game.Piece(g.Board.GetPiece(move.From))
-			player := piece.Player()
-			fmt.Printf("%v: P%v's %v takes P%v's %v after %v\n", i, player, piece, opponent, capturedPiece, move)
-			g.Board.Draw()
+			fmt.Printf("%v: %v takes %v after %v\n", i, piece, capturedPiece, move)
+		} else {
+			fmt.Printf("%v: %v moves %v\n", i, piece, move)
 		}
 
 		g.Play(*move)
