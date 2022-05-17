@@ -18,3 +18,18 @@ An example of a position reached by the engine playing against itself. Pretty si
 ## How does it work?
 
 To pick a move, it uses negamax with alpha-beta pruning to arrive to the most favorable forced position at a specified depth. How favorable a position is is evaluated based on the team's pieces' positions, progression of the game, and number of available moves. It uses [multithreading by running the position evaluation on all availabe CPUs](https://github.com/vpoliakov01/2v2ChessAI/blob/dev/ai/ai.go#L82-L97) (GPU acceleration is planned for the future).
+
+## What are the main components that are worth checking out?
+* [ai/ai.go](https://github.com/vpoliakov01/2v2ChessAI/blob/main/ai/ai.go)
+* [game/game.go](https://github.com/vpoliakov01/2v2ChessAI/blob/main/ai/game.go)
+* [game/board.go](https://github.com/vpoliakov01/2v2ChessAI/blob/main/ai/board.go)
+* [game/piece.go](https://github.com/vpoliakov01/2v2ChessAI/blob/main/ai/piece.go)
+* [game/ in general](https://github.com/vpoliakov01/2v2ChessAI/tree/main/game)
+* [dev branch](https://github.com/vpoliakov01/2v2ChessAI/tree/dev)
+* [~~PRs~~](https://github.com/vpoliakov01/2v2ChessAI/pulls?q=+)
+
+Some more positions reached by the engine playing itself:
+
+![image](https://user-images.githubusercontent.com/53489500/168729637-f39da27a-744d-4229-9807-efcd3c516a0c.png)
+![image](https://user-images.githubusercontent.com/53489500/168729546-68150198-a880-42b3-b38d-a92300a6f5b2.png)
+![image](https://user-images.githubusercontent.com/53489500/168729819-535f804d-3136-4240-95c9-c1947319d8fa.png)
