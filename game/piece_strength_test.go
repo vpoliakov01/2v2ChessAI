@@ -6,6 +6,7 @@ import (
 	. "github.com/vpoliakov01/2v2ChessAI/game"
 )
 
+// TestBonuses prints the values for the position bonus maps.
 func (s *TestSuite) TestBonuses() {
 	funcs := []func(Square) float64{
 		GetCenterBonus,

@@ -14,7 +14,7 @@ func GetDirectionalMoves(board *Board, from Square, vectors [][]int) []Move {
 			} else if board.IsEmpty(to) {
 				moves = append(moves, Move{from, to})
 				continue
-			} else if !Piece(board.Get(to)).GetPlayer().IsTeamMate(Piece(board.Get(from)).GetPlayer()) {
+			} else if !Piece(board.GetPiece(to)).Player().IsTeamMate(Piece(board.GetPiece(from)).Player()) {
 				moves = append(moves, Move{from, to})
 			}
 			break
@@ -34,7 +34,7 @@ func GetEnumeratedMoves(board *Board, from Square, vectors [][]int) []Move {
 
 		if !to.IsValid() {
 			continue
-		} else if board.IsEmpty(to) || !Piece(board.Get(to)).GetPlayer().IsTeamMate(Piece(board.Get(from)).GetPlayer()) {
+		} else if board.IsEmpty(to) || !Piece(board.GetPiece(to)).Player().IsTeamMate(Piece(board.GetPiece(from)).Player()) {
 			moves = append(moves, Move{from, to})
 		}
 	}

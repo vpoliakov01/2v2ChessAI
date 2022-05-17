@@ -4,10 +4,11 @@ type Pawn Piece
 
 var _ GamePiece = (*Pawn)(nil)
 
+// GetMoves returns the moves the piece can make.
 func (p Pawn) GetMoves(board *Board, from Square) []Move {
-	player := Piece(board.Get(from)).GetPlayer()
+	player := Piece(board.GetPiece(from)).Player()
 
-	// Directions depend on which player's pawn it is.
+	// Move directions depend on which player's pawn it is.
 	dirs := [][][]int{
 		{{1, 0}, {1, -1}, {1, 1}},
 		{{0, 1}, {-1, 1}, {1, 1}},
@@ -42,7 +43,7 @@ func (p Pawn) GetMoves(board *Board, from Square) []Move {
 
 		if !to.IsValid() {
 			continue
-		} else if !board.IsEmpty(to) && !Piece(board.Get(to)).GetPlayer().IsTeamMate(Piece(board.Get(from)).GetPlayer()) {
+		} else if !board.IsEmpty(to) && !Piece(board.GetPiece(to)).Player().IsTeamMate(Piece(board.GetPiece(from)).Player()) {
 			moves = append(moves, Move{from, to})
 		}
 	}
@@ -52,9 +53,10 @@ func (p Pawn) GetMoves(board *Board, from Square) []Move {
 	return moves
 }
 
+// GetStrength returns an estimate of the piece's strength.
 func (p Pawn) GetStrength(board *Board, square Square, piecesLeft int) float64 {
 	// Check pawn structure.
-	player := Piece(p).GetPlayer()
+	player := Piece(p).Player()
 	dirs := [][][]int{
 		{{-1, -1}, {-1, 1}},
 		{{-1, -1}, {1, -1}},
@@ -69,7 +71,7 @@ func (p Pawn) GetStrength(board *Board, square Square, piecesLeft int) float64 {
 			continue
 		}
 
-		pieceBehind := Piece(board.Get(behind))
+		pieceBehind := Piece(board.GetPiece(behind))
 		if Piece(p) == pieceBehind { // If there is same player's pawn behind.
 			coef += 0.5
 		}

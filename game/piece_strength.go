@@ -7,6 +7,7 @@ const (
 )
 
 var (
+	// Strength stores relative base strengths for pieces.
 	Strength = map[PieceKind]float64{
 		KindPawn:   1.0,
 		KindKnight: 2.2,

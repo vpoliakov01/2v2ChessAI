@@ -9,14 +9,16 @@ const (
 	CornerSize = 3 // 2v2 chess board has corners (3 x 3) cut out.
 )
 
+// Board represents the chess board.
 type Board struct {
 	Grid         [BoardSize][BoardSize]Piece
-	PieceSquares map[Player]*set.Set
+	PieceSquares map[Player]*set.Set // TODO: replace set with just a map[Square]struct{}?
 }
 
+// NewBoard creates a new board.
 func NewBoard() *Board {
 	b := Board{
-		Grid:         [BoardSize][BoardSize]Piece{},
+		Grid:         [BoardSize][BoardSize]Piece{}, // Use an array instead of slice for perf optimization.
 		PieceSquares: map[Player]*set.Set{},
 	}
 
@@ -37,24 +39,31 @@ func NewBoard() *Board {
 	return &b
 }
 
-func (b *Board) Get(s Square) Piece {
+// GetPiece returns a piece from the square.
+// NOTE: it does not check the square's validity.
+func (b *Board) GetPiece(s Square) Piece {
 	return b.Grid[s.Rank][s.File]
 }
 
+// IsEmpty checks if the square is empty (no piece).
+// NOTE: it does not check the square's validity.
 func (b *Board) IsEmpty(s Square) bool {
 	return b.Grid[s.Rank][s.File] == Piece(EmptySquare)
 }
 
+// Clear clears all the pieces of the board.
 func (b *Board) Clear() {
 	newBoard := NewBoard()
 	*b = *newBoard
 }
 
+// PlacePiece places a piece onto the board.
 func (b *Board) PlacePiece(piece Piece, square Square) {
 	b.Grid[square.Rank][square.File] = piece
-	b.PieceSquares[piece.GetPlayer()].Add(square)
+	b.PieceSquares[piece.Player()].Add(square)
 }
 
+// SetStartingPosition sets the pieces for 4 players.
 func (b *Board) SetStartingPosition() {
 	pieces := [][]PieceKind{
 		{KindPawn, KindPawn, KindPawn, KindPawn, KindPawn, KindPawn, KindPawn, KindPawn},
@@ -80,6 +89,7 @@ func (b *Board) SetStartingPosition() {
 	}
 }
 
+// Copy returns a deep copy of the board.
 func (b *Board) Copy() *Board {
 	board := *b
 	board.PieceSquares = map[Player]*set.Set{}
@@ -91,15 +101,16 @@ func (b *Board) Copy() *Board {
 	return &board
 }
 
+// Move performs a move of a piece on the board.
 func (b *Board) Move(move Move) {
 	if !b.IsEmpty(move.To) {
-		capturedPiece := Piece(b.Get(move.To))
-		opponent := capturedPiece.GetPlayer()
+		capturedPiece := Piece(b.GetPiece(move.To))
+		opponent := capturedPiece.Player()
 
 		b.PieceSquares[opponent].Delete(move.To)
 	}
 
-	player := Piece(b.Get(move.From)).GetPlayer()
+	player := Piece(b.GetPiece(move.From)).Player()
 
 	b.PieceSquares[player].Delete(move.From)
 	b.PieceSquares[player].Add(move.To)

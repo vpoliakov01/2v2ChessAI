@@ -12,11 +12,20 @@ const (
 	pieceBitMask   = 7 // 2^4-1.
 )
 
-type Piece uint8
+// GamePiece defines functionality a piece should implement.
+type GamePiece interface {
+	// GetMoves returns a list of moves the peice could make.
+	GetMoves(board *Board, from Square) []Move
+	// GetStrength returns an estimate of the piece's strength depending on its position and # of pieces left on the board.
+	GetStrength(board *Board, square Square, piecesLeft int) float64
+}
+
+type Piece uint8 // Use uint8 to save some space (the board is a [][]Piece).
 
 type PieceKind uint8
 
 const (
+	// Set values from 0 to 7.
 	EmptySquare Piece = iota
 	InactiveSquare
 	KindPawn PieceKind = iota
@@ -44,27 +53,22 @@ var (
 	}
 )
 
-// GamePiece defines functionality a piece should implement.
-type GamePiece interface {
-	// GetMoves returns a list of moves the peice could make.
-	GetMoves(board *Board, from Square) []Move
-	// GetStrength returns an estimate of the piece's strength depending on its position and # of pieces left on the board.
-	GetStrength(board *Board, square Square, piecesLeft int) float64
-}
-
 // New creates a new Piece.
 func NewPiece(player Player, kind PieceKind) Piece {
 	return Piece(int(player)<<pieceBitOffset + int(kind))
 }
 
-func (p Piece) GetPlayer() Player {
+// Player returns the owner of the piece.
+func (p Piece) Player() Player {
 	return Player(p >> pieceBitOffset)
 }
 
-func (p Piece) GetKind() PieceKind {
+// Kind returns the kind of the piece.
+func (p Piece) Kind() PieceKind {
 	return PieceKind(p & pieceBitMask)
 }
 
+// String implements the Stringer interface.
 func (p Piece) String() string {
 	switch p {
 	case InactiveSquare:
@@ -72,12 +76,13 @@ func (p Piece) String() string {
 	case EmptySquare:
 		return "   "
 	default:
-		return fmt.Sprintf(" %v%v%v ", colorMap[p.GetPlayer()], printMap[p.GetKind()], color.Reset)
+		return fmt.Sprintf(" %v%v%v ", colorMap[p.Player()], printMap[p.Kind()], color.Reset)
 	}
 }
 
-func (p Piece) GetGamePiece() GamePiece {
-	switch p.GetKind() {
+// GamePiece returns the corresponding GamePiece implementation for the kind of the piece.
+func (p Piece) GamePiece() GamePiece {
+	switch p.Kind() {
 	case KindPawn:
 		return Pawn(p)
 	case KindKnight:

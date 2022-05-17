@@ -6,13 +6,14 @@ import (
 	"github.com/vpoliakov01/2v2ChessAI/color"
 )
 
+// Draw draws the board. Clunky but does the job.
 func (b *Board) Draw() {
 	for rank := BoardSize - 1; rank >= 0; rank-- {
 		fmt.Println(color.Reset, "  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+")
 
 		fmt.Printf("%-3v", rank+1)
 		for file := 0; file < BoardSize; file++ {
-			fmt.Printf("|%v", b.Get(NewSquare(rank, file)))
+			fmt.Printf("|%v", b.GetPiece(NewSquare(rank, file)))
 		}
 
 		fmt.Println("|")
