@@ -52,6 +52,6 @@ func main() {
 	}
 
 	g.Board.Draw()
-	fmt.Println(engine.EvaluateCurrent(g))
+	fmt.Println("Evaluation: ", engine.EvaluateCurrent(g))
 	fmt.Println(time.Since(startTime))
 }

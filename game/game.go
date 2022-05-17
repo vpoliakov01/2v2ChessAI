@@ -1,10 +1,14 @@
 package game
 
+// MoveMap represents
+type MoveMap map[Square][]Square
+
 // Game represents a state of the game.
 type Game struct {
 	ActivePlayer Player
 	Board        *Board
 	Score        Team // Red/Yellow win: 1, Blue/Green win: -1.
+	MoveMap      *MoveMap
 }
 
 // New creates a new Game.
@@ -21,21 +25,27 @@ func New() *Game {
 }
 
 // GetMoves returns all moves for the active player.
-// TODO: return map[Square][]Square instead for specific piece moves lookup?
-func (g *Game) GetMoves() []Move {
-	moves := []Move{}
+func (g *Game) GetMoves() MoveMap {
+	if g.MoveMap != nil {
+		return *g.MoveMap
+	}
+
+	moves := MoveMap{}
 
 	for _, s := range g.Board.PieceSquares[g.ActivePlayer].Elements() {
 		square := s.(Square)
 		piece := Piece(g.Board.GetPiece(square)).GamePiece()
-		moves = append(moves, piece.GetMoves(g.Board, square)...)
+		moves[square] = append(moves[square], piece.GetMoves(g.Board, square)...)
 	}
 
+	g.MoveMap = &moves
 	return moves
 }
 
 // Play plays a move in the game.
 func (g *Game) Play(move Move) {
+	g.MoveMap = nil // After the move is played, MoveMap has to be recalculated.
+
 	if !g.Board.IsEmpty(move.To) {
 		capturedPiece := Piece(g.Board.GetPiece(move.To))
 		if capturedPiece.Kind() == KindKing {
@@ -69,4 +79,17 @@ func (g *Game) Copy() *Game {
 	newGame := *g
 	newGame.Board = g.Board.Copy()
 	return &newGame
+}
+
+// Flatten transforms MoveMap into []Move.
+func (m MoveMap) Flatten() []Move {
+	moves := []Move{}
+
+	for from := range m {
+		for _, to := range m[from] {
+			moves = append(moves, Move{from, to})
+		}
+	}
+
+	return moves
 }

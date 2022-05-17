@@ -5,7 +5,7 @@ type Pawn Piece
 var _ GamePiece = (*Pawn)(nil)
 
 // GetMoves returns the moves the piece can make.
-func (p Pawn) GetMoves(board *Board, from Square) []Move {
+func (p Pawn) GetMoves(board *Board, from Square) []Square {
 	player := Piece(board.GetPiece(from)).Player()
 
 	// Move directions depend on which player's pawn it is.
@@ -15,12 +15,12 @@ func (p Pawn) GetMoves(board *Board, from Square) []Move {
 		{{-1, 0}, {-1, -1}, {-1, 1}},
 		{{0, -1}, {-1, -1}, {1, -1}},
 	}[player]
-	moves := []Move{}
+	moves := []Square{}
 
 	// Move forward by 1.
 	to := from.Add(dirs[0][0], dirs[0][1])
 	if to.IsValid() && board.IsEmpty(to) {
-		moves = append(moves, Move{from, to})
+		moves = append(moves, to)
 
 		// Move forward by 2.
 		to = from.Add(2*dirs[0][0], 2*dirs[0][1])
@@ -31,7 +31,7 @@ func (p Pawn) GetMoves(board *Board, from Square) []Move {
 				(player == 1 && from.File == 1) ||
 				(player == 2 && from.Rank == BoardSize-2) ||
 				(player == 3 && from.File == BoardSize-2) {
-				moves = append(moves, Move{from, to})
+				moves = append(moves, to)
 			}
 		}
 	}
@@ -44,7 +44,7 @@ func (p Pawn) GetMoves(board *Board, from Square) []Move {
 		if !to.IsValid() {
 			continue
 		} else if !board.IsEmpty(to) && !Piece(board.GetPiece(to)).Player().IsTeamMate(Piece(board.GetPiece(from)).Player()) {
-			moves = append(moves, Move{from, to})
+			moves = append(moves, to)
 		}
 	}
 
@@ -54,7 +54,7 @@ func (p Pawn) GetMoves(board *Board, from Square) []Move {
 }
 
 // GetStrength returns an estimate of the piece's strength.
-func (p Pawn) GetStrength(board *Board, square Square, piecesLeft int) float64 {
+func (p Pawn) GetStrength(board *Board, numMoves int, square Square, piecesLeft int) float64 {
 	// Check pawn structure.
 	player := Piece(p).Player()
 	dirs := [][][]int{

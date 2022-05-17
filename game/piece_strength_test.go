@@ -17,7 +17,7 @@ func (s *TestSuite) TestBonuses() {
 	for _, f := range funcs {
 		for rank := 0; rank < BoardSize; rank++ {
 			for file := 0; file < BoardSize; file++ {
-				fmt.Printf("%-2.2f ", f(NewSquare(rank, file)))
+				fmt.Printf("%-2.2f ", f(Square{rank, file}))
 			}
 			fmt.Println()
 		}

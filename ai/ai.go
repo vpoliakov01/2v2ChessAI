@@ -21,11 +21,6 @@ type moveScore struct {
 	score float64
 }
 
-type playerStrength struct {
-	player   game.Player
-	strength float64
-}
-
 // AI is the ai engine used for evaluating the position and picking the best move.
 type AI struct {
 	Depth int
@@ -74,12 +69,13 @@ func (ai *AI) Negamax(g *game.Game, depth int, alpha, beta float64) (nextMove *g
 		return nil, float64(math.MinInt32 + depth)
 	}
 
-	moves := g.GetMoves()
+	moveMap := g.GetMoves() // map[Square][]Square
+	moves := moveMap.Flatten()
 	if len(moves) == 0 {
 		return nil, 0
 	}
 
-	// Channel for communicating results of piece strength evaluations.
+	// Channel for communicating results of position evaluations.
 	c := make(chan moveScore, len(moves))
 	moveEvalEstimates := map[game.Move]moveScore{}
 
@@ -132,12 +128,14 @@ func (ai *AI) EvaluateCurrent(g *game.Game) float64 {
 		piecesLeft += g.Board.PieceSquares[player].Size()
 	}
 
+	numMoves := len(g.GetMoves().Flatten())
+
 	// For each piece, run piece strength evaluation (in parallel).
 	for player := range g.Board.PieceSquares {
 		for _, sq := range g.Board.PieceSquares[player].Elements() {
 			square := sq.(game.Square)
 			piece := game.Piece(g.Board.GetPiece(square)).GamePiece()
-			playerStrengths[player] += piece.GetStrength(g.Board, square, piecesLeft)
+			playerStrengths[player] += piece.GetStrength(g.Board, numMoves, square, piecesLeft)
 		}
 	}
 
