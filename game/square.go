@@ -8,14 +8,9 @@ type Square struct {
 	File int
 }
 
-// New creates a new Square.
-func NewSquare(rank, file int) Square {
-	return Square{Rank: rank, File: file}
-}
-
 // Add adds a vector to the square.
 func (s *Square) Add(rank, file int) Square {
-	return NewSquare(s.Rank+rank, s.File+file)
+	return Square{s.Rank + rank, s.File + file}
 }
 
 // String implements the Stringer interface.

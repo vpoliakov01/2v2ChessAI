@@ -83,7 +83,7 @@ func (b *Board) SetStartingPosition() {
 				player := Player(i)
 				rank := playerPositions[i][0]
 				file := playerPositions[i][1]
-				b.PlacePiece(NewPiece(player, kind), NewSquare(rank, file))
+				b.PlacePiece(NewPiece(player, kind), Square{rank, file})
 			}
 		}
 	}

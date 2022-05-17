@@ -15,9 +15,9 @@ const (
 // GamePiece defines functionality a piece should implement.
 type GamePiece interface {
 	// GetMoves returns a list of moves the peice could make.
-	GetMoves(board *Board, from Square) []Move
+	GetMoves(board *Board, from Square) []Square
 	// GetStrength returns an estimate of the piece's strength depending on its position and # of pieces left on the board.
-	GetStrength(board *Board, square Square, piecesLeft int) float64
+	GetStrength(board *Board, numMoves int, square Square, piecesLeft int) float64
 }
 
 type Piece uint8 // Use uint8 to save some space (the board is a [][]Piece).

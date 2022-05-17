@@ -21,16 +21,15 @@ func Test(t *testing.T) {
 }
 
 func (s *TestSuite) TestGetBestMove() {
-	ai := New(4)
+	engine := New(4)
 
 	startTime := time.Now()
 
 	g := game.New()
 
-	runtime.GOMAXPROCS(8)
-	// for i := 0; i < 10; i++ {
-	for i := 0; !g.HasEnded(); i++ {
-		move, err := ai.GetBestMove(g)
+	for i := 0; i < 10; i++ {
+		// for i := 0; !g.HasEnded(); i++ {
+		move, err := engine.GetBestMove(g)
 		if err != nil {
 			if err == ErrGameEnded {
 				fmt.Printf("%v: Team %v won!\n", i, g.Score)
@@ -53,7 +52,7 @@ func (s *TestSuite) TestGetBestMove() {
 		g.Board.Draw()
 	}
 
-	fmt.Println("Evaluation: ", ai.EvaluateCurrent(g))
+	fmt.Println("Evaluation: ", engine.EvaluateCurrent(g))
 	fmt.Println(time.Since(startTime))
 }
 
@@ -98,14 +97,14 @@ func (s *TestSuite) TestPosition() {
 		rank := pieces[i][1]
 		file := pieces[i][2]
 
-		g.Board.PlacePiece(piece, game.NewSquare(rank, file))
+		g.Board.PlacePiece(piece, game.Square{rank, file})
 	}
 
-	ai := New(2)
+	engine := New(2)
 	g.Board.Draw()
 
 	for i := 0; i < 30; i++ {
-		move, err := ai.GetBestMove(g)
+		move, err := engine.GetBestMove(g)
 		if err != nil {
 			if err == ErrGameEnded {
 				fmt.Printf("%v: Team %v won!\n", i, g.Score)
