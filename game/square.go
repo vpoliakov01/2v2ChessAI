@@ -15,7 +15,7 @@ func (s *Square) Add(rank, file int) Square {
 
 // String implements the Stringer interface.
 func (s Square) String() string {
-	return fmt.Sprintf("%v%v", fmt.Sprintf("%c", int('A')+s.File), s.Rank+1)
+	return fmt.Sprintf("%v%v", fmt.Sprintf("%c", int('a')+s.File), s.Rank+1)
 }
 
 // IsValid checs if the square is on the board.

@@ -14,28 +14,40 @@ type flags struct {
 	Depth       int
 	Moves       int
 	HumanPlayer int // game.Team.
+	Evaluation  bool
+	LoadPGN     string
 }
 
 var flg flags
 
 func main() {
-	flag.IntVar(&flg.Depth, "depth", 4, "depth of the engine")
+	flag.IntVar(&flg.Depth, "depth", 5, "depth of the engine")
 	flag.IntVar(&flg.Moves, "moves", 0, "the number of moves to play (0 for unlimited)")
-	flag.IntVar(&flg.HumanPlayer, "human", 1, "the team controlled by the human players")
+	flag.IntVar(&flg.HumanPlayer, "human", 0, "the team controlled by the human players")
+	flag.BoolVar(&flg.Evaluation, "eval", true, "print evalution after every move")
+	flag.StringVar(&flg.LoadPGN, "load", "", "load pgn notation (no sidelines) to setup the board")
 	flag.Parse()
 
-	fmt.Println("Flags:")
-	fmt.Println("	depth - engine depth")
-	fmt.Println("	moves - limit on number of moves to be played (useful for engine vs engine game)")
-	fmt.Println("	human - team to be controlled by user input (1: Red/Yellow, -1: Blue/Green, 0: engine vs engine")
+	flag.CommandLine.Usage()
 
-	fmt.Printf("Depth: %v\nMoves limit: %v\nHuman team: %v\n", flg.Depth, flg.Moves, flg.HumanPlayer)
+	fmt.Printf("\nDepth: %v\nMoves limit: %v\nHuman team: %v\nEvaluation: %v\n\n", flg.Depth, flg.Moves, flg.HumanPlayer, flg.Evaluation)
 
 	engine := ai.New(flg.Depth)
 
 	startTime := time.Now()
 
 	g := game.New()
+	if flg.LoadPGN != "" {
+		moves, err := input.LoadPGN(flg.LoadPGN)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, move := range moves {
+			g.Play(move)
+		}
+	}
+
 	g.Board.Draw()
 
 	for i := 0; !g.HasEnded(); i++ {
@@ -43,8 +55,12 @@ func main() {
 			break
 		}
 
+		fmt.Println()
+
 		var move *game.Move
+		var score float64
 		var err error
+		moveStartTime := time.Now()
 
 		if g.ActivePlayer.Team() == game.Team(flg.HumanPlayer) {
 			for {
@@ -61,7 +77,7 @@ func main() {
 				break
 			}
 		} else {
-			move, err = engine.GetBestMove(g)
+			move, score, err = engine.GetBestMove(g)
 			if err != nil {
 				if err == ai.ErrGameEnded {
 					fmt.Printf("%v: Team %v won!\n", i, g.Score)
@@ -70,10 +86,15 @@ func main() {
 				}
 				break
 			}
-		}
-		fmt.Println(move)
 
+			if flg.Evaluation {
+				fmt.Printf("Evaluation: %.3f\n", score*float64(g.ActivePlayer.Team()))
+			}
+		}
+
+		fmt.Printf("Time used: %.3fs\n", time.Since(moveStartTime).Seconds())
 		piece := game.Piece(g.Board.GetPiece(move.From))
+
 		if !g.Board.IsEmpty(move.To) {
 			capturedPiece := game.Piece(g.Board.GetPiece(move.To))
 			fmt.Printf("%v: %v takes %v after %v\n", i, piece, capturedPiece, move)
@@ -85,7 +106,8 @@ func main() {
 		g.Board.Draw()
 	}
 
-	g.Board.Draw()
-	fmt.Println("Evaluation: ", engine.EvaluateCurrent(g))
-	fmt.Println(time.Since(startTime))
+	if g.Score != 0 {
+		fmt.Printf("Team %v won!\n", g.Score)
+	}
+	fmt.Printf("Total time: %v\n", time.Since(startTime))
 }

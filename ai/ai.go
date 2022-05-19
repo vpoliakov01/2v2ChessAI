@@ -39,26 +39,26 @@ func New(depth int) *AI {
 }
 
 // GetBestMove returns the best move for the active player to play.
-func (ai *AI) GetBestMove(g *game.Game) (*game.Move, error) {
+func (ai *AI) GetBestMove(g *game.Game) (bestMove *game.Move, score float64, err error) {
 	if g.HasEnded() {
-		return nil, ErrGameEnded
+		return nil, float64(g.Score), ErrGameEnded
 	}
 
-	bestMove, _ := ai.Negamax(g, 0, math.Inf(-1), math.Inf(1))
+	bestMove, score = ai.Negamax(g, 0, ai.EvaluateCurrent(g), math.Inf(-1), math.Inf(1))
 	if bestMove == nil {
-		return nil, ErrGameEnded
+		return nil, 0, ErrGameEnded
 	}
 
-	return bestMove, nil
+	return bestMove, score, nil
 }
 
 // Negamax (minimax + negation) recursively finds the position to which
 // picking the best move by every player leads.
 // Alpha and beta params are used for alpha-beta pruning (skipping evalution
 // of branches that are guaranteed not to be picked by any of players).
-func (ai *AI) Negamax(g *game.Game, depth int, alpha, beta float64) (nextMove *game.Move, score float64) {
+func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextMove *game.Move, score float64) {
 	if depth == ai.Depth {
-		return nil, ai.EvaluateCurrent(g)
+		return nil, eval
 	}
 
 	// Instead of calculating checks, just evaluate until king capture.
@@ -100,7 +100,7 @@ func (ai *AI) Negamax(g *game.Game, depth int, alpha, beta float64) (nextMove *g
 	for i := range moves {
 		gameCopy := g.Copy()
 		gameCopy.Play(moves[i])
-		_, opponentScore := ai.Negamax(gameCopy, depth+1, -beta, -alpha)
+		_, opponentScore := ai.Negamax(gameCopy, depth+1, moveEvalEstimates[moves[i]].score, -beta, -alpha)
 		score := -opponentScore
 
 		// If the score is already better than what the opponent could get by playing
