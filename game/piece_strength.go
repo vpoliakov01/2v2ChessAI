@@ -11,10 +11,10 @@ var (
 	Strength = map[PieceKind]float64{
 		KindPawn:   1.0,
 		KindKnight: 2.2,
-		KindBishop: 4.5,
+		KindBishop: 5.0,
 		KindRook:   4.5,
-		KindQueen:  12.0,
-		KindKing:   5.0,
+		KindQueen:  14.0,
+		KindKing:   3.0,
 	}
 )
 

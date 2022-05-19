@@ -27,9 +27,9 @@ func (s *TestSuite) TestGetBestMove() {
 
 	g := game.New()
 
-	// for i := 0; i < 10; i++ {
-	for i := 0; !g.HasEnded(); i++ {
-		move, err := engine.GetBestMove(g)
+	for i := 0; i < 10; i++ {
+		// for i := 0; !g.HasEnded(); i++ {
+		move, score, err := engine.GetBestMove(g)
 		if err != nil {
 			if err == ErrGameEnded {
 				fmt.Printf("%v: Team %v won!\n", i, g.Score)
@@ -49,9 +49,9 @@ func (s *TestSuite) TestGetBestMove() {
 
 		g.Play(*move)
 		g.Board.Draw()
+		fmt.Println("Evaluation: ", score)
 	}
 
-	fmt.Println("Evaluation: ", engine.EvaluateCurrent(g))
 	fmt.Println(time.Since(startTime))
 }
 
@@ -73,6 +73,31 @@ func (s *TestSuite) TestMultithreading() {
 	}
 
 	s.Require().Less(times[len(times)-1], times[0])
+}
+
+func (s *TestSuite) TestEngineDepthsPerformance() {
+	moves := 1
+	depths := 9
+
+	last := time.Duration(1)
+	for depth := 1; depth <= depths; depth++ {
+		start := time.Now()
+		engine := New(depth)
+		g := game.New()
+
+		for i := 0; i < moves; i++ {
+			move, _, err := engine.GetBestMove(g)
+			if err != nil {
+				fmt.Println(err)
+				break
+			}
+			g.Play(*move)
+		}
+
+		t := time.Since(start)
+		fmt.Printf("Depth: %v\tTime: %v\tPer move: %v\tRatio: %.3fx\n", depth, t, t/time.Duration(moves), float64(t)/float64(last))
+		last = t
+	}
 }
 
 func (s *TestSuite) TestPosition() {
@@ -103,7 +128,7 @@ func (s *TestSuite) TestPosition() {
 	g.Board.Draw()
 
 	for i := 0; i < 30; i++ {
-		move, err := engine.GetBestMove(g)
+		move, _, err := engine.GetBestMove(g)
 		if err != nil {
 			if err == ErrGameEnded {
 				fmt.Printf("%v: Team %v won!\n", i, g.Score)
