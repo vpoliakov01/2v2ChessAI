@@ -1,6 +1,9 @@
 package game
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // MoveMap represents
 type MoveMap map[Square][]Square
@@ -15,15 +18,15 @@ type Game struct {
 
 // New creates a new Game.
 func New() *Game {
-	game := Game{
+	g := Game{
 		ActivePlayer: 0,
 		Board:        NewBoard(),
 		Score:        0,
 	}
 
-	game.Board.SetStartingPosition()
+	g.Board.SetStartingPosition()
 
-	return &game
+	return &g
 }
 
 // GetMoves returns all moves for the active player.
@@ -34,8 +37,7 @@ func (g *Game) GetMoves() MoveMap {
 
 	moves := MoveMap{}
 
-	for _, s := range g.Board.PieceSquares[g.ActivePlayer].Elements() {
-		square := s.(Square)
+	for square := range g.Board.PieceSquares[g.ActivePlayer] {
 		piece := Piece(g.Board.GetPiece(square)).GamePiece()
 		moves[square] = append(moves[square], piece.GetMoves(g.Board, square)...)
 	}
@@ -61,8 +63,7 @@ func (g *Game) Play(move Move) {
 
 // HasKing checks if the player still has a king.
 func (g *Game) HasKing(player Player) bool {
-	for _, sq := range g.Board.PieceSquares[player].Elements() {
-		square := sq.(Square)
+	for square := range g.Board.PieceSquares[player] {
 		piece := Piece(g.Board.GetPiece(square))
 		if piece.Kind() == KindKing {
 			return true
@@ -97,6 +98,27 @@ func (g *Game) ValidateMove(move *Move) error {
 	}
 
 	return fmt.Errorf("move %v is not available to the player", move)
+}
+
+// JSON returns json of the game object.
+func (g *Game) JSON() ([]byte, error) {
+	copy := g.Copy()
+	copy.Board.PieceSquares = nil // Exclude pieceSquares due to issues with marshaling map[Square]struct{}.
+	return json.Marshal(copy)
+}
+
+// LoadJSON returns the game defined by the json.
+func LoadJSON(bytes []byte) (*Game, error) {
+	g := Game{}
+
+	err := json.Unmarshal(bytes, &g)
+	if err != nil {
+		return nil, err
+	}
+
+	g.Board.SetPieceSquares()
+
+	return &g, nil
 }
 
 // Flatten transforms MoveMap into []Move.
