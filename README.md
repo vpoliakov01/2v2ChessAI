@@ -12,7 +12,9 @@ I can and I do! But 2v2 chess is more dynamic and requires good teamwork and com
 ## What stage is the project in?
 
 Since it's been started only a few days ago, it is in the MVP stage. It plays generally sound moves, but more optimization / testing is to be done.
+
 ![image](https://user-images.githubusercontent.com/53489500/169457551-9ab1c224-d676-4c19-ab04-6b76f1828257.png)
+
 An example of a position reached by the engine playing against itself. Pretty similar to the kind of positions reached by human players.
 
 ## How does it work?
@@ -30,8 +32,8 @@ To pick a move, it uses negamax with alpha-beta pruning to arrive to the most fa
 
 Some more positions reached by the engine playing itself:
 
-![image](https://user-images.githubusercontent.com/53489500/169457741-b0a90c6a-6586-4a5b-ac29-253ea9e97fed.png)
-![image](https://user-images.githubusercontent.com/53489500/169458094-ca46a11c-da20-46c4-bc54-54c267ae1dd0.png)
+![image](https://user-images.githubusercontent.com/53489500/169458751-f20fe24b-2372-4ced-937b-75d575195e10.png)
+![image](https://user-images.githubusercontent.com/53489500/169458772-539fa726-ffde-4f65-abb7-9e5271950d29.png)
 
 ## To play against the AI:
 `go build -o cmd/ai cmd/main.go && ./cmd/ai`
