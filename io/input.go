@@ -17,7 +17,7 @@ var moveRegex = regexp.MustCompile("[A-Z]?([a-n])([0-9][0-9]?){1,2}-?([a-n])([0-
 // ReadInput reads user io from STDIN.
 func ReadInput() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter a command or a move in format e2e4: ")
+	fmt.Print("Enter a command (save) or a move in format e2e4: ")
 
 	in, err := reader.ReadString('\n')
 	if err != nil {
