@@ -46,7 +46,7 @@ func (ai *AI) GetBestMove(g *game.Game) (bestMove *game.Move, score float64, err
 
 	bestMove, score = ai.Negamax(g, 0, ai.EvaluateCurrent(g), math.Inf(-1), math.Inf(1))
 	if bestMove == nil {
-		return nil, 0, ErrGameEnded
+		return nil, 0, ErrNoMoves
 	}
 
 	return bestMove, score, nil
@@ -125,15 +125,14 @@ func (ai *AI) EvaluateCurrent(g *game.Game) float64 {
 	piecesLeft := 0
 
 	for player := range g.Board.PieceSquares {
-		piecesLeft += g.Board.PieceSquares[player].Size()
+		piecesLeft += len(g.Board.PieceSquares[player])
 	}
 
 	numMoves := len(g.GetMoves().Flatten())
 
 	// For each piece, run piece strength evaluation (in parallel).
 	for player := range g.Board.PieceSquares {
-		for _, sq := range g.Board.PieceSquares[player].Elements() {
-			square := sq.(game.Square)
+		for square := range g.Board.PieceSquares[player] {
 			piece := game.Piece(g.Board.GetPiece(square)).GamePiece()
 			playerStrengths[player] += piece.GetStrength(g.Board, numMoves, square, piecesLeft)
 		}

@@ -2,3 +2,4 @@
 todo
 .vscode
 cmd/ai
+*.save

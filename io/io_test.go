@@ -1,4 +1,4 @@
-package input_test
+package io_test
 
 import (
 	"fmt"
@@ -6,7 +6,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	. "github.com/vpoliakov01/2v2ChessAI/input"
+	"github.com/vpoliakov01/2v2ChessAI/game"
+	. "github.com/vpoliakov01/2v2ChessAI/io"
 )
 
 type TestSuite struct {
@@ -31,4 +32,17 @@ func (s *TestSuite) TestParsePGN() {
 `)
 	r.NoError(err)
 	fmt.Println(moves)
+}
+
+func (s *TestSuite) TestSaveLoad() {
+	r := s.Require()
+
+	g := game.New()
+	file, err := Save(g)
+	r.NoError(err)
+	fmt.Println(file)
+
+	newGame, err := Load(file)
+	r.NoError(err)
+	r.Equal(g.Board.Grid, newGame.Board.Grid)
 }

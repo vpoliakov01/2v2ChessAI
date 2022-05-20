@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/vpoliakov01/2v2ChessAI/ai"
 	"github.com/vpoliakov01/2v2ChessAI/game"
-	"github.com/vpoliakov01/2v2ChessAI/input"
+	"github.com/vpoliakov01/2v2ChessAI/io"
 )
 
 type flags struct {
@@ -15,7 +16,7 @@ type flags struct {
 	Moves       int
 	HumanPlayer int // game.Team.
 	Evaluation  bool
-	LoadPGN     string
+	Load        string
 }
 
 var flg flags
@@ -23,29 +24,30 @@ var flg flags
 func main() {
 	flag.IntVar(&flg.Depth, "depth", 5, "depth of the engine")
 	flag.IntVar(&flg.Moves, "moves", 0, "the number of moves to play (0 for unlimited)")
-	flag.IntVar(&flg.HumanPlayer, "human", 0, "the team controlled by the human players")
+	flag.IntVar(&flg.HumanPlayer, "human", 1, "the team controlled by the human players")
 	flag.BoolVar(&flg.Evaluation, "eval", true, "print evalution after every move")
-	flag.StringVar(&flg.LoadPGN, "load", "", "load pgn notation (no sidelines) to setup the board")
+	flag.StringVar(&flg.Load, "load", "", "load pgn notation (no sidelines) to setup the board")
 	flag.Parse()
 
 	flag.CommandLine.Usage()
 
-	fmt.Printf("\nDepth: %v\nMoves limit: %v\nHuman team: %v\nEvaluation: %v\n\n", flg.Depth, flg.Moves, flg.HumanPlayer, flg.Evaluation)
+	fmt.Printf("\nDepth: %v\nMoves limit: %v\nHuman team: %v\nEvaluation: %v\nLoad: %v\n\n", flg.Depth, flg.Moves, flg.HumanPlayer, flg.Evaluation, flg.Load)
 
 	engine := ai.New(flg.Depth)
 
 	startTime := time.Now()
 
-	g := game.New()
-	if flg.LoadPGN != "" {
-		moves, err := input.LoadPGN(flg.LoadPGN)
+	var g *game.Game
+	var err error
+
+	if flg.Load != "" {
+		g, err = io.Load(flg.Load)
 		if err != nil {
+			fmt.Println(err)
 			panic(err)
 		}
-
-		for _, move := range moves {
-			g.Play(move)
-		}
+	} else {
+		g = game.New()
 	}
 
 	g.Board.Draw()
@@ -64,7 +66,25 @@ func main() {
 
 		if g.ActivePlayer.Team() == game.Team(flg.HumanPlayer) {
 			for {
-				move, err = input.ReadMove()
+				in, err := io.ReadInput()
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+
+				switch {
+				case strings.ToLower(in) == "save":
+					file, err := io.Save(g)
+					if err != nil {
+						fmt.Println(err)
+						continue
+					}
+					fmt.Printf("Saved to %v\n", file)
+					continue
+				default:
+					move, err = io.ParseMove(in)
+				}
+
 				if err != nil {
 					fmt.Println(err)
 					continue
