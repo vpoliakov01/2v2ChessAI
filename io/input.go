@@ -12,7 +12,7 @@ import (
 	"github.com/vpoliakov01/2v2ChessAI/game"
 )
 
-var moveRegex = regexp.MustCompile("[A-Z]?([a-n])([0-9][0-9]?){1,2}-?([a-n])([0-9][0-9]?)")
+var moveRegex = regexp.MustCompile(`[QRBNK]?([a-n])([1-9][0-4]?){1,2}[-x]?[QRBNK]?([a-n])([1-9][0-4]?)(=[QRBN])?[+#]?`)
 
 // ReadInput reads user io from STDIN.
 func ReadInput() (string, error) {
