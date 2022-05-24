@@ -6,7 +6,7 @@ var _ GamePiece = (*Knight)(nil)
 
 // GetMoves returns the moves the piece can make.
 func (p Knight) GetMoves(board *Board, from Square) []Square {
-	dirs := [][]int{{-2, -1}, {-2, 1}, {-1, 2}, {1, 2}, {2, 1}, {2, -1}, {-1, 2}, {-1, -2}}
+	dirs := [][]int{{-2, -1}, {-2, 1}, {-1, -2}, {-1, 2}, {1, -2}, {1, 2}, {2, -1}, {2, 1}}
 
 	return GetEnumeratedMoves(board, from, dirs)
 }

@@ -130,7 +130,7 @@ func (ai *AI) EvaluateCurrent(g *game.Game) float64 {
 
 	numMoves := len(g.GetMoves().Flatten())
 
-	// For each piece, run piece strength evaluation (in parallel).
+	// For each piece, run piece strength evaluation.
 	for player := range g.Board.PieceSquares {
 		for square := range g.Board.PieceSquares[player] {
 			piece := game.Piece(g.Board.GetPiece(square)).GamePiece()
