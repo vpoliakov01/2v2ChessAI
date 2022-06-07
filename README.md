@@ -21,6 +21,10 @@ An example of a position reached by the engine playing against itself. Pretty si
 
 To pick a move, it uses negamax with alpha-beta pruning to arrive to the most favorable forced position at a specified depth. How favorable a position is is evaluated based on the team's pieces' positions, progression of the game, and number of available moves. It uses [multithreading by running the position evaluation on all availabe CPUs](https://github.com/vpoliakov01/2v2ChessAI/blob/dev/ai/ai.go#L78-L93) (GPU acceleration is planned for the future).
 
+## What is the ELO estimate for this engine
+
+On depth 5, it is around 1700-1800 ELO
+
 ## What are the main components that are worth checking out?
 * [ai/ai.go](https://github.com/vpoliakov01/2v2ChessAI/blob/main/ai/ai.go)
 * [game/game.go](https://github.com/vpoliakov01/2v2ChessAI/blob/main/ai/game.go)
