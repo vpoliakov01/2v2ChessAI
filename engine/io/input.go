@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/vpoliakov01/2v2ChessAI/game"
+	"github.com/vpoliakov01/2v2ChessAI/engine/game"
 )
 
 var moveRegex = regexp.MustCompile(`[QRBNK]?([a-n])([1-9][0-4]?){1,2}[-x]?[QRBNK]?([a-n])([1-9][0-4]?)(=[QRBN])?[+#]?`)

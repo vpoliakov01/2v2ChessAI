@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/vpoliakov01/2v2ChessAI/game"
+	"github.com/vpoliakov01/2v2ChessAI/engine/game"
 )
 
 func Save(g *game.Game) (string, error) {

@@ -3,7 +3,7 @@ package game_test
 import (
 	"fmt"
 
-	. "github.com/vpoliakov01/2v2ChessAI/game"
+	. "github.com/vpoliakov01/2v2ChessAI/engine/game"
 )
 
 // TestBonuses prints the values for the position bonus maps.

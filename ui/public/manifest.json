@@ -1,0 +1,25 @@
+{
+  "short_name": "Fry's 2v2 Chess",
+  "name": "Fry's 2v2 Chess",
+  "icons": [
+    {
+      "src": "fry_16.ico",
+      "type": "image/ico",
+      "sizes": "16x16"
+    },
+    {
+      "src": "fry_192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "fry_512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

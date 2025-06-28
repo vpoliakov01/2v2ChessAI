@@ -3,12 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/vpoliakov01/2v2ChessAI/ai"
-	"github.com/vpoliakov01/2v2ChessAI/game"
-	"github.com/vpoliakov01/2v2ChessAI/io"
+	"github.com/vpoliakov01/2v2ChessAI/engine/ai"
+	"github.com/vpoliakov01/2v2ChessAI/engine/game"
+	"github.com/vpoliakov01/2v2ChessAI/engine/io"
+	"github.com/vpoliakov01/2v2ChessAI/engine/ui"
 )
 
 type flags struct {
@@ -17,28 +21,47 @@ type flags struct {
 	HumanPlayer int // game.Team.
 	Evaluation  bool
 	Load        string
+	ReactUI     bool
 }
 
 var flg flags
 
 func main() {
+	// Parse command line flags
 	flag.IntVar(&flg.Depth, "depth", 5, "depth of the engine")
 	flag.IntVar(&flg.Moves, "moves", 0, "the number of moves to play (0 for unlimited)")
 	flag.IntVar(&flg.HumanPlayer, "human", 1, "the team controlled by the human players")
 	flag.BoolVar(&flg.Evaluation, "eval", true, "print evalution after every move")
 	flag.StringVar(&flg.Load, "load", "", "load pgn notation (no sidelines) to setup the board")
+	flag.BoolVar(&flg.ReactUI, "ui", false, "start the React UI")
 	flag.Parse()
 
 	flag.CommandLine.Usage()
 
 	fmt.Printf("\nDepth: %v\nMoves limit: %v\nHuman team: %v\nEvaluation: %v\nLoad: %v\n\n", flg.Depth, flg.Moves, flg.HumanPlayer, flg.Evaluation, flg.Load)
 
-	engine := ai.New(flg.Depth)
+	// Get the project root directory for React app
+	if flg.ReactUI {
+		ex, err := os.Executable()
+		if err != nil {
+			log.Printf("Failed to get executable path: %v", err)
+			// Continue anyway as this only affects the UI
+		} else {
+			projectRoot := filepath.Dir(filepath.Dir(ex))
+			// Start the React app in a goroutine
+			go func() {
+				if err := ui.StartReactApp(projectRoot); err != nil {
+					log.Printf("Failed to start React app: %v", err)
+				}
+			}()
+		}
+	}
 
+	// Original game engine logic
+	engine := ai.New(flg.Depth)
 	startTime := time.Now()
 
 	var g *game.Game
-	var err error
 
 	if flg.Load != "" {
 		g, err = io.Load(flg.Load)

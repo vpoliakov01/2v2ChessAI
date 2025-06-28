@@ -3,7 +3,7 @@ package game
 import (
 	"fmt"
 
-	"github.com/vpoliakov01/2v2ChessAI/color"
+	"github.com/vpoliakov01/2v2ChessAI/engine/color"
 )
 
 // Draw draws the board. Clunky but does the job.

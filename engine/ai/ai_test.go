@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	. "github.com/vpoliakov01/2v2ChessAI/ai"
-	"github.com/vpoliakov01/2v2ChessAI/game"
+	. "github.com/vpoliakov01/2v2ChessAI/engine/ai"
+	"github.com/vpoliakov01/2v2ChessAI/engine/game"
 )
 
 type TestSuite struct {

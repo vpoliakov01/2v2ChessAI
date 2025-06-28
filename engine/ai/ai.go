@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"sort"
 
-	"github.com/vpoliakov01/2v2ChessAI/game"
+	"github.com/vpoliakov01/2v2ChessAI/engine/game"
 )
 
 var (

@@ -2,4 +2,27 @@
 todo
 .vscode
 cmd/ai
+cmd/__debug*
 *.save
+
+# Go specific
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# React/TypeScript specific
+/ui/node_modules
+/ui/.pnp
+/ui/.pnp.js
+/ui/coverage
+/ui/build
+/ui/.DS_Store
+/ui/.env.local
+/ui/.env.development.local
+/ui/.env.test.local
+/ui/.env.production.local
+/ui/npm-debug.log*
+/ui/yarn-debug.log*
+/ui/yarn-error.log*
