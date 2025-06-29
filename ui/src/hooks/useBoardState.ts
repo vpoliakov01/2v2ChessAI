@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Color, PlayerColors, Piece, PieceType } from '../common';
+import { Color, PlayerColors, Piece, PieceType, Move } from '../common';
 
 export type BoardPosition = (Piece | null | undefined)[][];
 
@@ -79,6 +79,7 @@ export function useBoardState() {
   });
   const [activePlayer, setActivePlayer] = useState<Color>(Color.Red);
   const [selectedPiece, setSelectedPiece] = useState<{row: number, col: number} | null>(null);
+  const [moves, setMoves] = useState<Move[]>([]);
 
   const turns: Color[] = PlayerColors;
 
@@ -86,6 +87,13 @@ export function useBoardState() {
     if (!isValidMove(fromRow, fromCol, toRow, toCol)) {
       return false;
     }
+
+    setMoves([...moves, {
+      from: {row: fromRow, col: fromCol},
+      to: {row: toRow, col: toCol},
+      piece: board[fromRow][fromCol]!,
+      capturedPiece: board[toRow][toCol] ?? null,
+    }]);
 
     const newBoard = [...board.map(row => [...row])];
     newBoard[toRow][toCol] = board[fromRow][fromCol];
@@ -121,6 +129,7 @@ export function useBoardState() {
   return {
     board,
     activePlayer,
+    moves,
     selectedPiece,
     movePiece,
     setSelectedPiece,

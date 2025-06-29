@@ -42,3 +42,10 @@ export interface Piece {
   type: PieceType;
   color: Color;
 }
+
+export interface Move {
+  from: {row: number, col: number};
+  to: {row: number, col: number};
+  piece: Piece;
+  capturedPiece: Piece | null;
+}

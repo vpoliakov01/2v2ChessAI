@@ -7,11 +7,11 @@ interface SquareProps {
   isPlayable: boolean;
   isLight: boolean;
   piece: Piece | null | undefined;
-  selected: boolean;
+  higlighted: Color | null;
   onClick: () => void;
 }
 
-function Square({ isPlayable, isLight, piece, selected, onClick }: SquareProps) {
+function Square({ isPlayable, isLight, piece, higlighted, onClick }: SquareProps) {
   if (!isPlayable) {
     return <div style={{
       aspectRatio: '1',
@@ -22,8 +22,8 @@ function Square({ isPlayable, isLight, piece, selected, onClick }: SquareProps) 
   }
 
   let backgroundColor = isLight ? colorCode[Color.LightGray] : colorCode[Color.DarkGray];
-  if (selected) {
-    backgroundColor = `color-mix(in srgb, ${colorCode[piece?.color ?? Color.Black]} 50%, ${backgroundColor})`;
+  if (higlighted) {
+    backgroundColor = `color-mix(in srgb, ${colorCode[higlighted]} 45%, ${backgroundColor})`;
   }
 
   const getPieceImage = (piece: Piece) => {
@@ -96,7 +96,7 @@ export function PlayerIndicator({ color }: { color: Color }) {
 }
 
 export function ChessBoard() {
-  const { board, activePlayer, selectedPiece, movePiece, setSelectedPiece } = useBoardState();
+  const { board, activePlayer, moves, selectedPiece, movePiece, setSelectedPiece } = useBoardState();
 
   const handleSquareClick = (row: number, col: number) => {
     if (board[row][col] === undefined) return;
@@ -111,6 +111,15 @@ export function ChessBoard() {
       setSelectedPiece({ row, col });
     }
   };
+
+  let higlightedSquares: {row: number, col: number, color: Color}[] = [];
+  for (let i = moves.length - 1; i >= 0 && i > moves.length - 5; i--) {
+    higlightedSquares.push({ ...moves[i].from, color: moves[i].piece.color});
+    higlightedSquares.push({ ...moves[i].to, color: moves[i].piece.color});
+  }
+  if (selectedPiece) {
+    higlightedSquares.push({ ...selectedPiece, color: activePlayer });
+  }
 
   return (
     <div className="board-container" style={{
@@ -140,7 +149,7 @@ export function ChessBoard() {
                   isPlayable={board[row][col] !== undefined}
                   isLight={(row + col) % 2 === 0}
                   piece={board[row][col]}
-                  selected={selectedPiece?.row === row && selectedPiece?.col === col}
+                  higlighted={higlightedSquares.find(square => square.row === row && square.col === col)?.color ?? null}
                   onClick={() => handleSquareClick(row, col)}
                 />
               ))}
