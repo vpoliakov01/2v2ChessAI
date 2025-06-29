@@ -1,4 +1,4 @@
-package io
+package play
 
 import (
 	"crypto/sha256"
@@ -17,7 +17,7 @@ func Save(g *game.Game) (string, error) {
 	hash := sha256.Sum256(bytes)
 	file := fmt.Sprintf("%x.save", hash[0:2])
 
-	err = ioutil.WriteFile(file, bytes, 0644)
+	err = ioutil.WriteFile(file, bytes, 0o644)
 	if err != nil {
 		return "", err
 	}

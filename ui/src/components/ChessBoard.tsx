@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Color, colorCode, Piece, pieceName } from '../common';
+import { Color, colorCode, movesEqual, Piece, pieceName, positionsEqual } from '../common';
 import { useBoardState, BOARD_SIZE, CORNER_SIZE } from '../hooks/useBoardState';
 
 interface SquareProps {
@@ -8,10 +8,11 @@ interface SquareProps {
   isLight: boolean;
   piece: Piece | null | undefined;
   higlighted: Color | null;
+  possibleMove: boolean;
   onClick: () => void;
 }
 
-function Square({ isPlayable, isLight, piece, higlighted, onClick }: SquareProps) {
+function Square({ isPlayable, isLight, piece, higlighted, possibleMove, onClick }: SquareProps) {
   if (!isPlayable) {
     return <div style={{
       aspectRatio: '1',
@@ -22,8 +23,10 @@ function Square({ isPlayable, isLight, piece, higlighted, onClick }: SquareProps
   }
 
   let backgroundColor = isLight ? colorCode[Color.LightGray] : colorCode[Color.DarkGray];
+  const originalBackgroundColor = backgroundColor;
+  let higlightedBackgroundColor = originalBackgroundColor;
   if (higlighted) {
-    backgroundColor = `color-mix(in srgb, ${colorCode[higlighted]} 45%, ${backgroundColor})`;
+    higlightedBackgroundColor = `color-mix(in srgb, ${colorCode[higlighted]} 45%, ${backgroundColor})`;
   }
 
   const getPieceImage = (piece: Piece) => {
@@ -32,12 +35,23 @@ function Square({ isPlayable, isLight, piece, higlighted, onClick }: SquareProps
     return `/${color}_${pieceName[type]}.svg`;
   };
 
+  function onMouseEnter(e: React.MouseEvent<HTMLDivElement>) {
+    if (possibleMove) {
+      e.currentTarget.style.backgroundColor = higlightedBackgroundColor;
+    }
+  }
+  function onMouseLeave(e: React.MouseEvent<HTMLDivElement>) {
+    if (possibleMove) {
+      e.currentTarget.style.backgroundColor = originalBackgroundColor;
+    }
+  }
+
   return (
     <div
       style={{
         alignItems: 'center',
         aspectRatio: '1',
-        backgroundColor,
+        backgroundColor: higlighted && !possibleMove ? higlightedBackgroundColor : backgroundColor,
         cursor: piece ? 'pointer' : 'default',
         display: 'flex',
         justifyContent: 'center',
@@ -45,8 +59,20 @@ function Square({ isPlayable, isLight, piece, higlighted, onClick }: SquareProps
         userSelect: 'none',
         width: '100%',
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       onClick={onClick}
     >
+      {possibleMove && (
+        <div style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.2)',
+          borderRadius: '50%',
+          height: '30%',
+          left: '35%',
+          top: '35%',
+          width: '30%',
+        }} />
+      )}
       {piece && (
         <img 
           src={getPieceImage(piece)} 
@@ -96,19 +122,20 @@ export function PlayerIndicator({ color }: { color: Color }) {
 }
 
 export function ChessBoard() {
-  const { board, activePlayer, moves, selectedPiece, movePiece, setSelectedPiece } = useBoardState();
+  const { board, activePlayer, moves, availableMoves, selectedPiece, movePiece, setSelectedPiece } = useBoardState();
 
   const handleSquareClick = (row: number, col: number) => {
+    const newPosition = {row, col};
     if (board[row][col] === undefined) return;
 
     if (selectedPiece) {
-      if (movePiece(selectedPiece.row, selectedPiece.col, row, col)) {
+      if (movePiece({from: selectedPiece, to: newPosition})) {
         setSelectedPiece(null);
       } else if (board[row][col]?.color === activePlayer) {
-        setSelectedPiece({ row, col });
+        setSelectedPiece(newPosition);
       }
     } else if (board[row][col]?.color === activePlayer) {
-      setSelectedPiece({ row, col });
+      setSelectedPiece(newPosition);
     }
   };
 
@@ -119,6 +146,7 @@ export function ChessBoard() {
   }
   if (selectedPiece) {
     higlightedSquares.push({ ...selectedPiece, color: activePlayer });
+    higlightedSquares.push(...availableMoves.filter(m => positionsEqual(m.from, selectedPiece)).map(m => ({ ...m.to, color: activePlayer })));
   }
 
   return (
@@ -150,6 +178,7 @@ export function ChessBoard() {
                   isLight={(row + col) % 2 === 0}
                   piece={board[row][col]}
                   higlighted={higlightedSquares.find(square => square.row === row && square.col === col)?.color ?? null}
+                  possibleMove={!!selectedPiece && availableMoves.some(m => movesEqual(m, {from: selectedPiece, to: {row, col}}))}
                   onClick={() => handleSquareClick(row, col)}
                 />
               ))}

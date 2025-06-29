@@ -1,4 +1,4 @@
-package io
+package play
 
 import (
 	"bufio"
@@ -17,7 +17,7 @@ var moveRegex = regexp.MustCompile(`[QRBNK]?([a-n])([1-9][0-4]?){1,2}[-x]?[QRBNK
 // ReadInput reads user io from STDIN.
 func ReadInput() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter a command (save) or a move in format e2e4: ")
+	fmt.Print("Enter a command (save / exit) or a move in format e2e4: ")
 
 	in, err := reader.ReadString('\n')
 	if err != nil {
@@ -121,4 +121,17 @@ func ParsePGN(io string) ([]game.Move, error) {
 
 	}
 	return moves, nil
+}
+
+func SetupBoard(loadFile string) *game.Game {
+	if loadFile != "" {
+		g, err := Load(loadFile)
+		if err != nil {
+			fmt.Println(err)
+			panic(err)
+		}
+		return g
+	}
+
+	return game.New()
 }

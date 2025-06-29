@@ -4,8 +4,8 @@ import "fmt"
 
 // Move stores move coordinates.
 type Move struct {
-	From Square
-	To   Square
+	From Square `json:"from"`
+	To   Square `json:"to"`
 }
 
 // String implements the Stringer interface.

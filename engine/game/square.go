@@ -6,8 +6,8 @@ import (
 
 // Square stores a coordinate on the board.
 type Square struct {
-	Rank int
-	File int
+	Rank int `json:"rank"`
+	File int `json:"file"`
 }
 
 // Add adds a vector to the square.
@@ -18,11 +18,6 @@ func (s *Square) Add(rank, file int) Square {
 // String implements the Stringer interface.
 func (s Square) String() string {
 	return fmt.Sprintf("%v%v", fmt.Sprintf("%c", int('a')+s.File), s.Rank+1)
-}
-
-// MarshalJSON implements the json.Marshaler interface.
-func (s Square) MarshalJSON() (text []byte, err error) {
-	return []byte(s.String()), nil
 }
 
 // IsValid checs if the square is on the board.

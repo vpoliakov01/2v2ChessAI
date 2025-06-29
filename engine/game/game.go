@@ -102,9 +102,7 @@ func (g *Game) ValidateMove(move *Move) error {
 
 // JSON returns json of the game object.
 func (g *Game) JSON() ([]byte, error) {
-	copy := g.Copy()
-	copy.Board.PieceSquares = nil // Exclude pieceSquares due to issues with marshaling map[Square]struct{}.
-	return json.Marshal(copy)
+	return json.Marshal(g)
 }
 
 // LoadJSON returns the game defined by the json.

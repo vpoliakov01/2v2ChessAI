@@ -43,9 +43,28 @@ export interface Piece {
   color: Color;
 }
 
+export interface Position {
+  row: number;
+  col: number;
+}
+
 export interface Move {
-  from: {row: number, col: number};
-  to: {row: number, col: number};
+  from: Position;
+  to: Position;
+}
+
+export function positionsEqual(a: Position, b: Position): boolean {
+  return a.row === b.row && a.col === b.col;
+}
+
+export function movesEqual(a: Move, b: Move): boolean {
+  return a.from.row === b.from.row &&
+         a.from.col === b.from.col && 
+         a.to.row === b.to.row && 
+         a.to.col === b.to.col;
+}
+
+export interface MoveInfo extends Move {
   piece: Piece;
   capturedPiece: Piece | null;
 }

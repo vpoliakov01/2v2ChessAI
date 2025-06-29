@@ -7,8 +7,8 @@ const (
 
 // Board represents the chess board.
 type Board struct {
-	Grid         [BoardSize][BoardSize]Piece
-	PieceSquares map[Player]map[Square]struct{}
+	Grid         [BoardSize][BoardSize]Piece    `json:"grid"`
+	PieceSquares map[Player]map[Square]struct{} `json:"omit"`
 }
 
 // NewBoard creates a new board.

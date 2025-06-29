@@ -1,4 +1,4 @@
-package main
+package play
 
 import (
 	"fmt"
@@ -9,7 +9,6 @@ import (
 	"runtime"
 	"time"
 )
-
 
 func openBrowser(url string) error {
 	var cmd *exec.Cmd
@@ -27,7 +26,7 @@ func openBrowser(url string) error {
 func StartReactApp(projectRoot string) error {
 	// Change to the ui directory
 	uiDir := filepath.Join(projectRoot, "ui")
-	
+
 	// Install dependencies if node_modules doesn't exist
 	if _, err := os.Stat(filepath.Join(uiDir, "node_modules")); os.IsNotExist(err) {
 		installCmd := exec.Command("npm", "install")
@@ -46,14 +45,14 @@ func StartReactApp(projectRoot string) error {
 	npmCmd.Stderr = os.Stderr
 	// Set PORT=3000 environment variable
 	npmCmd.Env = append(os.Environ(), "PORT=3000", "BROWSER=none") // BROWSER=none prevents npm from opening the browser
-	
+
 	if err := npmCmd.Start(); err != nil {
 		return fmt.Errorf("failed to start React app: %v", err)
 	}
 
 	// Wait a bit for the server to start
 	time.Sleep(3 * time.Second)
-	
+
 	// Open the browser
 	if err := openBrowser("http://localhost:3000"); err != nil {
 		log.Printf("Failed to open browser: %v", err)

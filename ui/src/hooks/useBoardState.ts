@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Color, PlayerColors, Piece, PieceType, Move } from '../common';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Color, PlayerColors, Piece, PieceType, Position, MoveInfo, Move, movesEqual } from '../common';
+import { MessageType, Message, BestMoveResponse } from '../ws';
 
 export type BoardPosition = (Piece | null | undefined)[][];
 
@@ -44,9 +45,9 @@ function setPieces(board: BoardPosition): BoardPosition {
     const transformIndex = (color: Color, i: number, j: number) => {
       switch (color) {
         case Color.Yellow:
-          return [i, j + CORNER_SIZE];
+          return [i, BOARD_SIZE - CORNER_SIZE - 1 - j];
         case Color.Green:
-          return [j + CORNER_SIZE, BOARD_SIZE - 1 - i];
+          return [BOARD_SIZE - CORNER_SIZE - 1 - j, BOARD_SIZE - 1 - i];
         case Color.Red:
           return [BOARD_SIZE - 1 - i, j + CORNER_SIZE];
         case Color.Blue:
@@ -78,58 +79,90 @@ export function useBoardState() {
     return setPieces(emptyBoard);
   });
   const [activePlayer, setActivePlayer] = useState<Color>(Color.Red);
-  const [selectedPiece, setSelectedPiece] = useState<{row: number, col: number} | null>(null);
-  const [moves, setMoves] = useState<Move[]>([]);
+  const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
+  const [moves, setMoves] = useState<MoveInfo[]>([]);
+  const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
 
-  const turns: Color[] = PlayerColors;
+  const wsRef = useRef<WebSocket | null>(null);
 
-  const movePiece = (fromRow: number, fromCol: number, toRow: number, toCol: number) => {
-    if (!isValidMove(fromRow, fromCol, toRow, toCol)) {
-      return false;
+  const isValidMove = useCallback((move: Move): boolean => {
+    return availableMoves.some(m => movesEqual(m, move));
+  }, [availableMoves]);
+
+  const movePiece = useCallback((move: Move, playerMove: boolean = true) => {
+    const {from, to} = move;
+
+    if (playerMove && wsRef.current) {
+      if (!isValidMove(move)) {
+        return false;
+      }
+
+      wsRef.current.send(new Message(
+        MessageType.PlayerMove,
+        move,
+      ).json());
     }
 
     setMoves([...moves, {
-      from: {row: fromRow, col: fromCol},
-      to: {row: toRow, col: toCol},
-      piece: board[fromRow][fromCol]!,
-      capturedPiece: board[toRow][toCol] ?? null,
+      ...move,
+      piece: board[from.row][from.col]!,
+      capturedPiece: board[to.row][to.col] ?? null,
     }]);
 
     const newBoard = [...board.map(row => [...row])];
-    newBoard[toRow][toCol] = board[fromRow][fromCol];
-    newBoard[fromRow][fromCol] = null;
+    newBoard[to.row][to.col] = board[from.row][from.col];
+    newBoard[from.row][from.col] = null;
     setBoard(newBoard);
 
-    setActivePlayer(turns[(turns.indexOf(activePlayer) + 1) % turns.length]);
+    setActivePlayer(PlayerColors[(PlayerColors.indexOf(activePlayer) + 1) % PlayerColors.length]);
     return true;
-  };
+  }, [board, isValidMove, moves, activePlayer]);
 
-  const isValidMove = (fromRow: number, fromCol: number, toRow: number, toCol: number): boolean => {
-    if (
-      board?.[fromRow]?.[fromCol] === undefined ||
-      board?.[toRow]?.[toCol] === undefined
-    ) {
-      return false;
+  useEffect(() => {
+    const ws = new WebSocket('ws://localhost:8080/ws');
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log('connected');
+    };
+
+    ws.onclose = () => {
+      console.log('disconnected');
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!wsRef.current) {
+      return;
     }
 
-    const piece = board[fromRow][fromCol];
-    if (!piece || piece.color !== activePlayer) {
-      return false;
-    }
-
-    const targetPiece = board[toRow][toCol];
-    if (targetPiece && targetPiece.color === piece.color) {
-      return false;
-    }
-
-    // TODO: Add backend control.
-    return true;
-  };
+    wsRef.current.onmessage = (event) => {
+      console.log('message', event.data);
+      const message = JSON.parse(event.data) as Message;
+      switch (message.type) {
+        case MessageType.Moves:
+          setAvailableMoves([...(message.data as Move[])]);
+          break;
+        case MessageType.EngineMove:
+          const response = message.data as BestMoveResponse;
+          movePiece(response.move, false);
+          break;
+        default:
+          console.log('unknown message', message);
+          break;
+      }
+    };
+  }, [movePiece]);
 
   return {
     board,
     activePlayer,
     moves,
+    availableMoves,
     selectedPiece,
     movePiece,
     setSelectedPiece,
