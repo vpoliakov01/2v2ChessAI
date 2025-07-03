@@ -71,7 +71,7 @@ func RunCLI(cfg *Config) {
 			move, score, err = engine.GetBestMove(g)
 			if err != nil {
 				if err == ai.ErrGameEnded {
-					fmt.Printf("%v: Team %v won!\n", i, g.Score)
+					fmt.Printf("%v: Team %v won!\n", i, g.Winner)
 				} else {
 					fmt.Println(err)
 				}
@@ -97,8 +97,8 @@ func RunCLI(cfg *Config) {
 		g.Board.Draw()
 	}
 
-	if g.Score != 0 {
-		fmt.Printf("Team %v won!\n", g.Score)
+	if g.Winner != 0 {
+		fmt.Printf("Team %v won!\n", g.Winner)
 	}
 	fmt.Printf("Total time: %v\n", time.Since(startTime))
 }

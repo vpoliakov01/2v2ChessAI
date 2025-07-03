@@ -19,6 +19,4 @@ func (c *Connection) SendMessage(messageType MessageType, data interface{}) {
 		log.Println("write:", err)
 		return
 	}
-
-	log.Printf("sent message: %+v", msg)
 }

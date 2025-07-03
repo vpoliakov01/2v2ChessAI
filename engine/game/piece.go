@@ -12,8 +12,8 @@ const (
 	pieceBitMask   = 7 // 2^4-1.
 )
 
-// GamePiece defines functionality a piece should implement.
-type GamePiece interface {
+// PieceType defines functionality a piece should implement.
+type PieceType interface {
 	// GetMoves returns a list of moves the peice could make.
 	GetMoves(board *Board, from Square) []Square
 	// GetStrength returns an estimate of the piece's strength depending on its position and # of pieces left on the board.
@@ -80,8 +80,8 @@ func (p Piece) String() string {
 	}
 }
 
-// GamePiece returns the corresponding GamePiece implementation for the kind of the piece.
-func (p Piece) GamePiece() GamePiece {
+// PieceType returns the corresponding PieceType implementation for the kind of the piece.
+func (p Piece) PieceType() PieceType {
 	switch p.Kind() {
 	case KindPawn:
 		return Pawn(p)

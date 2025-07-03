@@ -82,6 +82,7 @@ export function useBoardState() {
   const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
   const [moves, setMoves] = useState<MoveInfo[]>([]);
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
+  const [score, setScore] = useState<number>(0);
 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -141,7 +142,6 @@ export function useBoardState() {
     }
 
     wsRef.current.onmessage = (event) => {
-      console.log('message', event.data);
       const message = JSON.parse(event.data) as Message;
       switch (message.type) {
         case MessageType.Moves:
@@ -149,14 +149,16 @@ export function useBoardState() {
           break;
         case MessageType.EngineMove:
           const response = message.data as BestMoveResponse;
+          console.log(response.time, response.score, response.move);
           movePiece(response.move, false);
+          setScore(response.score);
           break;
         default:
           console.log('unknown message', message);
           break;
       }
     };
-  }, [movePiece]);
+  }, [movePiece, setScore]);
 
   return {
     board,
@@ -164,6 +166,7 @@ export function useBoardState() {
     moves,
     availableMoves,
     selectedPiece,
+    score,
     movePiece,
     setSelectedPiece,
   };

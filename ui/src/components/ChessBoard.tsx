@@ -121,8 +121,31 @@ export function PlayerIndicator({ color }: { color: Color }) {
   return <div className="player-indicator" style={getPlayerIndicatorStyle(color)} />;
 }
 
+export function ScoreDisplay({ score }: { score: number }) {
+  const maxScore = 10;
+  const offsetLength = `calc(${CORNER_SIZE / BOARD_SIZE} * 100%)`;
+  const height = Math.max(Math.min(50 + score / maxScore / 2 * 100, 100), 0);
+
+  return <div className="score-display" style={{
+    width: '20px',
+    marginRight: '10px',
+    position: 'relative',
+    top: offsetLength,
+    height: `${(BOARD_SIZE - 2 * CORNER_SIZE) / BOARD_SIZE * 100}%`,
+  }}>
+    <div style={{
+      backgroundColor: colorCode[Color.Blue],
+      height: `${100 -height}%`,
+    }} />
+    <div style={{
+      backgroundColor: colorCode[Color.Red],
+      height: `${height}%`,
+    }} />
+  </div>;
+}
+
 export function ChessBoard() {
-  const { board, activePlayer, moves, availableMoves, selectedPiece, movePiece, setSelectedPiece } = useBoardState();
+  const { board, activePlayer, moves, availableMoves, selectedPiece, score, movePiece, setSelectedPiece } = useBoardState();
 
   const handleSquareClick = (row: number, col: number) => {
     const newPosition = {row, col};
@@ -155,7 +178,10 @@ export function ChessBoard() {
       padding: '10px',
       position: 'relative',
       height: '100%',
+      display: 'flex',
+      flexDirection: 'row',
     }}>
+      <ScoreDisplay score={score} />
       <div className="board-inner-container"style={{
         position: 'relative',
         width: '100%',
@@ -189,7 +215,7 @@ export function ChessBoard() {
             borderRadius: '50%',
             left: 'calc(50%)',
             opacity: '0.5',
-            position: 'fixed',
+            position: 'absolute',
             top: '50%',
             transform: 'translate(-50%, -50%)',
           }} />

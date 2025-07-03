@@ -41,7 +41,7 @@ func New(depth int) *AI {
 // GetBestMove returns the best move for the active player to play.
 func (ai *AI) GetBestMove(g *game.Game) (bestMove *game.Move, score float64, err error) {
 	if g.HasEnded() {
-		return nil, float64(g.Score), ErrGameEnded
+		return nil, float64(g.Winner), ErrGameEnded
 	}
 
 	bestMove, score = ai.Negamax(g, 0, ai.EvaluateCurrent(g), math.Inf(-1), math.Inf(1))
@@ -64,6 +64,15 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextM
 	// Instead of calculating checks, just evaluate until king capture.
 	// In 2v2 chess king capture is actually possible since teammate A can
 	// unblock the path between a teammate's B piece and the opponent's king.
+	for player := range g.Board.PieceSquares {
+		if !g.HasKing(player) {
+			if player.IsTeamMate(g.ActivePlayer) {
+				return nil, float64(-math.MaxInt32 + depth)
+			}
+			return nil, float64(math.MaxInt32 - depth)
+		}
+	}
+
 	if !g.HasKing(g.ActivePlayer) {
 		// Prefer finishing the game for the winner and prolonging it for the loser.
 		return nil, float64(math.MinInt32 + depth)
@@ -93,6 +102,7 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextM
 	}
 
 	// Sort to process "immediately stronger" moves first.
+	// Strongest moves are the weakest for the opponent (lowest score).
 	sort.Slice(moves, func(a, b int) bool {
 		return moveEvalEstimates[moves[a]].score < moveEvalEstimates[moves[b]].score
 	})
@@ -104,7 +114,7 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextM
 		score := -opponentScore
 
 		// If the score is already better than what the opponent could get by playing
-		// another move, we can assume that the opponent will not play this move,
+		// any other move, we can assume that the opponent will not play this move,
 		// so we can stop evaluating this branch.
 		if score >= beta {
 			return &moves[i], beta
@@ -133,7 +143,7 @@ func (ai *AI) EvaluateCurrent(g *game.Game) float64 {
 	// For each piece, run piece strength evaluation.
 	for player := range g.Board.PieceSquares {
 		for square := range g.Board.PieceSquares[player] {
-			piece := game.Piece(g.Board.GetPiece(square)).GamePiece()
+			piece := game.Piece(g.Board.GetPiece(square)).PieceType()
 			playerStrengths[player] += piece.GetStrength(g.Board, numMoves, square, piecesLeft)
 		}
 	}

@@ -2,7 +2,7 @@ package game
 
 type Rook Piece
 
-var _ GamePiece = (*Rook)(nil)
+var _ PieceType = (*Rook)(nil)
 
 // GetMoves returns the moves the piece can make.
 func (p Rook) GetMoves(board *Board, from Square) []Square {

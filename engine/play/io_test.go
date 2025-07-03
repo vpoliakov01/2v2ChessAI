@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/vpoliakov01/2v2ChessAI/engine/game"
-	. "github.com/vpoliakov01/2v2ChessAI/engine/io"
+	. "github.com/vpoliakov01/2v2ChessAI/engine/play"
 )
 
 type TestSuite struct {

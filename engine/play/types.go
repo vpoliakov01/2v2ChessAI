@@ -34,6 +34,7 @@ type Move struct {
 type BestMoveResponse struct {
 	Move  Move    `json:"move"`
 	Score float64 `json:"score"`
+	Time  float64 `json:"time"`
 }
 
 func (p Position) ToSquare() game.Square {

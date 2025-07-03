@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"slices"
+	"time"
 
 	g "github.com/vpoliakov01/2v2ChessAI/engine/game"
 )
@@ -74,17 +76,20 @@ func (c *Connection) proceedUntilPlayerMove() {
 	game := c.game
 
 	for !slices.Contains(c.cfg.HumanPlayers, game.ActivePlayer) {
+		now := time.Now()
 		bestMove, score, err := c.engine.GetBestMove(game)
+		elapsed := time.Since(now)
 		if err != nil {
 			log.Printf("Error getting best move: %v", err)
 			return
 		}
-		game.Play(*bestMove)
-		game.Board.Draw()
 		c.SendMessage(MessageTypeEngineMove, BestMoveResponse{
 			Move:  MoveFromGameMove(*bestMove),
-			Score: score,
+			Score: math.Round(score*float64(game.ActivePlayer.Team())*100) / 100,
+			Time:  math.Round(elapsed.Seconds()*100) / 100,
 		})
+		game.Play(*bestMove)
+		game.Board.Draw()
 	}
 
 	c.processGetMoves()

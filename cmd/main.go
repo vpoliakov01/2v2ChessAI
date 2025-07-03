@@ -26,16 +26,16 @@ var flg flags
 
 func main() {
 	// Parse command line flags
-	flag.IntVar(&flg.Depth, "depth", 5, "depth of the engine")
+	flag.IntVar(&flg.Depth, "depth", 4, "depth of the engine")
 	flag.IntVar(&flg.Moves, "moves", 0, "the number of moves to play (0 for unlimited)")
-	flag.StringVar(&flg.HumanPlayers, "humans", "0,2", "comma separated list of players (0,1,2,3)")
+	flag.StringVar(&flg.HumanPlayers, "humans", "0", "comma separated list of players (0,1,2,3)")
 	flag.BoolVar(&flg.Evaluation, "eval", true, "print evalution after every move")
 	flag.StringVar(&flg.Load, "load", "", "load pgn notation (no sidelines) to setup the board")
 	flag.BoolVar(&flg.ReactUI, "ui", false, "start the React UI")
 	flag.BoolVar(&flg.Server, "server", false, "start the server for the UI")
 	flag.Parse()
 
-	humanPlayersStr := strings.Split(flg.HumanPlayers, ",")
+	humanPlayersStr := strings.Fields(flg.HumanPlayers)
 	humanPlayers := make([]game.Player, len(humanPlayersStr))
 	for i, playerStr := range humanPlayersStr {
 		player, err := strconv.Atoi(playerStr)

@@ -2,7 +2,7 @@ package game
 
 type Bishop Piece
 
-var _ GamePiece = (*Bishop)(nil)
+var _ PieceType = (*Bishop)(nil)
 
 // GetMoves returns the moves the piece can make.
 func (p Bishop) GetMoves(board *Board, from Square) []Square {

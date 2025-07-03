@@ -2,7 +2,7 @@ package game
 
 type Knight Piece
 
-var _ GamePiece = (*Knight)(nil)
+var _ PieceType = (*Knight)(nil)
 
 // GetMoves returns the moves the piece can make.
 func (p Knight) GetMoves(board *Board, from Square) []Square {

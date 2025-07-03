@@ -2,7 +2,7 @@ package game
 
 type Pawn Piece
 
-var _ GamePiece = (*Pawn)(nil)
+var _ PieceType = (*Pawn)(nil)
 
 // GetMoves returns the moves the piece can make.
 func (p Pawn) GetMoves(board *Board, from Square) []Square {

@@ -32,7 +32,7 @@ func (s *TestSuite) TestGetBestMove() {
 		move, score, err := engine.GetBestMove(g)
 		if err != nil {
 			if err == ErrGameEnded {
-				fmt.Printf("%v: Team %v won!\n", i, g.Score)
+				fmt.Printf("%v: Team %v won!\n", i, g.Winner)
 			} else {
 				fmt.Println(err)
 			}
@@ -131,7 +131,7 @@ func (s *TestSuite) TestPosition() {
 		move, _, err := engine.GetBestMove(g)
 		if err != nil {
 			if err == ErrGameEnded {
-				fmt.Printf("%v: Team %v won!\n", i, g.Score)
+				fmt.Printf("%v: Team %v won!\n", i, g.Winner)
 			} else {
 				fmt.Println(err)
 			}

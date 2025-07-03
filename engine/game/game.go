@@ -12,7 +12,7 @@ type MoveMap map[Square][]Square
 type Game struct {
 	ActivePlayer Player
 	Board        *Board
-	Score        Team // Red/Yellow win: 1, Blue/Green win: -1.
+	Winner       Team // Red/Yellow win: 1, Blue/Green win: -1.
 	MoveMap      *MoveMap
 }
 
@@ -21,7 +21,7 @@ func New() *Game {
 	g := Game{
 		ActivePlayer: 0,
 		Board:        NewBoard(),
-		Score:        0,
+		Winner:       0,
 	}
 
 	g.Board.SetStartingPosition()
@@ -38,7 +38,7 @@ func (g *Game) GetMoves() MoveMap {
 	moves := MoveMap{}
 
 	for square := range g.Board.PieceSquares[g.ActivePlayer] {
-		piece := Piece(g.Board.GetPiece(square)).GamePiece()
+		piece := Piece(g.Board.GetPiece(square)).PieceType()
 		moves[square] = append(moves[square], piece.GetMoves(g.Board, square)...)
 	}
 
@@ -53,7 +53,7 @@ func (g *Game) Play(move Move) {
 	if !g.Board.IsEmpty(move.To) {
 		capturedPiece := Piece(g.Board.GetPiece(move.To))
 		if capturedPiece.Kind() == KindKing {
-			g.Score = g.ActivePlayer.Team()
+			g.Winner = g.ActivePlayer.Team()
 		}
 	}
 
@@ -74,7 +74,7 @@ func (g *Game) HasKing(player Player) bool {
 
 // HasEnded returns whether the game has ended.
 func (g *Game) HasEnded() bool {
-	return g.Score != 0
+	return g.Winner != 0
 }
 
 // Copy returns a deep copy of the game.
