@@ -10,5 +10,5 @@ type Move struct {
 
 // String implements the Stringer interface.
 func (m Move) String() string {
-	return fmt.Sprintf("%v->%v", m.From, m.To)
+	return fmt.Sprintf("%v-%v", m.From, m.To)
 }

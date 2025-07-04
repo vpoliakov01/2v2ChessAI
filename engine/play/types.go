@@ -1,19 +1,26 @@
 package play
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/vpoliakov01/2v2ChessAI/engine/game"
 )
 
 type MessageType string
 
 const (
-	MessageTypeGetBoardState MessageType = "getBoardState"
-	MessageTypeBoardState    MessageType = "boardState"
-	MessageTypeGetMoves      MessageType = "getMoves"
-	MessageTypeMoves         MessageType = "moves"
-	MessageTypePlayerMove    MessageType = "playerMove"
-	MessageTypeEngineMove    MessageType = "engineMove"
-	MessageTypeInvalidMove   MessageType = "invalidMove"
+	MessageTypeGetAvailableMoves MessageType = "getAvailableMoves"
+	MessageTypeAvailableMoves    MessageType = "availableMoves"
+	MessageTypePlayerMove        MessageType = "playerMove"
+	MessageTypeEngineMove        MessageType = "engineMove"
+	MessageTypeInvalidMove       MessageType = "invalidMove"
+	MessageTypeSaveGame          MessageType = "saveGame"
+	MessageTypeSaveGameResponse  MessageType = "saveGameResponse"
+	MessageTypeLoadGame          MessageType = "loadGame"
+	MessageTypeLoadGameResponse  MessageType = "loadGameResponse"
+	MessageTypeNewGame           MessageType = "newGame"
+	MessageTypeSetCurrentMove    MessageType = "setCurrentMove"
 )
 
 type Message struct {
@@ -21,41 +28,46 @@ type Message struct {
 	Data interface{} `json:"data"`
 }
 
-type Position struct {
-	Row int `json:"row"`
-	Col int `json:"col"`
-}
-
-type Move struct {
-	From Position `json:"from"`
-	To   Position `json:"to"`
-}
+type PGNMove string
 
 type BestMoveResponse struct {
-	Move        Move    `json:"move"`
+	Move        PGNMove `json:"move"`
 	Score       float64 `json:"score"`
 	Time        float64 `json:"time"`
 	Evaluations int     `json:"evaluations"`
 }
 
-func (p Position) ToSquare() game.Square {
-	return game.Square{Rank: game.BoardSize - 1 - p.Row, File: p.Col}
+type SaveGameResponse struct {
+	PGN string `json:"pgn"`
 }
 
-func PositionFromSquare(square game.Square) Position {
-	return Position{Row: game.BoardSize - 1 - square.Rank, Col: square.File}
+type LoadGameResponse struct {
+	PastMoves   []PGNMove `json:"pastMoves"`
+	CurrentMove int       `json:"currentMove"`
 }
 
-func (m Move) ToGameMove() game.Move {
-	return game.Move{
-		From: m.From.ToSquare(),
-		To:   m.To.ToSquare(),
+func PGNMoveFromGameMove(gameMove game.Move) PGNMove {
+	return PGNMove(gameMove.From.String() + "-" + gameMove.To.String())
+}
+
+func PGNMovesFromGameMoves(gameMoves []game.Move) []PGNMove {
+	moves := make([]PGNMove, len(gameMoves))
+	for i, gameMove := range gameMoves {
+		moves[i] = PGNMoveFromGameMove(gameMove)
 	}
+	return moves
 }
 
-func MoveFromGameMove(gameMove game.Move) Move {
-	return Move{
-		From: PositionFromSquare(gameMove.From),
-		To:   PositionFromSquare(gameMove.To),
+func GameMoveFromPGN(pgn PGNMove) game.Move {
+	pos := strings.Split(string(pgn), "-")
+	return game.Move{From: SquareFromPGN(pos[0]), To: SquareFromPGN(pos[1])}
+}
+
+// SquareFromPGN returns a square from a pgn string.
+func SquareFromPGN(pgn string) game.Square {
+	rank, err := strconv.Atoi(string(pgn[1:]))
+	if err != nil {
+		return game.Square{}
 	}
+	return game.Square{Rank: rank - 1, File: int(pgn[0] - 'a')}
 }

@@ -1,3 +1,6 @@
+export const BOARD_SIZE = 14;
+export const CORNER_SIZE = 3;
+
 export enum Color {
   Red = 'red',
   Blue = 'blue',
@@ -5,18 +8,11 @@ export enum Color {
   Green = 'green',
   Black = 'black',
   LightGray = 'light-gray',
+  Gray = 'gray',
   DarkGray = 'dark-gray',
 }
 
-export const colorCode = {
-  [Color.Red]: '#bf3B43',
-  [Color.Blue]: '#4185bf',
-  [Color.Yellow]: '#c09526',
-  [Color.Green]: '#4e9161',
-  [Color.Black]: '#302e2b',
-  [Color.LightGray]: '#dadada',
-  [Color.DarkGray]: '#adadad',
-}
+export const colorCode = (color: Color) => `var(--color-${color})`;
 
 export const PlayerColors = [Color.Red, Color.Blue, Color.Yellow, Color.Green];
 
@@ -48,10 +44,31 @@ export interface Position {
   col: number;
 }
 
-export interface Move {
-  from: Position;
-  to: Position;
+export type PGNMove = string;
+
+export class Move {
+  constructor(public from: Position, public to: Position) {}
+
+  static fromPGN(pgn: PGNMove): Move {
+    const [from, to] = pgn.split('-').map(pos => ({
+      col: pos.charCodeAt(0) - 'a'.charCodeAt(0),
+      row: BOARD_SIZE - parseInt(pos.slice(1)),
+    }));
+    return new Move(from, to);
+  }
+
+  toPGN(): PGNMove {
+    const [from, to] = [this.from, this.to].map(pos => `${String.fromCharCode(pos.col + 'a'.charCodeAt(0))}${BOARD_SIZE - pos.row}`);
+    return `${from}-${to}`;
+  }
 }
+
+export class MoveInfo extends Move {
+  constructor(public from: Position, public to: Position, public piece: Piece, public capturedPiece: Piece | null) {
+    super(from, to);
+  }
+}
+
 
 export function positionsEqual(a: Position, b: Position): boolean {
   return a.row === b.row && a.col === b.col;
@@ -64,7 +81,18 @@ export function movesEqual(a: Move, b: Move): boolean {
          a.to.col === b.to.col;
 }
 
-export interface MoveInfo extends Move {
-  piece: Piece;
-  capturedPiece: Piece | null;
+export function movesToPGN(moves: Move[]): string {
+  let pgn = "";
+
+  for (let i = 0; i < moves.length; i += 4) {
+    if (i > 0 && i % 4 === 0) {
+      pgn += "\n";
+    }
+    pgn += `${i / 4 + 1}.`;
+    for (let j = 0; j < 4 && i + j < moves.length; j++) {
+      pgn += ` ${moves[i + j].toPGN()}`;
+    }
+  }
+
+  return pgn;
 }

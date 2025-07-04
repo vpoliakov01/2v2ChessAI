@@ -21,7 +21,7 @@ func Test(t *testing.T) {
 func (s *TestSuite) TestParsePGN() {
 	r := s.Require()
 
-	moves, err := ParsePGN(`
+	moves, err := game.ParsePGN(`
 1. h2-h3 .. b7-c7 .. g13-g12 .. m8-l8
 2. f2-f3 .. b9-c9 .. Qh14-e11 .. Qn7-k10
 3. Bi1-h2 .. b5-c5 .. Qe11-h11 .. Qk10-g6
@@ -38,11 +38,11 @@ func (s *TestSuite) TestSaveLoad() {
 	r := s.Require()
 
 	g := game.New()
-	file, err := Save(g)
+	file, err := SavePGN(g)
 	r.NoError(err)
 	fmt.Println(file)
 
-	newGame, err := Load(file)
+	newGame, err := LoadPGN(file)
 	r.NoError(err)
 	r.Equal(g.Board.Grid, newGame.Board.Grid)
 }

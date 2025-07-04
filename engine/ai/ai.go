@@ -77,13 +77,8 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextM
 	// Instead of calculating checks, just evaluate until king capture.
 	// In 2v2 chess king capture is actually possible since teammate A can
 	// unblock the path between a teammate's B piece and the opponent's king.
-	for player := range g.Board.PieceSquares {
-		if !g.HasKing(player) {
-			if player.IsTeamMate(g.ActivePlayer) {
-				return nil, float64(-1001 + depth)
-			}
-			return nil, float64(1001 - depth)
-		}
+	if g.HasEnded() {
+		return nil, float64(-1001 + depth)
 	}
 
 	moves := g.GetMoves().Flatten()

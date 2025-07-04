@@ -1,181 +1,44 @@
 import React from 'react';
 
-import { Color, colorCode, movesEqual, Piece, pieceName, positionsEqual } from '../common';
-import { useBoardState, BOARD_SIZE, CORNER_SIZE } from '../hooks/useBoardState';
-
-interface SquareProps {
-  isPlayable: boolean;
-  isLight: boolean;
-  piece: Piece | null | undefined;
-  higlighted: Color | null;
-  possibleMove: boolean;
-  onClick: () => void;
-}
-
-function Square({ isPlayable, isLight, piece, higlighted, possibleMove, onClick }: SquareProps) {
-  if (!isPlayable) {
-    return <div style={{
-      aspectRatio: '1',
-      backgroundColor: colorCode[Color.Black],
-      border: `1px solid ${colorCode[Color.Black]}`,
-      width: '100%',
-    }} />;
-  }
-
-  let backgroundColor = isLight ? colorCode[Color.LightGray] : colorCode[Color.DarkGray];
-  const originalBackgroundColor = backgroundColor;
-  let higlightedBackgroundColor = originalBackgroundColor;
-  if (higlighted) {
-    higlightedBackgroundColor = `color-mix(in srgb, ${colorCode[higlighted]} 45%, ${backgroundColor})`;
-  }
-
-  const getPieceImage = (piece: Piece) => {
-    const color = piece.color;
-    const type = piece.type;
-    return `/${color}_${pieceName[type]}.svg`;
-  };
-
-  function onMouseEnter(e: React.MouseEvent<HTMLDivElement>) {
-    if (possibleMove) {
-      e.currentTarget.style.backgroundColor = higlightedBackgroundColor;
-    }
-  }
-  function onMouseLeave(e: React.MouseEvent<HTMLDivElement>) {
-    if (possibleMove) {
-      e.currentTarget.style.backgroundColor = originalBackgroundColor;
-    }
-  }
-
-  return (
-    <div
-      style={{
-        alignItems: 'center',
-        aspectRatio: '1',
-        backgroundColor: higlighted && !possibleMove ? higlightedBackgroundColor : backgroundColor,
-        cursor: piece ? 'pointer' : 'default',
-        display: 'flex',
-        justifyContent: 'center',
-        position: 'relative',
-        userSelect: 'none',
-        width: '100%',
-      }}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      onClick={onClick}
-    >
-      {possibleMove && (
-        <div style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.2)',
-          borderRadius: '50%',
-          height: '30%',
-          left: '35%',
-          top: '35%',
-          width: '30%',
-        }} />
-      )}
-      {piece && (
-        <img 
-          src={getPieceImage(piece)} 
-          alt={`${piece.color} ${piece.type}`}
-          style={{
-            pointerEvents: 'none',
-            position: 'absolute',
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-export function PlayerIndicator({ color }: { color: Color }) {
-  const getPlayerIndicatorStyle = (color: Color): React.CSSProperties => {
-    const offsetLength = `calc(${CORNER_SIZE / BOARD_SIZE} * 100%)`;
-    const lineWidth = '3px';
-    const offset = 6;
-
-    switch (color) {
-      case Color.Red:
-      case Color.Yellow:
-        return {
-          backgroundColor: colorCode[color],
-          height: lineWidth,
-          left: offsetLength,
-          position: 'absolute',
-          right: offsetLength,
-          top: color === Color.Yellow ? -offset : `calc(100% - ${lineWidth} + ${offset}px)`,
-        };
-      case Color.Blue:
-      case Color.Green:
-        return {
-          backgroundColor: colorCode[color],
-          bottom: offsetLength,
-          left: color === Color.Blue ? -offset : `calc(100% - ${lineWidth} + ${offset}px)`,
-          position: 'absolute',
-          top: offsetLength,
-          width: lineWidth,
-        };
-      default:
-        return {};
-    }
-  }
-  return <div className="player-indicator" style={getPlayerIndicatorStyle(color)} />;
-}
-
-export function ScoreDisplay({ score }: { score: number }) {
-  const maxScore = 10;
-  const offsetLength = `calc(${CORNER_SIZE / BOARD_SIZE} * 100%)`;
-  const height = Math.max(Math.min(50 + score / maxScore / 2 * 100, 100), 0);
-
-  return <div className="score-display" style={{
-    width: '20px',
-    marginRight: '10px',
-    position: 'relative',
-    top: offsetLength,
-    height: `${(BOARD_SIZE - 2 * CORNER_SIZE) / BOARD_SIZE * 100}%`,
-  }}>
-    <div style={{
-      backgroundColor: colorCode[Color.Blue],
-      height: `${100 -height}%`,
-    }} />
-    <div style={{
-      backgroundColor: colorCode[Color.Red],
-      height: `${height}%`,
-    }} />
-  </div>;
-}
+import { BOARD_SIZE, Color, Move, movesEqual, positionsEqual } from '../common';
+import { Square, ScoreDisplay, PlayerIndicator } from './ChessBoardElements';
+import { useBoardStateContext } from '../context/BoardStateContext';
 
 export function ChessBoard() {
-  const { board, activePlayer, moves, availableMoves, selectedPiece, score, movePiece, setSelectedPiece } = useBoardState();
+  const { board, activePlayer, moves, availableMoves, selectedSquare, score, movePiece, setSelectedSquare } = useBoardStateContext();
 
   const handleSquareClick = (row: number, col: number) => {
     const newPosition = {row, col};
     if (board[row][col] === undefined) return;
 
-    if (selectedPiece) {
-      if (movePiece({from: selectedPiece, to: newPosition})) {
-        setSelectedPiece(null);
+    if (selectedSquare) {
+      if (movePiece(new Move(selectedSquare, newPosition), true)) {
+        setSelectedSquare(null);
       } else if (board[row][col]?.color === activePlayer) {
-        setSelectedPiece(newPosition);
+        setSelectedSquare(newPosition);
       }
     } else if (board[row][col]?.color === activePlayer) {
-      setSelectedPiece(newPosition);
+      setSelectedSquare(newPosition);
     }
   };
 
   let higlightedSquares: {row: number, col: number, color: Color}[] = [];
   for (let i = moves.length - 1; i >= 0 && i > moves.length - 5; i--) {
-    higlightedSquares.push({ ...moves[i].from, color: moves[i].piece.color});
-    higlightedSquares.push({ ...moves[i].to, color: moves[i].piece.color});
+    const move = moves[i];
+    if (move?.piece) {
+      higlightedSquares.push({ ...move.from, color: move.piece.color});
+      higlightedSquares.push({ ...move.to, color: move.piece.color});
+    }
   }
-  if (selectedPiece) {
-    higlightedSquares.push({ ...selectedPiece, color: activePlayer });
-    higlightedSquares.push(...availableMoves.filter(m => positionsEqual(m.from, selectedPiece)).map(m => ({ ...m.to, color: activePlayer })));
+  if (selectedSquare) {
+    higlightedSquares.push({ ...selectedSquare, color: activePlayer });
+    higlightedSquares.push(...availableMoves.filter(m => positionsEqual(m.from, selectedSquare)).map(m => ({ ...m.to, color: activePlayer })));
   }
 
   return (
     <div className="board-container" style={{
       boxSizing: 'border-box',
-      padding: '10px',
+      padding: 10,
       position: 'relative',
       height: '100%',
       display: 'flex',
@@ -204,7 +67,7 @@ export function ChessBoard() {
                   isLight={(row + col) % 2 === 0}
                   piece={board[row][col]}
                   higlighted={higlightedSquares.find(square => square.row === row && square.col === col)?.color ?? null}
-                  possibleMove={!!selectedPiece && availableMoves.some(m => movesEqual(m, {from: selectedPiece, to: {row, col}}))}
+                  possibleMove={!!selectedSquare && availableMoves.some(m => movesEqual(m, new Move(selectedSquare, {row, col})))}
                   onClick={() => handleSquareClick(row, col)}
                 />
               ))}
@@ -224,4 +87,4 @@ export function ChessBoard() {
         </div>
     </div>
   );
-} 
+}

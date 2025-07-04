@@ -1,3 +1,16 @@
+:root {
+  --color-red: #bf3B43;
+  --color-blue: #4185bf;
+  --color-yellow: #c09526;
+  --color-green: #4e9161;
+  --color-light-gray: #dadada;
+  --color-gray: #adadad;
+  --color-slightly-darker-gray: #666666;
+  --color-dark-gray: #444444;
+  --color-darker-gray: #222222;
+  --color-black: #302e2b;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -10,4 +23,61 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+button {
+  background-color: var(--color-slightly-darker-gray);
+  border-radius: 5px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 10px 25px;
+  font-size: 18px;
+}
+button:hover {
+  background-color: var(--color-green);
+}
+
+textarea:active, textarea:focus {
+  outline: none;
+}
+
+#move-table td {
+  width: 85px;
+  text-align: left;
+  padding: 5px;
+  border-radius: 2px;
+}
+
+#move-table td.move-number {
+  width: 20px;
+}
+
+#move-table td.move-cell {
+  font-weight: bold;
+}
+
+#move-table td.move-cell:hover {
+  background-color: var(--color-dark-gray);
+  cursor: pointer;
+}
+
+#move-table td.current-move {
+  background-color: var(--color-dark-gray);
+}
+
+#move-table td.move-cell:nth-child(2) {
+  color: var(--color-red);
+}
+
+#move-table td.move-cell:nth-child(3) {
+  color: var(--color-blue);
+}
+
+#move-table td.move-cell:nth-child(4) {
+  color: var(--color-yellow);
+}
+
+#move-table td.move-cell:nth-child(5) {
+  color: var(--color-green);
 }

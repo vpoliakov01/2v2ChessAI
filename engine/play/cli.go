@@ -1,6 +1,7 @@
 package play
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"slices"
@@ -17,7 +18,7 @@ func RunCLI(cfg *Config) {
 	engine := ai.New(cfg.Depth, cfg.CaptureDepth)
 	startTime := time.Now()
 
-	g := SetupBoard(cfg.Load)
+	g := game.SetupBoard(cfg.Load)
 	g.Board.Draw()
 
 	// Play the game.
@@ -43,7 +44,7 @@ func RunCLI(cfg *Config) {
 
 				switch {
 				case strings.ToLower(in) == "save":
-					file, err := Save(g)
+					file, err := game.SaveToFile(g)
 					if err != nil {
 						fmt.Println(err)
 						continue
@@ -53,7 +54,7 @@ func RunCLI(cfg *Config) {
 				case strings.ToLower(in) == "exit":
 					os.Exit(0)
 				default:
-					move, err = ParseMove(in)
+					move, err = game.ParseMove(in)
 				}
 
 				if err != nil {
@@ -68,7 +69,7 @@ func RunCLI(cfg *Config) {
 				break
 			}
 		} else { // AI's turn.
-			move, score, err = engine.GetBestMove(g)
+			move, score, err = engine.GetBestMove(g.Game)
 			if err != nil {
 				if err == ai.ErrGameEnded {
 					fmt.Printf("%v: Team %v won!\n", i, g.Winner)
@@ -101,4 +102,17 @@ func RunCLI(cfg *Config) {
 		fmt.Printf("Team %v won!\n", g.Winner)
 	}
 	fmt.Printf("Total time: %v\n", time.Since(startTime))
+}
+
+// ReadInput reads user io from STDIN.
+func ReadInput() (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter a command (save / exit) or a move in format e2e4: ")
+
+	in, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Trim(in, " \n\t"), nil
 }

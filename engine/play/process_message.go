@@ -27,64 +27,107 @@ func CastData[T any](data interface{}) (T, error) {
 
 func (c *Connection) ProcessMessage(msg *Message) {
 	switch msg.Type {
-	case MessageTypeGetBoardState:
-		boardState, err := c.game.JSON()
-		if err != nil {
-			log.Fatalf("Error getting board state: %v", err)
-		}
-		c.SendMessage(MessageTypeBoardState, string(boardState))
-	case MessageTypeGetMoves:
-		c.processGetMoves()
+	case MessageTypeGetAvailableMoves:
+		c.processGetAvailableMoves()
 	case MessageTypePlayerMove:
-		move, err := CastData[Move](msg.Data)
+		move, err := CastData[PGNMove](msg.Data)
 		if err != nil {
 			log.Printf("Error casting move: %v", err)
 			return
 		}
 		c.processPlayerMove(move)
+	case MessageTypeSaveGame:
+		c.processSaveGame()
+	case MessageTypeLoadGame:
+		c.processLoadGame(msg.Data.(string))
+	case MessageTypeNewGame:
+		c.processNewGame()
+	case MessageTypeSetCurrentMove:
+		c.processSetCurrentMove(int(msg.Data.(float64)))
 	default:
 		log.Printf("Unknown message type: %s", msg.Type)
 	}
 }
 
-func (c *Connection) processGetMoves() {
-	gameMoves := c.game.GetMoves().Flatten()
-	moves := make([]Move, len(gameMoves))
+func (c *Connection) processGetAvailableMoves() {
+	gameMoves := c.gs.GetMoves().Flatten()
+	moves := make([]PGNMove, len(gameMoves))
 	for i, gameMove := range gameMoves {
-		moves[i] = MoveFromGameMove(gameMove)
+		moves[i] = PGNMoveFromGameMove(gameMove)
 	}
-	c.SendMessage(MessageTypeMoves, moves)
+	c.SendMessage(MessageTypeAvailableMoves, moves)
 }
 
-func (c *Connection) processPlayerMove(move Move) {
-	game := c.game
+func (c *Connection) processPlayerMove(move PGNMove) {
+	game := c.gs
 
-	gameMove := g.Move{
-		From: move.From.ToSquare(),
-		To:   move.To.ToSquare(),
-	}
+	gameMove := GameMoveFromPGN(move)
 	if err := game.ValidateMove(&gameMove); err != nil {
 		c.SendMessage(MessageTypeInvalidMove, err.Error())
 		return
 	}
 	game.Play(gameMove)
+	game.Board.Draw()
 
 	c.proceedUntilPlayerMove()
 }
 
+func (c *Connection) processSaveGame() {
+	c.SendMessage(MessageTypeSaveGameResponse, SaveGameResponse{
+		PGN: c.gs.PGN(),
+	})
+}
+
+func (c *Connection) processLoadGame(data string) {
+	game, err := g.LoadPGN(data)
+	if err != nil {
+		log.Printf("Error loading game: %v", err)
+		return
+	}
+	c.gs = game
+
+	c.SendMessage(MessageTypeLoadGameResponse, LoadGameResponse{
+		PastMoves:   PGNMovesFromGameMoves(c.gs.PastMoves),
+		CurrentMove: c.gs.CurrentMove,
+	})
+	c.proceedUntilPlayerMove()
+}
+
+func (c *Connection) processNewGame() {
+	c.gs = g.NewGameSession()
+	c.SendMessage(MessageTypeLoadGameResponse, LoadGameResponse{
+		PastMoves:   PGNMovesFromGameMoves(c.gs.PastMoves),
+		CurrentMove: c.gs.CurrentMove,
+	})
+	c.proceedUntilPlayerMove()
+}
+
+func (c *Connection) processSetCurrentMove(moveIndex int) {
+	err := c.gs.SetCurrentMove(moveIndex)
+	if err != nil {
+		log.Printf("Error setting current move: %v", err)
+		return
+	}
+	c.SendMessage(MessageTypeLoadGameResponse, LoadGameResponse{
+		PastMoves:   PGNMovesFromGameMoves(c.gs.PastMoves),
+		CurrentMove: c.gs.CurrentMove,
+	})
+	c.proceedUntilPlayerMove()
+}
+
 func (c *Connection) proceedUntilPlayerMove() {
-	game := c.game
+	game := c.gs
 
 	for !slices.Contains(c.cfg.HumanPlayers, game.ActivePlayer) {
 		now := time.Now()
-		bestMove, score, err := c.engine.GetBestMove(game)
+		bestMove, score, err := c.engine.GetBestMove(game.Game)
 		elapsed := time.Since(now)
 		if err != nil {
 			log.Printf("Error getting best move: %v", err)
 			return
 		}
 		c.SendMessage(MessageTypeEngineMove, BestMoveResponse{
-			Move:        MoveFromGameMove(*bestMove),
+			Move:        PGNMoveFromGameMove(*bestMove),
 			Score:       math.Round(score*float64(game.ActivePlayer.Team())*100) / 100,
 			Time:        math.Round(elapsed.Seconds()*100) / 100,
 			Evaluations: c.engine.EvalsCount,
@@ -93,5 +136,5 @@ func (c *Connection) proceedUntilPlayerMove() {
 		game.Board.Draw()
 	}
 
-	c.processGetMoves()
+	c.processGetAvailableMoves()
 }

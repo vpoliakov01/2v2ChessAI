@@ -1,19 +1,18 @@
 package game
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
-// MoveMap represents
+// MoveMap represents available moves from each square.
 type MoveMap map[Square][]Square
 
 // Game represents a state of the game.
 type Game struct {
 	ActivePlayer Player
 	Board        *Board
-	Winner       Team // Red/Yellow win: 1, Blue/Green win: -1.
-	MoveMap      *MoveMap
+	Winner       Team     // Red/Yellow win: 1, Blue/Green win: -1.
+	MoveMap      *MoveMap `json:"-"`
 }
 
 // New creates a new Game.
@@ -98,25 +97,6 @@ func (g *Game) ValidateMove(move *Move) error {
 	}
 
 	return fmt.Errorf("move %v is not available to the player", move)
-}
-
-// JSON returns json of the game object.
-func (g *Game) JSON() ([]byte, error) {
-	return json.Marshal(g)
-}
-
-// LoadJSON returns the game defined by the json.
-func LoadJSON(bytes []byte) (*Game, error) {
-	g := Game{}
-
-	err := json.Unmarshal(bytes, &g)
-	if err != nil {
-		return nil, err
-	}
-
-	g.Board.SetPieceSquares()
-
-	return &g, nil
 }
 
 // Flatten transforms MoveMap into []Move.

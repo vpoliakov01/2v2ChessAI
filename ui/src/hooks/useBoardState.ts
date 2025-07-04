@@ -1,11 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Color, PlayerColors, Piece, PieceType, Position, MoveInfo, Move, movesEqual } from '../common';
-import { MessageType, Message, BestMoveResponse } from '../ws';
+import { Color, PlayerColors, Piece, PieceType, Position, MoveInfo, Move, movesEqual, BOARD_SIZE, CORNER_SIZE, PGNMove } from '../common';
+import { MessageType, Message, BestMoveResponse, SaveGameResponse, LoadGameResponse } from '../ws';
 
 export type BoardPosition = (Piece | null | undefined)[][];
-
-export const BOARD_SIZE = 14;
-export const CORNER_SIZE = 3;
 
 // Initialize the 14x14 board with cut corners
 function createEmptyBoard(): BoardPosition {
@@ -23,7 +20,7 @@ function createEmptyBoard(): BoardPosition {
     }
   }
 
-  return board;
+  return setPieces(board);
 }
 
 function setPieces(board: BoardPosition): BoardPosition {
@@ -74,23 +71,58 @@ function setPieces(board: BoardPosition): BoardPosition {
 }
 
 export function useBoardState() {
-  const [board, setBoard] = useState<BoardPosition>(() => {
-    const emptyBoard = createEmptyBoard();
-    return setPieces(emptyBoard);
-  });
+  const [board, setBoard] = useState<BoardPosition>(createEmptyBoard());
   const [activePlayer, setActivePlayer] = useState<Color>(Color.Red);
-  const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
-  const [moves, setMoves] = useState<MoveInfo[]>([]);
+  const [selectedSquare, setSelectedSquare] = useState<Position | null>(null);
+  const [allMoves, setAllMoves] = useState<MoveInfo[]>([]);
+  const [currentMove, setCurrentMove] = useState<number>(-1);
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
   const [score, setScore] = useState<number>(0);
+  const [pgn, setPgn] = useState<string>('');
+  const moves = allMoves.slice(0, currentMove + 1);
 
   const wsRef = useRef<WebSocket | null>(null);
+
+  function resetBoard() {
+    setBoard(createEmptyBoard());
+    setActivePlayer(Color.Red);
+    setSelectedSquare(null);
+    setAvailableMoves([]);
+    setPgn('');
+    setScore(0);
+    setCurrentMove(-1);
+    // Do not setAllMoves.
+  }
+
+  const replayMoves = useCallback((pastMoves: Move[], currentMove: number) => {
+    resetBoard();
+    const newMoves = [];
+    let newBoard = createEmptyBoard();
+    
+    const lastMoveIndex = Math.min(currentMove, pastMoves.length - 1);
+
+    for (let i = 0; i < pastMoves.length; i++) {
+      const move = pastMoves[i];
+      const {from, to} = move;
+      newMoves.push(new MoveInfo(from, to, newBoard[from.row][from.col]!, newBoard[to.row][to.col] ?? null));
+      newBoard[to.row][to.col] = newBoard[from.row][from.col];
+      newBoard[from.row][from.col] = null;
+
+      if (i === lastMoveIndex) { // Set the board and proceed with move calculation.
+        setBoard(newBoard);
+        newBoard = [...newBoard.map(row => [...row])];
+      }
+    }
+    setAllMoves(newMoves);
+    setActivePlayer(PlayerColors[(lastMoveIndex + 1) % PlayerColors.length]);
+    setCurrentMove(lastMoveIndex);
+  }, []);
 
   const isValidMove = useCallback((move: Move): boolean => {
     return availableMoves.some(m => movesEqual(m, move));
   }, [availableMoves]);
 
-  const movePiece = useCallback((move: Move, playerMove: boolean = true) => {
+  const movePiece = useCallback((move: Move, playerMove: boolean = false) => {
     const {from, to} = move;
 
     if (playerMove && wsRef.current) {
@@ -100,24 +132,22 @@ export function useBoardState() {
 
       wsRef.current.send(new Message(
         MessageType.PlayerMove,
-        move,
+        move.toPGN(),
       ).json());
     }
 
-    setMoves([...moves, {
-      ...move,
-      piece: board[from.row][from.col]!,
-      capturedPiece: board[to.row][to.col] ?? null,
-    }]);
+    setAllMoves([...moves, new MoveInfo(from, to, board[from.row][from.col]!, board[to.row][to.col] ?? null)]);
+
+    setCurrentMove(currentMove + 1);
 
     const newBoard = [...board.map(row => [...row])];
-    newBoard[to.row][to.col] = board[from.row][from.col];
+    newBoard[to.row][to.col] = newBoard[from.row][from.col];
     newBoard[from.row][from.col] = null;
     setBoard(newBoard);
 
     setActivePlayer(PlayerColors[(PlayerColors.indexOf(activePlayer) + 1) % PlayerColors.length]);
     return true;
-  }, [board, isValidMove, moves, activePlayer]);
+  }, [board, isValidMove, moves, activePlayer, currentMove]);
 
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8080/ws');
@@ -144,30 +174,49 @@ export function useBoardState() {
     wsRef.current.onmessage = (event) => {
       const message = JSON.parse(event.data) as Message;
       switch (message.type) {
-        case MessageType.Moves:
-          setAvailableMoves([...(message.data as Move[])]);
+        case MessageType.AvailableMoves:
+          setAvailableMoves((message.data as PGNMove[]).map(Move.fromPGN));
           break;
         case MessageType.EngineMove:
-          const response = message.data as BestMoveResponse;
-          console.log(response.time, response.score, response.evaluations, Math.round(response.time / response.evaluations * 1e6) / 1000);
-          movePiece(response.move, false);
-          setScore(response.score);
+          const moveData = message.data as BestMoveResponse;
+          console.log(
+            moveData.time,
+            moveData.score,
+            moveData.evaluations,
+            Math.round(moveData.time / moveData.evaluations * 1e6) / 1000,
+          );
+          movePiece(Move.fromPGN(moveData.move));
+          setScore(moveData.score);
+          break;
+        case MessageType.SaveGameResponse:
+          const saveData = message.data as SaveGameResponse;
+          setPgn(saveData.pgn);
+          break;
+        case MessageType.LoadGameResponse:
+          const loadData = message.data as LoadGameResponse;
+          replayMoves(loadData.pastMoves.map(Move.fromPGN), loadData.currentMove);
           break;
         default:
           console.log('unknown message', message);
           break;
       }
     };
-  }, [movePiece, setScore]);
+  }, [movePiece, setScore, currentMove, replayMoves]);
 
   return {
-    board,
     activePlayer,
-    moves,
+    allMoves,
     availableMoves,
-    selectedPiece,
+    board,
+    currentMove,
+    moves,
+    pgn,
     score,
+    selectedSquare,
+    setCurrentMove,
     movePiece,
-    setSelectedPiece,
+    setPgn,
+    setSelectedSquare,
+    wsRef,
   };
 } 

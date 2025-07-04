@@ -19,7 +19,7 @@ type Config struct {
 type Connection struct {
 	conn   *websocket.Conn
 	cfg    *Config
-	game   *game.Game
+	gs     *game.GameSession
 	engine *ai.AI
 }
 
@@ -27,7 +27,7 @@ func NewConnection(c *websocket.Conn, cfg *Config) *Connection {
 	connection := &Connection{
 		conn:   c,
 		cfg:    cfg,
-		game:   SetupBoard(cfg.Load),
+		gs:     game.SetupBoard(cfg.Load),
 		engine: ai.New(cfg.Depth, cfg.CaptureDepth),
 	}
 

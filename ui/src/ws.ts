@@ -1,25 +1,36 @@
-import { Move } from './common';
+import { PGNMove } from './common';
 
 export enum MessageType {
-  GetBoardState = 'getBoardState',
-  BoardState = 'boardState',
-  GetMoves = 'getMoves',
-  Moves = 'moves',
+  GetAvailableMoves = 'getAvailableMoves',
+  AvailableMoves = 'availableMoves',
   PlayerMove = 'playerMove',
   EngineMove = 'engineMove',
   InvalidMove = 'invalidMove',
+  NewGame = 'newGame',
+  SaveGame = 'saveGame',
+  SaveGameResponse = 'saveGameResponse',
+  LoadGame = 'loadGame',
+  LoadGameResponse = 'loadGameResponse',
+  SetCurrentMove = 'setCurrentMove',
 }
 
-type PlayerMove = Move;
-
 export interface BestMoveResponse {
-  move: Move;
+  move: PGNMove;
   score: number;
   time: number;
   evaluations: number;
 }
 
-type MessageData = PlayerMove | Move[] | BestMoveResponse | null;
+export interface SaveGameResponse {
+  pgn: string;
+}
+
+export interface LoadGameResponse {
+  pastMoves: PGNMove[];
+  currentMove: number;
+}
+
+type MessageData = PGNMove | PGNMove[] | BestMoveResponse | SaveGameResponse | LoadGameResponse | string | number | null;
 
 export class Message {
   constructor(public type: MessageType, public data: MessageData) {}
