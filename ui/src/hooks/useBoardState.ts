@@ -149,7 +149,7 @@ export function useBoardState() {
           break;
         case MessageType.EngineMove:
           const response = message.data as BestMoveResponse;
-          console.log(response.time, response.score, response.move);
+          console.log(response.time, response.score, response.evaluations, Math.round(response.time / response.evaluations * 1e6) / 1000);
           movePiece(response.move, false);
           setScore(response.score);
           break;

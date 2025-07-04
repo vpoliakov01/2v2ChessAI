@@ -16,6 +16,7 @@ export interface BestMoveResponse {
   move: Move;
   score: number;
   time: number;
+  evaluations: number;
 }
 
 type MessageData = PlayerMove | Move[] | BestMoveResponse | null;

@@ -84,9 +84,10 @@ func (c *Connection) proceedUntilPlayerMove() {
 			return
 		}
 		c.SendMessage(MessageTypeEngineMove, BestMoveResponse{
-			Move:  MoveFromGameMove(*bestMove),
-			Score: math.Round(score*float64(game.ActivePlayer.Team())*100) / 100,
-			Time:  math.Round(elapsed.Seconds()*100) / 100,
+			Move:        MoveFromGameMove(*bestMove),
+			Score:       math.Round(score*float64(game.ActivePlayer.Team())*100) / 100,
+			Time:        math.Round(elapsed.Seconds()*100) / 100,
+			Evaluations: c.engine.EvalsCount,
 		})
 		game.Play(*bestMove)
 		game.Board.Draw()

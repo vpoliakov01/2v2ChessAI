@@ -9,6 +9,7 @@ import (
 // Config is the config for the game.
 type Config struct {
 	Depth        int
+	CaptureDepth int
 	HumanPlayers []game.Player
 	MoveLimit    int
 	Evaluation   bool
@@ -27,7 +28,7 @@ func NewConnection(c *websocket.Conn, cfg *Config) *Connection {
 		conn:   c,
 		cfg:    cfg,
 		game:   SetupBoard(cfg.Load),
-		engine: ai.New(cfg.Depth),
+		engine: ai.New(cfg.Depth, cfg.CaptureDepth),
 	}
 
 	return connection

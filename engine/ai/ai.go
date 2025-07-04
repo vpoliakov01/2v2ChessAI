@@ -23,7 +23,11 @@ type moveScore struct {
 
 // AI is the ai engine used for evaluating the position and picking the best move.
 type AI struct {
-	Depth int
+	Depth        int
+	CaptureDepth int
+	EvalsCount   int
+
+	evalsCountCh chan int
 }
 
 func init() {
@@ -32,14 +36,27 @@ func init() {
 }
 
 // New creates a new AI.
-func New(depth int) *AI {
-	return &AI{
-		Depth: depth,
+func New(depth, captureDepth int) *AI {
+	ai := &AI{
+		Depth:        depth,
+		CaptureDepth: captureDepth,
+		EvalsCount:   0,
+		evalsCountCh: make(chan int),
 	}
+
+	go func() {
+		for {
+			ai.EvalsCount += <-ai.evalsCountCh
+		}
+	}()
+
+	return ai
 }
 
 // GetBestMove returns the best move for the active player to play.
 func (ai *AI) GetBestMove(g *game.Game) (bestMove *game.Move, score float64, err error) {
+	ai.evalsCountCh <- -ai.EvalsCount // Reset to 0.
+
 	if g.HasEnded() {
 		return nil, float64(g.Winner), ErrGameEnded
 	}
@@ -57,31 +74,31 @@ func (ai *AI) GetBestMove(g *game.Game) (bestMove *game.Move, score float64, err
 // Alpha and beta params are used for alpha-beta pruning (skipping evalution
 // of branches that are guaranteed not to be picked by any of players).
 func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextMove *game.Move, score float64) {
-	if depth == ai.Depth {
-		return nil, eval
-	}
-
 	// Instead of calculating checks, just evaluate until king capture.
 	// In 2v2 chess king capture is actually possible since teammate A can
 	// unblock the path between a teammate's B piece and the opponent's king.
 	for player := range g.Board.PieceSquares {
 		if !g.HasKing(player) {
 			if player.IsTeamMate(g.ActivePlayer) {
-				return nil, float64(-math.MaxInt32 + depth)
+				return nil, float64(-1001 + depth)
 			}
-			return nil, float64(math.MaxInt32 - depth)
+			return nil, float64(1001 - depth)
 		}
 	}
 
-	if !g.HasKing(g.ActivePlayer) {
-		// Prefer finishing the game for the winner and prolonging it for the loser.
-		return nil, float64(math.MinInt32 + depth)
-	}
+	moves := g.GetMoves().Flatten()
 
-	moveMap := g.GetMoves() // map[Square][]Square
-	moves := moveMap.Flatten()
+	if depth >= ai.Depth {
+		captureMoves := []game.Move{}
+		for _, move := range moves {
+			if !g.Board.GetPiece(move.To).IsEmpty() {
+				captureMoves = append(captureMoves, move)
+			}
+		}
+		moves = captureMoves
+	}
 	if len(moves) == 0 {
-		return nil, 0
+		return nil, eval
 	}
 
 	// Channel for communicating results of position evaluations.
@@ -92,26 +109,36 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextM
 		go func(move game.Move) {
 			gameCopy := g.Copy()
 			gameCopy.Play(move)
-			c <- moveScore{move, ai.EvaluateCurrent(gameCopy)} // Although the keys are different, concurrent map writes are not allowed.
+			c <- moveScore{move, -ai.EvaluateCurrent(gameCopy)} // Negate the opponent's position evaluation.
 		}(moves[i])
 	}
 
 	for range moves {
-		ms := <-c
-		moveEvalEstimates[ms.move] = ms
+		moveScore := <-c
+		moveEvalEstimates[moveScore.move] = moveScore
 	}
 
 	// Sort to process "immediately stronger" moves first.
 	// Strongest moves are the weakest for the opponent (lowest score).
 	sort.Slice(moves, func(a, b int) bool {
-		return moveEvalEstimates[moves[a]].score < moveEvalEstimates[moves[b]].score
+		if !g.Board.GetPiece(moves[a].To).IsEmpty() && g.Board.GetPiece(moves[b].To).IsEmpty() {
+			return true
+		}
+		if g.Board.GetPiece(moves[a].To).IsEmpty() && !g.Board.GetPiece(moves[b].To).IsEmpty() {
+			return false
+		}
+
+		return moveEvalEstimates[moves[a]].score > moveEvalEstimates[moves[b]].score
 	})
 
 	for i := range moves {
-		gameCopy := g.Copy()
-		gameCopy.Play(moves[i])
-		_, opponentScore := ai.Negamax(gameCopy, depth+1, moveEvalEstimates[moves[i]].score, -beta, -alpha)
-		score := -opponentScore
+		score := moveEvalEstimates[moves[i]].score
+		if depth < ai.CaptureDepth {
+			gameCopy := g.Copy()
+			gameCopy.Play(moves[i])
+			_, opponentScore := ai.Negamax(gameCopy, depth+1, -moveEvalEstimates[moves[i]].score, -beta, -alpha)
+			score = -opponentScore
+		}
 
 		// If the score is already better than what the opponent could get by playing
 		// any other move, we can assume that the opponent will not play this move,
@@ -131,6 +158,7 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextM
 
 // EvaluateCurrent returns the difference between strengths of the team making the move and the other team.
 func (ai *AI) EvaluateCurrent(g *game.Game) float64 {
+	ai.evalsCountCh <- 1
 	playerStrengths := map[game.Player]float64{}
 	piecesLeft := 0
 

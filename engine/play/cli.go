@@ -12,9 +12,9 @@ import (
 )
 
 func RunCLI(cfg *Config) {
-	fmt.Printf("\nDepth: %v\nMoves limit: %v\nHuman players: %v\nEvaluation: %v\nLoad: %v\n\n", cfg.Depth, cfg.MoveLimit, cfg.HumanPlayers, cfg.Evaluation, cfg.Load)
+	fmt.Printf("\nDepth: %v/%v\nMoves limit: %v\nHuman players: %v\nEvaluation: %v\nLoad: %v\n\n", cfg.Depth, cfg.CaptureDepth, cfg.MoveLimit, cfg.HumanPlayers, cfg.Evaluation, cfg.Load)
 
-	engine := ai.New(cfg.Depth)
+	engine := ai.New(cfg.Depth, cfg.CaptureDepth)
 	startTime := time.Now()
 
 	g := SetupBoard(cfg.Load)

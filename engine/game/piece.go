@@ -68,6 +68,11 @@ func (p Piece) Kind() PieceKind {
 	return PieceKind(p & pieceBitMask)
 }
 
+// IsEmpty returns true if the piece is empty.
+func (p Piece) IsEmpty() bool {
+	return p == EmptySquare
+}
+
 // String implements the Stringer interface.
 func (p Piece) String() string {
 	switch p {
