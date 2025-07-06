@@ -25,6 +25,7 @@ type moveScore struct {
 type AI struct {
 	Depth        int
 	CaptureDepth int
+	EvalLimit    int
 	EvalsCount   int
 
 	evalsCountCh chan int
@@ -36,11 +37,16 @@ func init() {
 }
 
 // New creates a new AI.
-func New(depth, captureDepth int) *AI {
+func New(depth, captureDepth, evalLimit int) *AI {
+	if evalLimit == 0 {
+		evalLimit = math.MaxInt
+	}
+
 	ai := &AI{
 		Depth:        depth,
 		CaptureDepth: captureDepth,
 		EvalsCount:   0,
+		EvalLimit:    evalLimit,
 		evalsCountCh: make(chan int),
 	}
 
@@ -61,7 +67,8 @@ func (ai *AI) GetBestMove(g *game.Game) (bestMove *game.Move, score float64, err
 		return nil, float64(g.Winner), ErrGameEnded
 	}
 
-	bestMove, score = ai.Negamax(g, 0, ai.EvaluateCurrent(g), math.Inf(-1), math.Inf(1))
+	forcedMateScore := 1002 - float64(ai.Depth) // No point on trying to improve the score if you are forcing mate.
+	bestMove, score = ai.Negamax(g, 0, ai.EvaluateCurrent(g), -forcedMateScore, forcedMateScore)
 	if bestMove == nil {
 		return nil, 0, ErrNoMoves
 	}
@@ -128,7 +135,7 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextM
 
 	for i := range moves {
 		score := moveEvalEstimates[moves[i]].score
-		if depth < ai.CaptureDepth {
+		if depth < ai.CaptureDepth && ai.EvalsCount < ai.EvalLimit {
 			gameCopy := g.Copy()
 			gameCopy.Play(moves[i])
 			_, opponentScore := ai.Negamax(gameCopy, depth+1, -moveEvalEstimates[moves[i]].score, -beta, -alpha)

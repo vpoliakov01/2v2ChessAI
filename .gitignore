@@ -4,6 +4,7 @@ todo
 cmd/ai
 cmd/__debug*
 *.save
+saves
 
 # Go specific
 *.exe

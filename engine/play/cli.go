@@ -15,7 +15,7 @@ import (
 func RunCLI(cfg *Config) {
 	fmt.Printf("\nDepth: %v/%v\nMoves limit: %v\nHuman players: %v\nEvaluation: %v\nLoad: %v\n\n", cfg.Depth, cfg.CaptureDepth, cfg.MoveLimit, cfg.HumanPlayers, cfg.Evaluation, cfg.Load)
 
-	engine := ai.New(cfg.Depth, cfg.CaptureDepth)
+	engine := ai.New(cfg.Depth, cfg.CaptureDepth, cfg.EvalLimit)
 	startTime := time.Now()
 
 	g := game.SetupBoard(cfg.Load)

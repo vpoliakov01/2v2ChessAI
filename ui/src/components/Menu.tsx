@@ -2,71 +2,19 @@ import React, { useState } from 'react';
 import { Color, colorCode, movesToPGN } from '../common';
 import { useBoardStateContext } from '../context/BoardStateContext';
 import { Message, MessageType } from '../ws';
+import { CollapsibleBlock, BORDER_RADIUS } from './CollapsibleBlock';
 import { MoveTable } from './MoveTable';
-
-interface CollapsibleBlockProps {
-  header: React.ReactNode;
-  children: React.ReactNode;
-  collapsed?: boolean;
-}
-
-const BORDER_RADIUS = 10;
-
-function CollapsibleBlock({ header, children, collapsed=true }: CollapsibleBlockProps) {
-  const [isCollapsed, setIsCollapsed] = useState(collapsed);
-
-  return (
-    <div className="collapsible-block" style={{
-      backgroundColor: colorCode(Color.Black),
-      borderRadius: BORDER_RADIUS,
-      marginBottom: 5,
-      width: '100%',
-    }}>
-      <div 
-        className="collapsible-header"
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{
-          alignItems: 'center',
-          cursor: 'pointer',
-          display: 'flex',
-          justifyContent: 'space-between',
-          padding: '10px 12px 10px 10px',
-        }}
-      >
-        {header}
-        <span style={{
-          fontSize: 20,
-          position: 'relative',
-          bottom: 2,
-        }}>{isCollapsed ? '+' : '-'}</span>
-      </div>
-      <div 
-        className="collapsible-content"
-        style={{
-          maxHeight: isCollapsed ? 0 : 'fit-content',
-          overflow: 'hidden',
-          padding: isCollapsed ? 0 : '0 10px 10px 10px',
-          transition: 'all 0.02s linear',
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
+import { Settings } from './Settings';
 
 export function Menu() {
-  const { wsRef, allMoves, currentMove, setCurrentMove } = useBoardStateContext();
+  const { allMoves, currentMove, setCurrentMove, sendMessage } = useBoardStateContext();
   const [pgnBlockCollapsed, setPGNBlockCollapsed] = useState(false);
   const [userPGN, setUserPGN] = useState<string | null>(null);
 
+  const pgn = userPGN != null ? userPGN : movesToPGN(allMoves);
+
   function handleNewGame(event: React.MouseEvent<HTMLButtonElement>) {
-    if (wsRef.current) {
-      wsRef.current.send(new Message(
-        MessageType.NewGame,
-        null,
-      ).json());
-    }
+    sendMessage(new Message(MessageType.NewGame, null));
     event.stopPropagation();
   }
 
@@ -77,12 +25,7 @@ export function Menu() {
   }
 
   function handleLoad(event: React.MouseEvent<HTMLButtonElement>) {
-    if (wsRef.current) {
-      wsRef.current.send(new Message(
-        MessageType.LoadGame,
-        userPGN || movesToPGN(allMoves),
-      ).json());
-    }
+    sendMessage(new Message(MessageType.LoadGame, pgn));
     setUserPGN(null);
     setPGNBlockCollapsed(true);
     event.stopPropagation();
@@ -90,12 +33,7 @@ export function Menu() {
 
   function handleSetCurrentMove(moveIndex: number) {
     setCurrentMove(moveIndex);
-    if (wsRef.current) {
-      wsRef.current.send(new Message(
-        MessageType.SetCurrentMove,
-        moveIndex,
-      ).json());
-    }
+    sendMessage(new Message(MessageType.SetCurrentMove, moveIndex));
   }
 
   return (
@@ -127,8 +65,9 @@ export function Menu() {
             </div>
           }>
           <textarea id="game-save-text"
-            value={userPGN || movesToPGN(allMoves)}
+            value={pgn}
             onChange={(e) => setUserPGN(e.target.value)}
+            onBlur={() => setUserPGN(userPGN || movesToPGN(allMoves))} // Reset on empty userPGN.
             style={{
               backgroundColor: colorCode(Color.Black),
               borderRadius: BORDER_RADIUS / 2,
@@ -140,6 +79,9 @@ export function Menu() {
               resize: 'vertical',
               width: '100%',
           }} />
+        </CollapsibleBlock>
+        <CollapsibleBlock header="Settings" collapsed={false}>
+          <Settings />
         </CollapsibleBlock>
         <CollapsibleBlock header="Moves" collapsed={false}>
           {allMoves.length > 0 && <MoveTable moves={allMoves} currentMove={currentMove} handleSetCurrentMove={handleSetCurrentMove} />}

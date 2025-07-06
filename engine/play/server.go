@@ -47,7 +47,7 @@ func (s *Server) HandleWebsocket() fiber.Handler {
 
 		conn := NewConnection(c, s.cfg)
 
-		conn.proceedUntilPlayerMove()
+		conn.playUntilPlayerMove()
 
 		for {
 			_, msg, err := c.ReadMessage()

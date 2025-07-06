@@ -13,6 +13,7 @@ type Game struct {
 	Board        *Board
 	Winner       Team     // Red/Yellow win: 1, Blue/Green win: -1.
 	MoveMap      *MoveMap `json:"-"`
+	MoveNumber   int
 }
 
 // New creates a new Game.
@@ -21,6 +22,7 @@ func New() *Game {
 		ActivePlayer: 0,
 		Board:        NewBoard(),
 		Winner:       0,
+		MoveNumber:   1,
 	}
 
 	g.Board.SetStartingPosition()
@@ -58,6 +60,7 @@ func (g *Game) Play(move Move) {
 
 	g.Board.Move(move)
 	g.ActivePlayer = (g.ActivePlayer + 1) % 4
+	g.MoveNumber++
 }
 
 // HasKing checks if the player still has a king.

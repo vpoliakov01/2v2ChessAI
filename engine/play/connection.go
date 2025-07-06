@@ -11,9 +11,10 @@ type Config struct {
 	Depth        int
 	CaptureDepth int
 	HumanPlayers []game.Player
-	MoveLimit    int
-	Evaluation   bool
-	Load         string
+	MoveLimit    int    // Number of moves to play before stopping.
+	EvalLimit    int    // Max number of evaluations to perform per move.
+	Evaluation   bool   // Whether to display the evaluation of the position.
+	Load         string // PGN file to load.
 }
 
 type Connection struct {
@@ -21,14 +22,17 @@ type Connection struct {
 	cfg    *Config
 	gs     *game.GameSession
 	engine *ai.AI
+
+	pauseEngine chan struct{}
 }
 
 func NewConnection(c *websocket.Conn, cfg *Config) *Connection {
 	connection := &Connection{
-		conn:   c,
-		cfg:    cfg,
-		gs:     game.SetupBoard(cfg.Load),
-		engine: ai.New(cfg.Depth, cfg.CaptureDepth),
+		conn:        c,
+		cfg:         cfg,
+		gs:          game.SetupBoard(cfg.Load),
+		engine:      ai.New(cfg.Depth, cfg.CaptureDepth, cfg.EvalLimit),
+		pauseEngine: make(chan struct{}),
 	}
 
 	return connection
