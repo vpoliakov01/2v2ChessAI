@@ -27,8 +27,8 @@ var flg flags
 
 func main() {
 	// Parse command line flags
-	flag.IntVar(&flg.Depth, "depth", 3, "depth of the engine")
-	flag.IntVar(&flg.CaptureDepth, "capture-depth", 8, "depth of the capture moves")
+	flag.IntVar(&flg.Depth, "depth", 4, "depth of the engine")
+	flag.IntVar(&flg.CaptureDepth, "capture-depth", 7, "depth of the capture moves")
 	flag.IntVar(&flg.Moves, "moves", 0, "the number of moves to play (0 for unlimited)")
 	flag.StringVar(&flg.HumanPlayers, "humans", "0 2", "space separated list of players (0 1 2 3)")
 	flag.BoolVar(&flg.Evaluation, "eval", true, "print evalution after every move")

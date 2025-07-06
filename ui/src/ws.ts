@@ -1,6 +1,7 @@
 import { PGNMove } from './common';
 
 export enum MessageType {
+  SetSettings = 'setSettings',
   GetAvailableMoves = 'getAvailableMoves',
   AvailableMoves = 'availableMoves',
   PlayerMove = 'playerMove',
@@ -30,7 +31,15 @@ export interface LoadGameResponse {
   currentMove: number;
 }
 
-type MessageData = PGNMove | PGNMove[] | BestMoveResponse | SaveGameResponse | LoadGameResponse | string | number | null;
+export interface GameSettings {
+  humanPlayers: number[];
+  depth: number;
+  captureDepth: number;
+  evalLimit: number;
+}
+
+
+type MessageData = PGNMove | PGNMove[] | BestMoveResponse | SaveGameResponse | LoadGameResponse | GameSettings | string | number | null;
 
 export class Message {
   constructor(public type: MessageType, public data: MessageData) {}

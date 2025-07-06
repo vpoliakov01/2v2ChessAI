@@ -99,7 +99,9 @@ func ParsePGN(pgn string) ([]Move, error) {
 			continue
 		}
 
-		for _, moveStr := range strings.Split(line[3:], " ") {
+		turnMovesStr := strings.Split(line, ". ")[1]
+
+		for _, moveStr := range strings.Split(turnMovesStr, " ") {
 			move, err := ParseMove(moveStr)
 			if err != nil {
 				return nil, err

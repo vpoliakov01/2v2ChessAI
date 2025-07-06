@@ -10,17 +10,19 @@ import (
 type MessageType string
 
 const (
-	MessageTypeGetAvailableMoves MessageType = "getAvailableMoves"
-	MessageTypeAvailableMoves    MessageType = "availableMoves"
-	MessageTypePlayerMove        MessageType = "playerMove"
-	MessageTypeEngineMove        MessageType = "engineMove"
-	MessageTypeInvalidMove       MessageType = "invalidMove"
-	MessageTypeSaveGame          MessageType = "saveGame"
-	MessageTypeSaveGameResponse  MessageType = "saveGameResponse"
-	MessageTypeLoadGame          MessageType = "loadGame"
-	MessageTypeLoadGameResponse  MessageType = "loadGameResponse"
-	MessageTypeNewGame           MessageType = "newGame"
-	MessageTypeSetCurrentMove    MessageType = "setCurrentMove"
+	MessageTypeSetSettings         MessageType = "setSettings"
+	MessageTypeSetSettingsResponse MessageType = "setSettingsResponse"
+	MessageTypeGetAvailableMoves   MessageType = "getAvailableMoves"
+	MessageTypeAvailableMoves      MessageType = "availableMoves"
+	MessageTypePlayerMove          MessageType = "playerMove"
+	MessageTypeEngineMove          MessageType = "engineMove"
+	MessageTypeInvalidMove         MessageType = "invalidMove"
+	MessageTypeSaveGame            MessageType = "saveGame"
+	MessageTypeSaveGameResponse    MessageType = "saveGameResponse"
+	MessageTypeLoadGame            MessageType = "loadGame"
+	MessageTypeLoadGameResponse    MessageType = "loadGameResponse"
+	MessageTypeNewGame             MessageType = "newGame"
+	MessageTypeSetCurrentMove      MessageType = "setCurrentMove"
 )
 
 type Message struct {

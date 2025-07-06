@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Color, PlayerColors, Piece, PieceType, Position, MoveInfo, Move, movesEqual, BOARD_SIZE, CORNER_SIZE, PGNMove } from '../common';
+import { Color, PlayerColors, Piece, PieceType, Position, MoveInfo, Move, movesEqual, BOARD_SIZE, CORNER_SIZE, PGNMove, formatNumber } from '../common';
 import { MessageType, Message, BestMoveResponse, SaveGameResponse, LoadGameResponse } from '../ws';
 
 export type BoardPosition = (Piece | null | undefined)[][];
@@ -83,6 +83,14 @@ export function useBoardState() {
 
   const wsRef = useRef<WebSocket | null>(null);
 
+  const sendMessage = useCallback((message: Message) => {
+    if (wsRef.current) {
+      wsRef.current.send(message.json());
+    } else {
+      console.log('No WebSocket connection');
+    }
+  }, [wsRef]);
+
   function resetBoard() {
     setBoard(createEmptyBoard());
     setActivePlayer(Color.Red);
@@ -130,10 +138,7 @@ export function useBoardState() {
         return false;
       }
 
-      wsRef.current.send(new Message(
-        MessageType.PlayerMove,
-        move.toPGN(),
-      ).json());
+      sendMessage(new Message(MessageType.PlayerMove, move.toPGN()));
     }
 
     setAllMoves([...moves, new MoveInfo(from, to, board[from.row][from.col]!, board[to.row][to.col] ?? null)]);
@@ -147,7 +152,7 @@ export function useBoardState() {
 
     setActivePlayer(PlayerColors[(PlayerColors.indexOf(activePlayer) + 1) % PlayerColors.length]);
     return true;
-  }, [board, isValidMove, moves, activePlayer, currentMove]);
+  }, [board, isValidMove, moves, activePlayer, currentMove, sendMessage]);
 
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8080/ws');
@@ -155,6 +160,13 @@ export function useBoardState() {
 
     ws.onopen = () => {
       console.log('connected');
+      console.log(
+        'move'.padEnd(8),
+        'time'.padStart(6),
+        'score'.padStart(9),
+        'evals'.padStart(8),
+        'avg'.padStart(5),
+      )
     };
 
     ws.onclose = () => {
@@ -180,10 +192,11 @@ export function useBoardState() {
         case MessageType.EngineMove:
           const moveData = message.data as BestMoveResponse;
           console.log(
-            moveData.time,
-            moveData.score,
-            moveData.evaluations,
-            Math.round(moveData.time / moveData.evaluations * 1e6) / 1000,
+            moveData.move.padEnd(8),
+            formatNumber(moveData.time, 3, 2, 's'),
+            formatNumber(moveData.score, 5, 2),
+            formatNumber(moveData.evaluations / 1000, 5, 2, 'k'),
+            formatNumber(moveData.time / moveData.evaluations * 1e6, 4, 0, 'μs'),
           );
           movePiece(Move.fromPGN(moveData.move));
           setScore(moveData.score);
@@ -217,6 +230,6 @@ export function useBoardState() {
     movePiece,
     setPgn,
     setSelectedSquare,
-    wsRef,
+    sendMessage,
   };
 } 

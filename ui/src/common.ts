@@ -10,6 +10,7 @@ export enum Color {
   LightGray = 'light-gray',
   Gray = 'gray',
   DarkGray = 'dark-gray',
+  White = 'white',
 }
 
 export const colorCode = (color: Color) => `var(--color-${color})`;
@@ -95,4 +96,19 @@ export function movesToPGN(moves: Move[]): string {
   }
 
   return pgn;
+}
+
+export function formatNumber(value: number, pad: number = 0, decimals: number = 0, unit: string = ''): string {
+  const integerValue = Math.floor(value);
+  const decimalValue = value - integerValue;
+
+  if (decimals > 0) {
+    if (decimalValue === 0) {
+      return integerValue.toString().padStart(pad).padEnd(pad+decimals+1, ' ') + unit;
+    } else {
+      return integerValue.toString().padStart(pad) + decimalValue.toFixed(decimals).slice(1).padEnd(decimals, '0') + unit;
+    }
+  } else {
+    return integerValue.toString().padStart(pad) + unit;
+  }
 }

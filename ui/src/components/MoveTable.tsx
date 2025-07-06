@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Move } from '../common';
 import { BOARD_SIZE } from '../common';
 
@@ -14,6 +14,20 @@ export function MoveTable({moves, currentMove, handleSetCurrentMove}: MoveTableP
     const toRank = (row: number) => BOARD_SIZE - row;
     return `${toFile(move.from.col)}${toRank(move.from.row)}-${toFile(move.to.col)}${toRank(move.to.row)}`;
   };
+
+  useEffect(() => {
+    const handleArrowPress = (e: KeyboardEvent) => {
+      if ((e.key === 'ArrowLeft' || e.key === 'ArrowUp') && currentMove > 0) {
+        handleSetCurrentMove(currentMove - 1);
+      } else if ((e.key === 'ArrowRight' || e.key === 'ArrowDown') && currentMove < moves.length - 1) {
+        handleSetCurrentMove(currentMove + 1);
+      }
+    };
+    window.addEventListener('keydown', handleArrowPress);
+    return () => {
+      window.removeEventListener('keydown', handleArrowPress);
+    };
+  }, [moves, currentMove, handleSetCurrentMove]);
 
   const rows = [];
   for (let i = 0; i < moves.length; i += 4) {

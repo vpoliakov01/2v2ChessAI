@@ -9,6 +9,7 @@
   --color-dark-gray: #444444;
   --color-darker-gray: #222222;
   --color-black: #302e2b;
+  --color-white: #ffffff;
 }
 
 body {
@@ -80,4 +81,81 @@ textarea:active, textarea:focus {
 
 #move-table td.move-cell:nth-child(5) {
   color: var(--color-green);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#settings-table td {
+  text-align: right;
+  padding: 5px;
+}
+
+.number-input-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.number-input-controls {
+  display: flex;
+  align-items: stretch;
+  height: 28px;
+}
+
+.number-input-display {
+  background-color: var(--color-slightly-darker-gray);
+  border-top: 1px solid var(--color-dark-gray);
+  border-bottom: 1px solid var(--color-dark-gray);
+  border-left: none;
+  border-right: none;
+  color: var(--color-white);
+  cursor: text;
+  font-size: 14px;
+  height: 26px;
+  margin: 0;
+  outline: none;
+  text-align: center;
+  padding: 0;
+}
+
+.number-input-button {
+  width: 28px;
+  border: 1px solid var(--color-dark-gray);
+  background-color: var(--color-slightly-darker-gray);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  line-height: 1;
+}
+
+.number-input-display:focus {
+  outline: none;
+}
+
+.number-input-button:first-child {
+  border-radius: 5px 0 0 5px;
+}
+
+.number-input-button:last-child {
+  border-radius: 0 5px 5px 0;
+}
+
+.number-input-button:hover:first-child:not(:disabled) {
+  background-color: var(--color-red);
+}
+
+.number-input-button:hover:last-child:not(:disabled) {
+  background-color: var(--color-green);
+}
+
+.number-input-button:hover:disabled {
+  background-color: var(--color-slightly-darker-gray);
+}
+
+.number-input-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.9;
 }
