@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"strconv"
 )
 
 // Square stores a coordinate on the board.
@@ -29,4 +30,12 @@ func (s *Square) IsValid() bool {
 func IsSquareValid(rank, file int) bool {
 	return !((file < CornerSize || file >= BoardSize-CornerSize) && (rank < CornerSize || rank >= BoardSize-CornerSize)) &&
 		(file >= 0 && file < BoardSize && rank >= 0 && rank < BoardSize)
+}
+
+func SquareFromPGN(pgn string) Square {
+	rank, err := strconv.Atoi(string(pgn[1:]))
+	if err != nil {
+		return Square{}
+	}
+	return Square{Rank: rank - 1, File: int(pgn[0] - 'a')}
 }

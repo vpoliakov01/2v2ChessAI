@@ -1,6 +1,9 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Move stores move coordinates.
 type Move struct {
@@ -11,4 +14,9 @@ type Move struct {
 // String implements the Stringer interface.
 func (m Move) String() string {
 	return fmt.Sprintf("%v-%v", m.From, m.To)
+}
+
+func MoveFromPGN(pgn string) Move {
+	pos := strings.Split(string(pgn), "-")
+	return Move{From: SquareFromPGN(pos[0]), To: SquareFromPGN(pos[1])}
 }

@@ -1,9 +1,6 @@
 package play
 
 import (
-	"strconv"
-	"strings"
-
 	"github.com/vpoliakov01/2v2ChessAI/engine/game"
 )
 
@@ -48,8 +45,12 @@ type LoadGameResponse struct {
 	CurrentMove int       `json:"currentMove"`
 }
 
+func GameMoveFromPGN(pgn PGNMove) game.Move {
+	return game.MoveFromPGN(string(pgn))
+}
+
 func PGNMoveFromGameMove(gameMove game.Move) PGNMove {
-	return PGNMove(gameMove.From.String() + "-" + gameMove.To.String())
+	return PGNMove(gameMove.String())
 }
 
 func PGNMovesFromGameMoves(gameMoves []game.Move) []PGNMove {
@@ -58,18 +59,4 @@ func PGNMovesFromGameMoves(gameMoves []game.Move) []PGNMove {
 		moves[i] = PGNMoveFromGameMove(gameMove)
 	}
 	return moves
-}
-
-func GameMoveFromPGN(pgn PGNMove) game.Move {
-	pos := strings.Split(string(pgn), "-")
-	return game.Move{From: SquareFromPGN(pos[0]), To: SquareFromPGN(pos[1])}
-}
-
-// SquareFromPGN returns a square from a pgn string.
-func SquareFromPGN(pgn string) game.Square {
-	rank, err := strconv.Atoi(string(pgn[1:]))
-	if err != nil {
-		return game.Square{}
-	}
-	return game.Square{Rank: rank - 1, File: int(pgn[0] - 'a')}
 }
