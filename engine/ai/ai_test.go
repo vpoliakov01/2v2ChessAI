@@ -14,21 +14,33 @@ import (
 
 type TestSuite struct {
 	suite.Suite
+	engine *AI
+	game   *game.Game
 }
 
 func Test(t *testing.T) {
 	suite.Run(t, new(TestSuite))
 }
 
+func (s *TestSuite) SetupTest() {
+	s.engine = New(3, 6, 0)
+	game, err := game.LoadPGN(`
+1. h2-h3 b9-c9 i13-i12 m8-l8
+2. g1-j4 a8-d11 e13-e12 m5-l5
+3. e2-e3 d11-g8 h14-k11 n7-l9
+`)
+	s.Require().NoError(err)
+	s.game = game.Game
+}
+
 func (s *TestSuite) TestGetBestMove() {
-	engine := New(4)
+	engine := s.engine
 
 	startTime := time.Now()
 
-	g := game.New()
+	g := s.game.Copy()
 
-	for i := 0; i < 10; i++ {
-		// for i := 0; !g.HasEnded(); i++ {
+	for i := 0; i < 5; i++ {
 		move, score, err := engine.GetBestMove(g)
 		if err != nil {
 			if err == ErrGameEnded {
@@ -52,38 +64,41 @@ func (s *TestSuite) TestGetBestMove() {
 		fmt.Println("Evaluation: ", score)
 	}
 
+	fmt.Println("Depth: ", engine.Depth)
+	fmt.Println("Capture depth: ", engine.CaptureDepth)
 	fmt.Println(time.Since(startTime))
-}
-
-func (s *TestSuite) TestMultithreading() {
-	cpus := runtime.NumCPU()
-	times := []time.Duration{}
-
-	for i := 1; i <= cpus; i++ {
-		runtime.GOMAXPROCS(i)
-
-		startTime := time.Now()
-		s.TestGetBestMove()
-
-		times = append(times, time.Since(startTime))
-	}
-
-	for i, t := range times {
-		fmt.Printf("%v CPU: %v\n", i+1, t)
-	}
-
-	s.Require().Less(times[len(times)-1], times[0])
 }
 
 func (s *TestSuite) TestEngineDepthsPerformance() {
 	moves := 1
-	depths := 9
+
+	depths := []struct {
+		depth        int
+		captureDepth int
+	}{
+		{2, 5},
+		{2, 6},
+		{2, 7},
+		{2, 8},
+		{3, 5},
+		{3, 6},
+		// {3, 7},
+		// {3, 8},
+		// {3, 9},
+		{4, 5},
+		// {4, 6},
+		// {4, 7},
+		// {4, 8},
+		// {5, 5},
+		// {5, 6},
+		// {5, 7},
+	}
 
 	last := time.Duration(1)
-	for depth := 1; depth <= depths; depth++ {
+	for _, d := range depths {
 		start := time.Now()
-		engine := New(depth)
-		g := game.New()
+		engine := New(d.depth, d.captureDepth, 0)
+		g := s.game.Copy()
 
 		for i := 0; i < moves; i++ {
 			move, _, err := engine.GetBestMove(g)
@@ -95,7 +110,7 @@ func (s *TestSuite) TestEngineDepthsPerformance() {
 		}
 
 		t := time.Since(start)
-		fmt.Printf("Depth: %v\tTime: %v\tPer move: %v\tRatio: %.3fx\n", depth, t, t/time.Duration(moves), float64(t)/float64(last))
+		fmt.Printf("Depth: %v/%v\t Time: %.2fs\tPer move: %.2fs\tRatio: %.2fx\tEvaluations: %v\n", d.depth, d.captureDepth, t.Seconds(), t.Seconds()/float64(moves), float64(t)/float64(last), engine.EvalsCount)
 		last = t
 	}
 }
@@ -124,7 +139,7 @@ func (s *TestSuite) TestPosition() {
 		g.Board.PlacePiece(piece, game.Square{rank, file})
 	}
 
-	engine := New(2)
+	engine := New(2, 2, 0)
 	g.Board.Draw()
 
 	for i := 0; i < 30; i++ {
@@ -151,4 +166,24 @@ func (s *TestSuite) TestPosition() {
 		g.Play(*move)
 		g.Board.Draw()
 	}
+}
+
+func (s *TestSuite) TestMultithreading() {
+	cpus := runtime.NumCPU()
+	times := []time.Duration{}
+
+	for i := 1; i <= cpus; i++ {
+		runtime.GOMAXPROCS(i)
+
+		startTime := time.Now()
+		s.TestGetBestMove()
+
+		times = append(times, time.Since(startTime))
+	}
+
+	for i, t := range times {
+		fmt.Printf("%v CPU: %v\n", i+1, t)
+	}
+
+	s.Require().Less(times[len(times)-1], times[0])
 }
