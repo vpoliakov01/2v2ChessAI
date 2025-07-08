@@ -137,3 +137,17 @@ func (b *Board) Move(move Move) {
 	b.Grid[move.To.Rank][move.To.File] = b.Grid[move.From.Rank][move.From.File]
 	b.Grid[move.From.Rank][move.From.File] = Piece(EmptySquare)
 }
+
+// Unmove undoes a move of a piece on the board.
+func (b *Board) Unmove(move Move, capturedPiece Piece) {
+	b.Grid[move.From.Rank][move.From.File] = b.Grid[move.To.Rank][move.To.File]
+	b.Grid[move.To.Rank][move.To.File] = capturedPiece
+
+	player := Piece(b.GetPiece(move.From)).Player()
+	b.PieceSquares[player][move.From] = struct{}{}
+	delete(b.PieceSquares[player], move.To)
+
+	if !capturedPiece.IsEmpty() {
+		b.PieceSquares[capturedPiece.Player()][move.To] = struct{}{}
+	}
+}

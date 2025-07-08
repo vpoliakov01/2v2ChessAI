@@ -48,11 +48,11 @@ func (g *Game) GetMoves() MoveMap {
 }
 
 // Play plays a move in the game.
-func (g *Game) Play(move Move) {
+func (g *Game) Play(move Move) Piece {
 	g.MoveMap = nil // After the move is played, MoveMap has to be recalculated.
 
-	if !g.Board.IsEmpty(move.To) {
-		capturedPiece := Piece(g.Board.GetPiece(move.To))
+	capturedPiece := Piece(g.Board.GetPiece(move.To))
+	if !capturedPiece.IsEmpty() {
 		if capturedPiece.Kind() == KindKing {
 			g.Winner = g.ActivePlayer.Team()
 		}
@@ -61,6 +61,22 @@ func (g *Game) Play(move Move) {
 	g.Board.Move(move)
 	g.ActivePlayer = (g.ActivePlayer + 1) % 4
 	g.MoveNumber++
+
+	return capturedPiece
+}
+
+// UnplayMove undoes a move in the game.
+func (g *Game) UnplayMove(move Move, capturedPiece Piece) {
+	g.MoveNumber--
+	g.ActivePlayer = (g.ActivePlayer + 3) % 4
+
+	g.Board.Unmove(move, capturedPiece)
+
+	if !capturedPiece.IsEmpty() && capturedPiece.Kind() == KindKing {
+		g.Winner = 0
+	}
+
+	g.MoveMap = nil
 }
 
 // HasKing checks if the player still has a king.

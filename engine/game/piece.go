@@ -9,7 +9,7 @@ import (
 const (
 	// Store the piece as ppkkk (last 3 bits specify the kind, 2 bits before them specify the player).
 	pieceBitOffset = 3
-	pieceBitMask   = 7 // 2^4-1.
+	pieceBitMask   = 7 // 00000111.
 )
 
 // PieceType defines functionality a piece should implement.

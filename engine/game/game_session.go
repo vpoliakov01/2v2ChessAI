@@ -21,11 +21,13 @@ func NewGameSession() *GameSession {
 }
 
 // Play plays a move in the game session.
-func (g *GameSession) Play(move Move) {
+func (g *GameSession) Play(move Move) Piece {
 	g.PastMoves = g.PastMoves[:g.CurrentMove+1]
-	g.Game.Play(move)
+	capturedPiece := g.Game.Play(move)
 	g.PastMoves = append(g.PastMoves, move)
 	g.CurrentMove++
+
+	return capturedPiece
 }
 
 // SetCurrentMove sets the current move index.
