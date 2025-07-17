@@ -5,7 +5,7 @@ import { Square, ScoreDisplay, PlayerIndicator } from './ChessBoardElements';
 import { useBoardStateContext } from '../context/BoardStateContext';
 
 export function ChessBoard() {
-  const { board, activePlayer, moves, availableMoves, selectedSquare, score, movePiece, setSelectedSquare } = useBoardStateContext();
+  const { board, activePlayer, moves, availableMoves, selectedSquare, score, movePiece, setSelectedSquare, displaySettings } = useBoardStateContext();
 
   const handleSquareClick = (row: number, col: number) => {
     const newPosition = {row, col};
@@ -35,6 +35,32 @@ export function ChessBoard() {
     higlightedSquares.push(...availableMoves.filter(m => positionsEqual(m.from, selectedSquare)).map(m => ({ ...m.to, color: activePlayer })));
   }
 
+  const getLabel = (row: number, col: number): string => {
+    const aCode = 'a'.charCodeAt(0);
+
+    const label = `${String.fromCharCode(aCode + col)}${BOARD_SIZE - row}`;
+
+    switch (displaySettings.showLabels) {
+      case 'all':
+        return label;
+      case 'border':
+        for (const [i, j] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+          if (board[row + i]?.[col + j] === undefined) {
+            return label;
+          }
+        }
+        return '';
+      case 'pieces':
+        return !!board[row][col] ? label : '';
+      case 'moves':
+        return !!board[row][col] || higlightedSquares.some(m => positionsEqual(m, {row, col})) ? label : '';
+      case 'moves+':
+        return !!board[row][col] || availableMoves.some(m => positionsEqual(m.to, {row, col})) ? label : '';
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className="board-container" style={{
       boxSizing: 'border-box',
@@ -60,7 +86,7 @@ export function ChessBoard() {
               display: 'flex',
               height: `${100 / BOARD_SIZE}%`
             }}>
-              {Array(BOARD_SIZE).fill(null).map((_, col) => (
+              {Array(BOARD_SIZE).fill(null).map((_, col) =>
                 <Square
                   key={`${row}-${col}`}
                   isPlayable={board[row][col] !== undefined}
@@ -68,9 +94,10 @@ export function ChessBoard() {
                   piece={board[row][col]}
                   higlighted={higlightedSquares.find(square => square.row === row && square.col === col)?.color ?? null}
                   possibleMove={!!selectedSquare && availableMoves.some(m => movesEqual(m, new Move(selectedSquare, {row, col})))}
+                  label={getLabel(row, col)}
                   onClick={() => handleSquareClick(row, col)}
                 />
-              ))}
+              )}
             </div>
           ))}
           <div className="center-marker" style={{

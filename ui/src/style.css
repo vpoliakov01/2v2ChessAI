@@ -14,9 +14,7 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: "Roboto", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -158,4 +156,17 @@ textarea:active, textarea:focus {
 .number-input-button:disabled {
   cursor: not-allowed;
   opacity: 0.9;
+}
+
+.collapsible-block:last-child {
+  margin-bottom: 0 !important;
+}
+
+.square-label {
+  font-size: 12px;
+  font-weight: bold;
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  color: var(--color-dark-gray);
 }

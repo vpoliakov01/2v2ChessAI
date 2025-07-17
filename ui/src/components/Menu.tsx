@@ -5,6 +5,7 @@ import { Message, MessageType } from '../ws';
 import { CollapsibleBlock, BORDER_RADIUS } from './CollapsibleBlock';
 import { MoveTable } from './MoveTable';
 import { Settings } from './Settings';
+import { DisplaySettings } from './DisplaySettings';
 
 export function Menu() {
   const { allMoves, currentMove, setCurrentMove, sendMessage } = useBoardStateContext();
@@ -47,7 +48,6 @@ export function Menu() {
       <div className="menu" style={{
         backgroundColor: colorCode(Color.DarkGray),
         boxSizing: 'border-box',
-        height: '100%',
         width: '100%',
         padding: 5,
         borderRadius: BORDER_RADIUS + 5,
@@ -82,6 +82,9 @@ export function Menu() {
         </CollapsibleBlock>
         <CollapsibleBlock header="Settings" collapsed={false}>
           <Settings />
+        </CollapsibleBlock>
+        <CollapsibleBlock header="Display Settings" collapsed={false}>
+          <DisplaySettings />
         </CollapsibleBlock>
         <CollapsibleBlock header="Moves" collapsed={false}>
           {allMoves.length > 0 && <MoveTable moves={allMoves} currentMove={currentMove} handleSetCurrentMove={handleSetCurrentMove} />}

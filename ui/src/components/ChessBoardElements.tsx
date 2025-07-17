@@ -8,10 +8,11 @@ interface SquareProps {
   piece: Piece | null | undefined;
   higlighted: Color | null;
   possibleMove: boolean;
+  label: string;
   onClick: () => void;
 }
 
-export function Square({ isPlayable, isLight, piece, higlighted, possibleMove, onClick }: SquareProps) {
+export function Square({ isPlayable, isLight, piece, higlighted, possibleMove, label, onClick }: SquareProps) {
   if (!isPlayable) {
     return <div style={{
       aspectRatio: '1',
@@ -73,13 +74,17 @@ export function Square({ isPlayable, isLight, piece, higlighted, possibleMove, o
         }} />
       )}
       {piece && (
-        <img 
+        <img
+          alt={`${pieceName[piece.type]}`}
           src={getPieceImage(piece)} 
           style={{
             pointerEvents: 'none',
             position: 'absolute',
           }}
         />
+      )}
+      {label && (
+        <span className="square-label">{label}</span>
       )}
     </div>
   );

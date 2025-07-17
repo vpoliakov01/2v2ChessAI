@@ -165,7 +165,7 @@ export function useBoardState() {
         'time'.padStart(6),
         'score'.padStart(9),
         'evals'.padStart(8),
-        'avg'.padStart(5),
+        'avg'.padStart(6),
       )
     };
 
