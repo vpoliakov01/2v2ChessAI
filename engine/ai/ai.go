@@ -23,12 +23,14 @@ type moveScore struct {
 
 // AI is the ai engine used for evaluating the position and picking the best move.
 type AI struct {
-	Depth        int
-	CaptureDepth int
-	EvalLimit    int
-	EvalsCount   int
+	Depth           int
+	CaptureDepth    int
+	EvalLimit       int
+	EvalsCount      int
+	BestMoveIndexes []AvgAcc
 
-	evalsCountCh chan int
+	evalsCountCh      chan int
+	bestMoveIndexesCh chan BestMoveIndexes
 }
 
 func init() {
@@ -43,16 +45,31 @@ func New(depth, captureDepth, evalLimit int) *AI {
 	}
 
 	ai := &AI{
-		Depth:        depth,
-		CaptureDepth: captureDepth,
-		EvalsCount:   0,
-		EvalLimit:    evalLimit,
-		evalsCountCh: make(chan int),
+		Depth:           depth,
+		CaptureDepth:    captureDepth,
+		EvalsCount:      0,
+		EvalLimit:       evalLimit,
+		BestMoveIndexes: make([]AvgAcc, 20),
+
+		evalsCountCh:      make(chan int),
+		bestMoveIndexesCh: make(chan BestMoveIndexes),
 	}
 
 	go func() {
 		for {
 			ai.EvalsCount += <-ai.evalsCountCh
+		}
+	}()
+
+	go func() {
+		for {
+			data := <-ai.bestMoveIndexesCh
+			ai.BestMoveIndexes[data.Depth].Count += 1
+			ai.BestMoveIndexes[data.Depth].IndexSum += data.MoveIndex
+			if data.MoveIndex > ai.BestMoveIndexes[data.Depth].MaxIndex {
+				ai.BestMoveIndexes[data.Depth].MaxIndex = data.MoveIndex
+			}
+			ai.BestMoveIndexes[data.Depth].TotalMoves += data.TotalMoves
 		}
 	}()
 
@@ -85,6 +102,11 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextM
 	// In 2v2 chess king capture is actually possible since teammate A can
 	// unblock the path between a teammate's B piece and the opponent's king.
 	if g.HasEnded() {
+		ai.bestMoveIndexesCh <- BestMoveIndexes{
+			Depth:      depth,
+			MoveIndex:  0,
+			TotalMoves: 1,
+		}
 		return nil, float64(-1001 + depth)
 	}
 
@@ -123,17 +145,14 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextM
 	// Sort to process "immediately stronger" moves first.
 	// Strongest moves are the weakest for the opponent (lowest score).
 	sort.Slice(moves, func(a, b int) bool {
-		if !g.Board.GetPiece(moves[a].To).IsEmpty() && g.Board.GetPiece(moves[b].To).IsEmpty() {
-			return true
-		}
-		if g.Board.GetPiece(moves[a].To).IsEmpty() && !g.Board.GetPiece(moves[b].To).IsEmpty() {
-			return false
-		}
-
 		return moveEvalEstimates[moves[a]].score > moveEvalEstimates[moves[b]].score
 	})
 
-	for i := range moves {
+	nextMoveIndex := 0
+
+	numMovesToCheck := getNumMovesToCheck(len(moves), depth, ai.Depth, ai.CaptureDepth)
+
+	for i := range moves[:numMovesToCheck] {
 		score := moveEvalEstimates[moves[i]].score
 		if depth < ai.CaptureDepth && ai.EvalsCount < ai.EvalLimit {
 			gameCopy := g.Copy()
@@ -146,16 +165,49 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextM
 		// any other move, we can assume that the opponent will not play this move,
 		// so we can stop evaluating this branch.
 		if score >= beta {
+			ai.bestMoveIndexesCh <- BestMoveIndexes{
+				Depth:      depth,
+				MoveIndex:  i,
+				TotalMoves: len(moves),
+			}
 			return &moves[i], beta
 		}
 
 		if score > alpha {
 			alpha = score
-			nextMove = &moves[i]
+			nextMoveIndex = i
 		}
 	}
 
-	return nextMove, alpha
+	ai.bestMoveIndexesCh <- BestMoveIndexes{
+		Depth:      depth,
+		MoveIndex:  nextMoveIndex,
+		TotalMoves: len(moves),
+	}
+	return &moves[nextMoveIndex], alpha
+}
+
+// getNumMovesToCheck returns the number of most promising moves to check.
+// The idea is to ignore moves that look bad to begin with.
+func getNumMovesToCheck(numMoves, depth, depthLimit, captureDepthLimit int) int {
+	if depth >= depthLimit {
+		n := 3
+		if captureDepthLimit-depth >= 4 {
+			return numMoves
+		}
+		if numMoves < n {
+			return numMoves
+		}
+		return n
+	}
+
+	if depth >= 3 {
+		return numMoves / 4
+	} else if depth >= 2 {
+		return numMoves / 2
+	} else {
+		return numMoves
+	}
 }
 
 // EvaluateCurrent returns the difference between strengths of the team making the move and the other team.
@@ -168,12 +220,13 @@ func (ai *AI) EvaluateCurrent(g *game.Game) float64 {
 		piecesLeft += len(g.Board.PieceSquares[player])
 	}
 
-	numMoves := len(g.GetMoves().Flatten())
+	moves := g.GetMoves()
 
 	// For each piece, run piece strength evaluation.
 	for player := range g.Board.PieceSquares {
 		for square := range g.Board.PieceSquares[player] {
 			piece := game.Piece(g.Board.GetPiece(square)).PieceType()
+			numMoves := len(moves[square])
 			playerStrengths[player] += piece.GetStrength(g.Board, numMoves, square, piecesLeft)
 		}
 	}

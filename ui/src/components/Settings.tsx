@@ -9,7 +9,7 @@ export function Settings() {
   const { sendMessage } = useBoardStateContext();
   const [settings, setSettings] = useState<GameSettings>({
     humanPlayers: [0, 2],
-    depth: 3,
+    depth: 6,
     captureDepth: 8,
     evalLimit: 0,
   });
