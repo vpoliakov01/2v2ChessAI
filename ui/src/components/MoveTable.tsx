@@ -10,7 +10,7 @@ interface MoveTableProps {
 }
 
 export function MoveTable({moves, currentMove, handleSetCurrentMove}: MoveTableProps) {
-  const { setHoveredMove } = useBoardStateContext();
+  const { displaySettings, setHoveredMove } = useBoardStateContext();
   const toPGN = (move: Move) => {
     const toFile = (col: number) => String.fromCharCode(col + 'a'.charCodeAt(0));
     const toRank = (row: number) => BOARD_SIZE - row;
@@ -31,6 +31,35 @@ export function MoveTable({moves, currentMove, handleSetCurrentMove}: MoveTableP
     };
   }, [moves, currentMove, handleSetCurrentMove]);
 
+  const handleMouseEnter = (moveIndex: number) => {
+    switch (displaySettings.onMoveHover) {
+      case 'arrow':
+      case 'highlight':
+        setHoveredMove({ move: moves[moveIndex], color: PlayerColors[moveIndex % 4] });
+        break;
+      case 'set board':
+        handleSetCurrentMove(moveIndex);
+        break;
+      case 'none':
+        setHoveredMove(null);
+        break;
+    }
+  }
+
+  const handleMouseLeave = (moveIndex: number) => {
+    switch (displaySettings.onMoveHover) {
+      case 'arrow':
+      case 'highlight':
+        setHoveredMove(null);
+        break;
+      case 'set board':
+        // Handled onMouseLeave the table.
+        break;
+      case 'none':
+        break;
+    }
+  }
+
   const rows = [];
   for (let i = 0; i < moves.length; i += 4) {
     const cells = Array.from({length: 4}).map((_, j) => (
@@ -39,8 +68,8 @@ export function MoveTable({moves, currentMove, handleSetCurrentMove}: MoveTableP
           className={`move-cell ${i + j === currentMove ? 'current-move' : ''}`}
           key={`${i}-${toPGN(moves[i+j])}`}
           onClick={() => handleSetCurrentMove(i + j)}
-          onMouseEnter={() => setHoveredMove({ move: moves[i + j], color: PlayerColors[(i + j) % 4] })}
-          onMouseLeave={() => setHoveredMove(null)}
+          onMouseEnter={() => handleMouseEnter(i + j)}
+          onMouseLeave={() => handleMouseLeave(i + j)}
         >
           {toPGN(moves[i+j])}
         </td>
@@ -60,7 +89,9 @@ export function MoveTable({moves, currentMove, handleSetCurrentMove}: MoveTableP
     <table id="move-table" style={{
       width: '100%',
       marginTop: 10,
-    }}>
+    }}
+    onMouseLeave={() => handleSetCurrentMove(moves.length - 1)}
+    >
       <thead>
         {rows}
       </thead>

@@ -50,6 +50,8 @@ Some more positions reached by the engine playing itself:
 * Add more settings
 * Refactor context / state management (?)
 * Disable selected piece on re-clicking that piece
+* Organize css per component + move unnecessary html styles there
+* Store the settings in local storage
 
 ### Engine:
 * Support castling

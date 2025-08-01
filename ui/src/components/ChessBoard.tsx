@@ -7,6 +7,29 @@ import { useBoardStateContext } from '../context/BoardStateContext';
 export function ChessBoard() {
   const { board, activePlayer, moves, availableMoves, selectedSquare, score, movePiece, setSelectedSquare, displaySettings, hoveredMove } = useBoardStateContext();
 
+  let higlightedSquares: {row: number, col: number, color: Color}[] = [];
+  for (let i = moves.length - 1; i >= 0 && i > moves.length - 5; i--) {
+    const move = moves[i];
+    if (move?.piece) {
+      higlightedSquares.push({ ...move.from, color: move.piece.color});
+      higlightedSquares.push({ ...move.to, color: move.piece.color});
+    }
+  }
+
+  if (selectedSquare) {
+    higlightedSquares.push({ ...selectedSquare, color: activePlayer });
+    higlightedSquares.push(...availableMoves.filter(m => positionsEqual(m.from, selectedSquare)).map(m => ({ ...m.to, color: activePlayer })));
+  }
+
+  if (hoveredMove) {
+    if (displaySettings.onMoveHover === 'highlight') {
+      higlightedSquares.push({ ...hoveredMove.move.from, color: hoveredMove.color });
+      higlightedSquares.push({ ...hoveredMove.move.to, color: hoveredMove.color });
+    } else if (displaySettings.onMoveHover === 'arrow') {
+      // TODO: Highlight the arrow.
+    }
+  }
+
   const handleSquareClick = (row: number, col: number) => {
     const newPosition = {row, col};
     if (board[row][col] === undefined) return;
@@ -21,23 +44,6 @@ export function ChessBoard() {
       setSelectedSquare(newPosition);
     }
   };
-
-  let higlightedSquares: {row: number, col: number, color: Color}[] = [];
-  for (let i = moves.length - 1; i >= 0 && i > moves.length - 5; i--) {
-    const move = moves[i];
-    if (move?.piece) {
-      higlightedSquares.push({ ...move.from, color: move.piece.color});
-      higlightedSquares.push({ ...move.to, color: move.piece.color});
-    }
-  }
-  if (selectedSquare) {
-    higlightedSquares.push({ ...selectedSquare, color: activePlayer });
-    higlightedSquares.push(...availableMoves.filter(m => positionsEqual(m.from, selectedSquare)).map(m => ({ ...m.to, color: activePlayer })));
-  }
-  if (hoveredMove) {
-    higlightedSquares.push({ ...hoveredMove.move.from, color: hoveredMove.color });
-    higlightedSquares.push({ ...hoveredMove.move.to, color: hoveredMove.color });
-  }
 
   const getLabel = (row: number, col: number): string => {
     const aCode = 'a'.charCodeAt(0);

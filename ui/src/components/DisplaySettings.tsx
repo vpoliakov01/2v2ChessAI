@@ -1,16 +1,25 @@
 import React from 'react';
 import { useBoardStateContext } from '../context/BoardStateContext';
 
-type ShowLabels = 'all' | 'border' | 'pieces' | 'moves' | 'moves+' | 'none';
+const showLabelsOptions = ['all', 'border', 'pieces', 'moves', 'moves+', 'none'] as const;
+const onMoveHoverOptions = ['set board', 'arrow', 'highlight', 'none'] as const;
+
+type ShowLabels = typeof showLabelsOptions[number];
+type OnMoveHover = typeof onMoveHoverOptions[number];
+
 export interface DisplaySettingsState {
   showLabels: ShowLabels;
+  onMoveHover: OnMoveHover;
 }
-
-const showLabelsOptions: ShowLabels[] = ['all', 'border', 'pieces', 'moves', 'moves+', 'none'];
 
 export const defaultDisplaySettings: DisplaySettingsState = {
   showLabels: 'moves',
+  onMoveHover: 'set board',
 };
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 export function DisplaySettings() {
   const { displaySettings, setDisplaySettings } = useBoardStateContext();
@@ -26,9 +35,25 @@ export function DisplaySettings() {
             <tr>
               <td>Show labels:</td>
               <td>
-                <select value={displaySettings.showLabels} onChange={(e) => setDisplaySettings({ ...displaySettings, showLabels: e.target.value as ShowLabels })}>
+                <select
+                  value={displaySettings.showLabels}
+                  onChange={(e) => setDisplaySettings({ ...displaySettings, showLabels: e.target.value as ShowLabels })}
+                >
                   {showLabelsOptions.map(option => (
-                    <option value={option}>{option.charAt(0).toUpperCase() + option.slice(1)}</option>
+                    <option key={option} value={option}>{capitalize(option)}</option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td>On move hover:</td>
+              <td>
+                <select
+                  value={displaySettings.onMoveHover}
+                  onChange={(e) => setDisplaySettings({ ...displaySettings, onMoveHover: e.target.value as OnMoveHover })}
+                >
+                  {onMoveHoverOptions.map(option => (
+                    <option key={option} value={option}>{capitalize(option)}</option>
                   ))}
                 </select>
               </td>
