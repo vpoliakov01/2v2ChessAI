@@ -44,9 +44,12 @@ Some more positions reached by the engine playing itself:
 
 ## TODO:
 ### UI:
-* Add square highlighting on table move hover
+* Add support for arrows
+    * On table move hover
+    * On right clicks
 * Add more settings
 * Refactor context / state management (?)
+* Disable selected piece on re-clicking that piece
 
 ### Engine:
 * Support castling
@@ -58,3 +61,4 @@ Some more positions reached by the engine playing itself:
 ### Other:
 * Dockerize (1 for ui, 1 for the engine)
 * UI/Engine desync handling
+* Update readme

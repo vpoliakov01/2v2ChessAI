@@ -5,7 +5,7 @@ import { Square, ScoreDisplay, PlayerIndicator } from './ChessBoardElements';
 import { useBoardStateContext } from '../context/BoardStateContext';
 
 export function ChessBoard() {
-  const { board, activePlayer, moves, availableMoves, selectedSquare, score, movePiece, setSelectedSquare, displaySettings } = useBoardStateContext();
+  const { board, activePlayer, moves, availableMoves, selectedSquare, score, movePiece, setSelectedSquare, displaySettings, hoveredMove } = useBoardStateContext();
 
   const handleSquareClick = (row: number, col: number) => {
     const newPosition = {row, col};
@@ -33,6 +33,10 @@ export function ChessBoard() {
   if (selectedSquare) {
     higlightedSquares.push({ ...selectedSquare, color: activePlayer });
     higlightedSquares.push(...availableMoves.filter(m => positionsEqual(m.from, selectedSquare)).map(m => ({ ...m.to, color: activePlayer })));
+  }
+  if (hoveredMove) {
+    higlightedSquares.push({ ...hoveredMove.move.from, color: hoveredMove.color });
+    higlightedSquares.push({ ...hoveredMove.move.to, color: hoveredMove.color });
   }
 
   const getLabel = (row: number, col: number): string => {

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { Move } from '../common';
+import { Color, Move, PlayerColors } from '../common';
 import { BOARD_SIZE } from '../common';
+import { useBoardStateContext } from '../context/BoardStateContext';
 
 interface MoveTableProps {
   moves: Move[];
@@ -9,6 +10,7 @@ interface MoveTableProps {
 }
 
 export function MoveTable({moves, currentMove, handleSetCurrentMove}: MoveTableProps) {
+  const { setHoveredMove } = useBoardStateContext();
   const toPGN = (move: Move) => {
     const toFile = (col: number) => String.fromCharCode(col + 'a'.charCodeAt(0));
     const toRank = (row: number) => BOARD_SIZE - row;
@@ -37,6 +39,8 @@ export function MoveTable({moves, currentMove, handleSetCurrentMove}: MoveTableP
           className={`move-cell ${i + j === currentMove ? 'current-move' : ''}`}
           key={`${i}-${toPGN(moves[i+j])}`}
           onClick={() => handleSetCurrentMove(i + j)}
+          onMouseEnter={() => setHoveredMove({ move: moves[i + j], color: PlayerColors[(i + j) % 4] })}
+          onMouseLeave={() => setHoveredMove(null)}
         >
           {toPGN(moves[i+j])}
         </td>
