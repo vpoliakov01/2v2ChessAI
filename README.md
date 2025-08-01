@@ -44,9 +44,7 @@ Some more positions reached by the engine playing itself:
 
 ## TODO:
 ### UI:
-* Set proper defaults
 * Add square highlighting on table move hover
-* Add a custom selector component and use it for label settings
 * Add more settings
 * Refactor context / state management (?)
 

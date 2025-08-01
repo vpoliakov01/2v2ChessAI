@@ -9,7 +9,7 @@ export interface DisplaySettingsState {
 const showLabelsOptions: ShowLabels[] = ['all', 'border', 'pieces', 'moves', 'moves+', 'none'];
 
 export const defaultDisplaySettings: DisplaySettingsState = {
-  showLabels: 'border',
+  showLabels: 'moves',
 };
 
 export function DisplaySettings() {
