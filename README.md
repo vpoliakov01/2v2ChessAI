@@ -41,3 +41,22 @@ Some more positions reached by the engine playing itself:
 
 ## To play against the AI:
 `go build -o cmd/ai cmd/main.go && ./cmd/ai`
+
+## TODO:
+### UI:
+* Set proper defaults
+* Add square highlighting on table move hover
+* Add a custom selector component and use it for label settings
+* Add more settings
+* Refactor context / state management (?)
+
+### Engine:
+* Support castling
+* Support forced calculation for checks
+* Test with very sophisticated position evaluation
+    * Fully tune piece position strength
+    * Incorporate threat / liability
+
+### Other:
+* Dockerize (1 for ui, 1 for the engine)
+* UI/Engine desync handling
