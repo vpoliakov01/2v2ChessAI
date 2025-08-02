@@ -1,0 +1,13 @@
+.scoreDisplay {
+  width: 20px;
+  margin-right: 10px;
+  position: relative;
+}
+
+.scoreBarBlue {
+  /* Dynamic height will be set inline */
+}
+
+.scoreBarRed {
+  /* Dynamic height and background color will be set inline */
+}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './NumberInput.module.css';
 
 interface NumberInputProps {
   value: number;
@@ -63,10 +64,10 @@ export function NumberInput({ value, onChange, min = 0, max = Infinity, step = 1
   };
 
   return (
-    <div className="number-input-container">
-      <div className="number-input-controls">
-        {!disableButtons && <button 
-          className="number-input-button" 
+    <div className={styles.numberInputContainer}>
+      <div className={styles.numberInputControls}>
+        {!disableButtons && <button
+          className={styles.numberInputButton}
           onClick={decrement}
           disabled={value <= min}
         >
@@ -79,16 +80,15 @@ export function NumberInput({ value, onChange, min = 0, max = Infinity, step = 1
           onFocus={handleFocus}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
-          className="number-input-display"
+          className={`${styles.numberInputDisplay} ${disableButtons ? styles.numberInputDisplayDisabled : ''}`}
           style={{
-              width,
-              borderRadius: disableButtons ? '5px' : 0,
+            width,
           }}
           disabled={!editable}
           onWheel={(e) => e.currentTarget.blur()}
         />
-        {!disableButtons && <button 
-          className="number-input-button"
+        {!disableButtons && <button
+          className={styles.numberInputButton}
           onClick={increment}
           disabled={value >= max}
         >

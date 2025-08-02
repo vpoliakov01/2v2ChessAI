@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Color, colorCode, movesToPGN } from '../common';
-import { useBoardStateContext } from '../context/BoardStateContext';
-import { Message, MessageType } from '../ws';
-import { CollapsibleBlock, BORDER_RADIUS } from './CollapsibleBlock';
-import { MoveTable } from './MoveTable';
-import { Settings } from './Settings';
-import { DisplaySettings } from './DisplaySettings';
+import { Color, colorCode, movesToPGN } from '../../common';
+import { useBoardStateContext } from '../../context/BoardStateContext';
+import { Message, MessageType } from '../../ws';
+import { CollapsibleBlock, BORDER_RADIUS } from '../CollapsibleBlock';
+import { MoveTable } from '../MoveTable';
+import { Settings } from '../Settings';
+import { DisplaySettings } from '../DisplaySettings';
 
 export function Menu() {
   const { allMoves, currentMove, setCurrentMove, sendMessage } = useBoardStateContext();

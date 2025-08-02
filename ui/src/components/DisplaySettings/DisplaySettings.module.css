@@ -1,0 +1,13 @@
+.displaySettings {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.settingsTable {
+  /* Settings table container */
+}
+
+.settingsTable td {
+  text-align: right;
+  padding: 5px;
+}

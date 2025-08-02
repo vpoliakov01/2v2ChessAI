@@ -1,5 +1,5 @@
 import React from 'react';
-import { Color, colorCode } from '../common';
+import { Color, colorCode } from '../../common';
 
 interface CheckboxProps {
   background: string;

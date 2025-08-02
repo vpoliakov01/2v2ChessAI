@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Message, MessageType, GameSettings } from '../ws';
-import { useBoardStateContext } from '../context/BoardStateContext';
-import { Color, PlayerColors, colorCode } from '../common';
-import { Checkbox } from './Checkbox';
-import { NumberInput } from './NumberInput';
+import { Message, MessageType, GameSettings } from '../../ws';
+import { useBoardStateContext } from '../../context/BoardStateContext';
+import { Color, PlayerColors, colorCode } from '../../common';
+import { Checkbox } from '../Checkbox';
+import { NumberInput } from '../NumberInput';
+import styles from './Settings.module.css';
 
 export function Settings() {
   const { sendMessage } = useBoardStateContext();
@@ -17,17 +18,10 @@ export function Settings() {
   useEffect(() => {
     sendMessage(new Message(MessageType.SetSettings, settings));
   }, [settings, sendMessage]);
-  
+
   return (
-    <div id="settings" style={{
-      width: '100%',
-      marginTop: 10,
-    }}>
-      <div className="settings-row" style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-      }}>
+    <div id="settings" className={styles.settingsContainer}>
+      <div className={styles.settingsRow}>
         <label>Human Players:</label>
         <div style={{ display: 'flex', gap: '5px' }}>
           {PlayerColors.map(color => (
@@ -64,7 +58,7 @@ export function Settings() {
           />
         </div>
       </div>
-      <div id="settings-table">
+      <div className={styles.settingsTable}>
         <table>
           <tbody>
             <tr>

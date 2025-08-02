@@ -1,8 +1,10 @@
 import React from 'react';
 
-import { BOARD_SIZE, Color, Move, movesEqual, positionsEqual } from '../common';
-import { Square, ScoreDisplay, PlayerIndicator } from './ChessBoardElements';
-import { useBoardStateContext } from '../context/BoardStateContext';
+import { BOARD_SIZE, Color, Move, movesEqual, positionsEqual } from '../../common';
+import { Square } from '../Square';
+import { ScoreDisplay } from '../ScoreDisplay';
+import { PlayerIndicator } from '../PlayerIndicator';
+import { useBoardStateContext } from '../../context/BoardStateContext';
 
 export function ChessBoard() {
   const { board, activePlayer, moves, availableMoves, selectedSquare, score, movePiece, setSelectedSquare, displaySettings, hoveredMove } = useBoardStateContext();

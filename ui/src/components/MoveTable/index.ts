@@ -1,0 +1,1 @@
+export { MoveTable } from './MoveTable';

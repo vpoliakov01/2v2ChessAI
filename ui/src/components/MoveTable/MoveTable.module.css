@@ -1,0 +1,45 @@
+.moveTable {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.moveCell {
+  width: 85px;
+  text-align: left;
+  padding: 5px;
+  border-radius: 2px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.moveCell:hover {
+  background-color: var(--color-dark-gray);
+}
+
+.currentMove {
+  background-color: var(--color-dark-gray);
+}
+
+.moveNumber {
+  width: 20px;
+  text-align: left;
+  padding: 5px;
+  border-radius: 2px;
+}
+
+/* Player colors */
+.moveCell:nth-child(2) {
+  color: var(--color-red);
+}
+
+.moveCell:nth-child(3) {
+  color: var(--color-blue);
+}
+
+.moveCell:nth-child(4) {
+  color: var(--color-yellow);
+}
+
+.moveCell:nth-child(5) {
+  color: var(--color-green);
+}

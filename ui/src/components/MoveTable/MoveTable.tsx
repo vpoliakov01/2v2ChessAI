@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { Color, Move, PlayerColors } from '../common';
-import { BOARD_SIZE } from '../common';
-import { useBoardStateContext } from '../context/BoardStateContext';
+import { Move, PlayerColors } from '../../common';
+import { BOARD_SIZE } from '../../common';
+import { useBoardStateContext } from '../../context/BoardStateContext';
+import styles from './MoveTable.module.css';
 
 interface MoveTableProps {
   moves: Move[];
@@ -65,7 +66,7 @@ export function MoveTable({moves, currentMove, handleSetCurrentMove}: MoveTableP
     const cells = Array.from({length: 4}).map((_, j) => (
       i + j < moves.length ? (
         <td
-          className={`move-cell ${i + j === currentMove ? 'current-move' : ''}`}
+          className={`${styles.moveCell} ${i + j === currentMove ? styles.currentMove : ''}`}
           key={`${i}-${toPGN(moves[i+j])}`}
           onClick={() => handleSetCurrentMove(i + j)}
           onMouseEnter={() => handleMouseEnter(i + j)}
@@ -79,19 +80,16 @@ export function MoveTable({moves, currentMove, handleSetCurrentMove}: MoveTableP
     ));
     rows.push(
       <tr key={`${i / 4 + 1}-row`}>
-        <td className="move-number" key={`${i}-number`}>{i / 4 + 1}.</td>
+        <td className={styles.moveNumber} key={`${i}-number`}>{i / 4 + 1}.</td>
         {cells}
       </tr>
     );
   }
 
   return (
-    <table id="move-table" style={{
-      width: '100%',
-      marginTop: 10,
-    }}
-    onMouseLeave={() => handleSetCurrentMove(moves.length - 1)}
-    >
+        <table className={styles.moveTable}
+     onMouseLeave={() => handleSetCurrentMove(moves.length - 1)}
+     >
       <thead>
         {rows}
       </thead>

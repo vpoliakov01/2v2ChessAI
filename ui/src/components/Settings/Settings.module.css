@@ -1,0 +1,23 @@
+/* Settings component styles */
+
+.settingsContainer {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.settingsTable {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.settingsRow {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.settingsTable td {
+    text-align: right;
+    padding: 5px;
+}

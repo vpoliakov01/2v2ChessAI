@@ -1,5 +1,6 @@
 import React from 'react';
-import { useBoardStateContext } from '../context/BoardStateContext';
+import { useBoardStateContext } from '../../context/BoardStateContext';
+import styles from './DisplaySettings.module.css';
 
 const showLabelsOptions = ['all', 'border', 'pieces', 'moves', 'moves+', 'none'] as const;
 const onMoveHoverOptions = ['set board', 'arrow', 'highlight', 'none'] as const;
@@ -25,11 +26,8 @@ export function DisplaySettings() {
   const { displaySettings, setDisplaySettings } = useBoardStateContext();
 
   return (
-    <div id="display-settings" style={{
-      width: '100%',
-      marginTop: 10,
-    }}>
-      <div id="settings-table">
+    <div className={styles.displaySettings}>
+      <div className={styles.settingsTable}>
         <table>
           <tbody>
             <tr>
