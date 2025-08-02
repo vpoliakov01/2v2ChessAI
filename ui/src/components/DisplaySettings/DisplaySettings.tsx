@@ -15,7 +15,7 @@ export interface DisplaySettingsState {
 
 export const defaultDisplaySettings: DisplaySettingsState = {
   showLabels: 'moves',
-  onMoveHover: 'set board',
+  onMoveHover: 'arrow',
 };
 
 function capitalize(s: string): string {

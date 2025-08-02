@@ -1,1 +1,1 @@
-export { CollapsibleBlock, BORDER_RADIUS } from './CollapsibleBlock';
+export { CollapsibleBlock } from './CollapsibleBlock';

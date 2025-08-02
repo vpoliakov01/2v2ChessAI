@@ -26,7 +26,7 @@
 }
 
 .numberInputDisplayDisabled {
-  border-radius: 5px;
+  border-radius: var(--border-radius-small);
 }
 
 .numberInputDisplay:focus {
@@ -44,11 +44,11 @@
 }
 
 .numberInputButton:first-child {
-  border-radius: 5px 0 0 5px;
+  border-radius: var(--border-radius-small) 0 0 var(--border-radius-small);
 }
 
 .numberInputButton:last-child {
-  border-radius: 0 5px 5px 0;
+  border-radius: 0 var(--border-radius-small) var(--border-radius-small) 0;
 }
 
 .numberInputButton:hover:first-child:not(:disabled) {

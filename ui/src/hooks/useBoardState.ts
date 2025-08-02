@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Color, PlayerColors, Piece, PieceType, Position, MoveInfo, Move, movesEqual, BOARD_SIZE, CORNER_SIZE, PGNMove, formatNumber } from '../common';
 import { MessageType, Message, BestMoveResponse, SaveGameResponse, LoadGameResponse } from '../ws';
 
+import { ArrowProps } from '../components/Arrow';
+
 export type BoardPosition = (Piece | null | undefined)[][];
 
 // Initialize the 14x14 board with cut corners
@@ -79,6 +81,10 @@ export function useBoardState() {
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
   const [score, setScore] = useState<number>(0);
   const [pgn, setPgn] = useState<string>('');
+  const [drawnArrows, setDrawnArrows] = useState<ArrowProps[]>([]);
+  const [isDrawingArrow, setIsDrawingArrow] = useState<boolean>(false);
+  const [arrowStart, setArrowStart] = useState<Position | null>(null);
+  const [arrowEnd, setArrowEnd] = useState<Position | null>(null);
   const moves = allMoves.slice(0, currentMove + 1);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -99,6 +105,10 @@ export function useBoardState() {
     setPgn('');
     setScore(0);
     setCurrentMove(-1);
+    setDrawnArrows([]);
+    setIsDrawingArrow(false);
+    setArrowStart(null);
+    setArrowEnd(null);
     // Do not setAllMoves.
   }
 
@@ -106,12 +116,12 @@ export function useBoardState() {
     resetBoard();
     const newMoves = [];
     let newBoard = createEmptyBoard();
-    
+
     const lastMoveIndex = Math.min(currentMove, pastMoves.length - 1);
 
     for (let i = 0; i < pastMoves.length; i++) {
       const move = pastMoves[i];
-      const {from, to} = move;
+      const { from, to } = move;
       newMoves.push(new MoveInfo(from, to, newBoard[from.row][from.col]!, newBoard[to.row][to.col] ?? null));
       newBoard[to.row][to.col] = newBoard[from.row][from.col];
       newBoard[from.row][from.col] = null;
@@ -131,7 +141,7 @@ export function useBoardState() {
   }, [availableMoves]);
 
   const movePiece = useCallback((move: Move, playerMove: boolean = false) => {
-    const {from, to} = move;
+    const { from, to } = move;
 
     if (playerMove && wsRef.current) {
       if (!isValidMove(move)) {
@@ -143,6 +153,10 @@ export function useBoardState() {
 
     setAllMoves([...moves, new MoveInfo(from, to, board[from.row][from.col]!, board[to.row][to.col] ?? null)]);
 
+    if (currentMove < moves.length - 1 && !playerMove) { // Engine move during game review.
+      return true;
+    }
+
     setCurrentMove(currentMove + 1);
 
     const newBoard = [...board.map(row => [...row])];
@@ -153,6 +167,57 @@ export function useBoardState() {
     setActivePlayer(PlayerColors[(PlayerColors.indexOf(activePlayer) + 1) % PlayerColors.length]);
     return true;
   }, [board, isValidMove, moves, activePlayer, currentMove, sendMessage]);
+
+  // Arrow drawing functions
+  const handleSquareRightMouseDown = useCallback((position: Position) => {
+    setIsDrawingArrow(true);
+    setArrowStart(position);
+    setArrowEnd(position);
+  }, []);
+
+  const handleSquareMouseEnter = useCallback((position: Position) => {
+    if (isDrawingArrow) {
+      setArrowEnd(position);
+    }
+  }, [isDrawingArrow]);
+
+  const handleSquareRightMouseUp = useCallback((position: Position) => {
+    if (!isDrawingArrow || !arrowStart) {
+      return;
+    }
+
+    const newArrow: ArrowProps = {
+      from: arrowStart,
+      to: position,
+      color: activePlayer
+    };
+
+    // If the new arrow is the same as any existing arrow,
+    // erase the old one instead of adding a new one.
+    setDrawnArrows(arrows => {
+      const existingIndex = arrows.findIndex(arrow =>
+        arrow.from.row === newArrow.from.row &&
+        arrow.from.col === newArrow.from.col &&
+        arrow.to.row === newArrow.to.row &&
+        arrow.to.col === newArrow.to.col
+      );
+
+      if (existingIndex === -1) {
+        return [...arrows, newArrow];
+      }
+
+      return arrows.filter((_, index) => index !== existingIndex);
+    });
+
+    setIsDrawingArrow(false);
+    setArrowStart(null);
+    setArrowEnd(null);
+  }, [isDrawingArrow, arrowStart, activePlayer]);
+
+  const handleSquareLeftClick = useCallback(() => {
+    // Clear all arrows on left click
+    setDrawnArrows([]);
+  }, []);
 
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8080/ws');
@@ -226,10 +291,18 @@ export function useBoardState() {
     pgn,
     score,
     selectedSquare,
+    drawnArrows,
+    isDrawingArrow,
+    arrowStart,
+    arrowEnd,
     setCurrentMove,
     movePiece,
     setPgn,
     setSelectedSquare,
     sendMessage,
+    handleSquareRightMouseDown,
+    handleSquareMouseEnter,
+    handleSquareRightMouseUp,
+    handleSquareLeftClick,
   };
 } 

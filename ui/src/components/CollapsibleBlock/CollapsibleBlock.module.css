@@ -1,6 +1,7 @@
 .collapsibleBlock {
   margin-bottom: 5px;
   width: 100%;
+  border-radius: var(--border-radius);
 }
 
 .collapsibleBlock:last-child {

@@ -1,1 +1,32 @@
-/* Menu component styles */
+.menuContainer {
+    box-sizing: border-box;
+    height: 100%;
+    padding: 10px;
+    position: relative;
+    width: 420px;
+}
+
+.menu {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 5px;
+    background-color: var(--color-dark-gray);
+    border-radius: var(--border-radius-large);
+}
+
+.buttonGroup {
+    display: flex;
+    gap: 10px;
+}
+
+.gameTextarea {
+    box-sizing: border-box;
+    color: var(--color-gray);
+    font-size: 15px;
+    min-height: 100px;
+    padding: 10px;
+    resize: vertical;
+    width: 100%;
+    background-color: var(--color-black);
+    border-radius: var(--border-radius-small);
+}

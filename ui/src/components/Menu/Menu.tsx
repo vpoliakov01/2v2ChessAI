@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Color, colorCode, movesToPGN } from '../../common';
+import { movesToPGN } from '../../common';
 import { useBoardStateContext } from '../../context/BoardStateContext';
 import { Message, MessageType } from '../../ws';
-import { CollapsibleBlock, BORDER_RADIUS } from '../CollapsibleBlock';
+import { CollapsibleBlock } from '../CollapsibleBlock';
 import { MoveTable } from '../MoveTable';
 import { Settings } from '../Settings';
 import { DisplaySettings } from '../DisplaySettings';
+import styles from './Menu.module.css';
 
 export function Menu() {
   const { allMoves, currentMove, setCurrentMove, sendMessage } = useBoardStateContext();
@@ -38,47 +39,24 @@ export function Menu() {
   }
 
   return (
-    <div className="menu-container" style={{
-      boxSizing: 'border-box',
-      height: '100%',
-      padding: 10,
-      position: 'relative',
-      width: 420,
-    }}>
-      <div className="menu" style={{
-        backgroundColor: colorCode(Color.DarkGray),
-        boxSizing: 'border-box',
-        width: '100%',
-        padding: 5,
-        borderRadius: BORDER_RADIUS + 5,
-      }}>
-        <CollapsibleBlock 
+    <div className={styles.menuContainer}>
+      <div className={styles.menu}>
+        <CollapsibleBlock
           collapsed={pgnBlockCollapsed}
           header={
-            <div style={{
-              display: 'flex',
-              gap: 10,
-            }}>
+            <div className={styles.buttonGroup}>
               <button id="button-new-game" onClick={handleNewGame}>New Game</button>
               <button id="button-copy" onClick={handleCopy}>Copy</button>
               <button id="button-load" onClick={handleLoad}>Load</button>
             </div>
           }>
-          <textarea id="game-save-text"
+          <textarea
+            id="game-save-text"
             value={pgn}
             onChange={(e) => setUserPGN(e.target.value)}
             onBlur={() => setUserPGN(userPGN || movesToPGN(allMoves))} // Reset on empty userPGN.
-            style={{
-              backgroundColor: colorCode(Color.Black),
-              borderRadius: BORDER_RADIUS / 2,
-              boxSizing: 'border-box',
-              color: colorCode(Color.Gray),
-              fontSize: 15,
-              minHeight: 100,
-              padding: 10,
-              resize: 'vertical',
-              width: '100%',
-          }} />
+            className={styles.gameTextarea}
+          />
         </CollapsibleBlock>
         <CollapsibleBlock header="Settings" collapsed={false}>
           <Settings />

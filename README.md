@@ -44,14 +44,12 @@ Some more positions reached by the engine playing itself:
 
 ## TODO:
 ### UI:
-* Add support for arrows
-    * On table move hover
-    * On right clicks
-* Add more settings
 * Refactor context / state management (?)
 * Disable selected piece on re-clicking that piece
-* Organize css per component + move unnecessary html styles there
 * Store the settings in local storage
+* Fix issues with set board on hover
+* Add toggle for game / analysis
+* Add more settings
 
 ### Engine:
 * Support castling

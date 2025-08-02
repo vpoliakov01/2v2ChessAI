@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { Color, colorCode } from '../../common';
 import styles from './CollapsibleBlock.module.css';
 
-export const BORDER_RADIUS = 10;
-
 interface CollapsibleBlockProps {
   header: React.ReactNode;
   children: React.ReactNode;
@@ -18,7 +16,6 @@ export function CollapsibleBlock({ header, children, collapsed = true }: Collaps
       className={styles.collapsibleBlock}
       style={{
         backgroundColor: colorCode(Color.Black),
-        borderRadius: BORDER_RADIUS,
       }}
     >
       <div

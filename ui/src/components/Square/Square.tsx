@@ -10,9 +10,13 @@ interface SquareProps {
   possibleMove: boolean;
   label: string;
   onClick: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  onMouseDown?: (e: React.MouseEvent) => void;
+  onMouseUp?: (e: React.MouseEvent) => void;
+  onMouseEnter?: () => void;
 }
 
-export function Square({ isPlayable, isLight, piece, higlighted, possibleMove, label, onClick }: SquareProps) {
+export function Square({ isPlayable, isLight, piece, higlighted, possibleMove, label, onClick, onContextMenu, onMouseDown, onMouseUp, onMouseEnter }: SquareProps) {
   if (!isPlayable) {
     return <div
       className={styles.squareNonPlayable}
@@ -36,17 +40,6 @@ export function Square({ isPlayable, isLight, piece, higlighted, possibleMove, l
     return `/${color}_${pieceName[type]}.svg`;
   };
 
-  function onMouseEnter(e: React.MouseEvent<HTMLDivElement>) {
-    if (possibleMove) {
-      e.currentTarget.style.backgroundColor = higlightedBackgroundColor;
-    }
-  }
-  function onMouseLeave(e: React.MouseEvent<HTMLDivElement>) {
-    if (possibleMove) {
-      e.currentTarget.style.backgroundColor = originalBackgroundColor;
-    }
-  }
-
   return (
     <div
       className={styles.square}
@@ -54,9 +47,21 @@ export function Square({ isPlayable, isLight, piece, higlighted, possibleMove, l
         backgroundColor: higlighted && !possibleMove ? higlightedBackgroundColor : backgroundColor,
         cursor: piece ? 'pointer' : 'default',
       }}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+      onMouseEnter={(e) => {
+        onMouseEnter && onMouseEnter();
+        if (possibleMove) {
+          e.currentTarget.style.backgroundColor = higlightedBackgroundColor;
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (possibleMove) {
+          e.currentTarget.style.backgroundColor = originalBackgroundColor;
+        }
+      }}
       onClick={onClick}
+      onContextMenu={onContextMenu}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
     >
       {possibleMove && (
         <div className={styles.possibleMoveIndicator} />
