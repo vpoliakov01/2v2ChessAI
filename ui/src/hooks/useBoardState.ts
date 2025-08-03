@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Color, PlayerColors, PieceType, Position, MoveInfo, Move, movesEqual, BOARD_SIZE, CORNER_SIZE, PGNMove, formatNumber } from '../common';
-import { MessageType, Message, BestMoveResponse, SaveGameResponse, LoadGameResponse } from '../ws';
 import { ArrowProps } from '../components/Arrow';
-import { BoardStateStorage, BoardPosition, SavedBoardState } from '../utils';
+import { BoardStateStorage, BoardPosition, SavedBoardState, MessageType, Message, BestMoveResponse, SaveGameResponse, LoadGameResponse } from '../utils';
 
 // Initialize the 14x14 board with cut corners
 function createEmptyBoard(): BoardPosition {
@@ -215,20 +214,14 @@ export function useBoardState() {
     }
 
     const newArrow: ArrowProps = {
-      from: arrowStart,
-      to: position,
+      move: new Move(arrowStart, position),
       color: activePlayer
     };
 
     // If the new arrow is the same as any existing arrow,
     // erase the old one instead of adding a new one.
     setDrawnArrows(arrows => {
-      const existingIndex = arrows.findIndex(arrow =>
-        arrow.from.row === newArrow.from.row &&
-        arrow.from.col === newArrow.from.col &&
-        arrow.to.row === newArrow.to.row &&
-        arrow.to.col === newArrow.to.col
-      );
+      const existingIndex = arrows.findIndex(arrow => movesEqual(arrow.move, newArrow.move));
 
       if (existingIndex === -1) {
         return [...arrows, newArrow];

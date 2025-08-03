@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Message, MessageType, GameSettings } from '../../ws';
+import { Message, MessageType, GameSettings } from '../../utils';
 import { useBoardStateContext } from '../../context/BoardStateContext';
 import { Color, PlayerColors, colorCode } from '../../common';
 import { Checkbox } from '../Checkbox';

@@ -1,23 +1,22 @@
 import React from 'react';
-import { BOARD_SIZE, Color, colorCode, Position } from '../../common';
+import { BOARD_SIZE, Color, colorCode, Move } from '../../common';
 import styles from './Arrow.module.css';
 
 export interface ArrowProps {
-    from: Position;
-    to: Position;
+    move: Move;
     color: Color;
     short?: boolean;
 }
 
-export function Arrow({ from, to, color, short = false }: ArrowProps) {
+export function Arrow({ move, color, short = false }: ArrowProps) {
     // Calculate the position and dimensions
     const squareSize = 100 / BOARD_SIZE; // Percentage
 
     // Center positions of squares
-    const fromX = (from.col + 0.5) * squareSize;
-    const fromY = (from.row + 0.5) * squareSize;
-    const toX = (to.col + 0.5) * squareSize;
-    const toY = (to.row + 0.5) * squareSize;
+    const fromX = (move.from.col + 0.5) * squareSize;
+    const fromY = (move.from.row + 0.5) * squareSize;
+    const toX = (move.to.col + 0.5) * squareSize;
+    const toY = (move.to.row + 0.5) * squareSize;
 
     // Calculate distance for zero-distance check
     const deltaX = toX - fromX;
@@ -71,12 +70,12 @@ export function Arrow({ from, to, color, short = false }: ArrowProps) {
             >
                 <defs>
                     <marker
-                        id={`arrowhead-${from.row}:${from.col}->${to.row}:${to.col}`}
+                        id={`arrowhead-${move.toPGN()}`}
                         orient="auto"
                         overflow="visible"
                         markerWidth={arrowHeadWidth}
                         markerHeight={arrowHeadLength}
-                        refX={short ? squareSize * 0.15 : squareSize * 0.1}
+                        refX={short ? squareSize * 0.16 : squareSize * 0.08}
                         refY={arrowHeadWidth}
                     >
                         <path
@@ -96,7 +95,7 @@ export function Arrow({ from, to, color, short = false }: ArrowProps) {
                     strokeWidth={arrowWidth}
                     strokeLinecap="round"
                     opacity={opacity}
-                    markerEnd={`url(#arrowhead-${from.row}:${from.col}->${to.row}:${to.col})`}
+                    markerEnd={`url(#arrowhead-${move.toPGN()})`}
                 />
             </svg>
         </div>

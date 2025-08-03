@@ -1,4 +1,4 @@
-import { PGNMove } from './common';
+import { PGNMove } from '../common';
 
 export enum MessageType {
   SetSettings = 'setSettings',
@@ -38,11 +38,10 @@ export interface GameSettings {
   evalLimit: number;
 }
 
-
 type MessageData = PGNMove | PGNMove[] | BestMoveResponse | SaveGameResponse | LoadGameResponse | GameSettings | string | number | null;
 
 export class Message {
-  constructor(public type: MessageType, public data: MessageData) {}
+  constructor(public type: MessageType, public data: MessageData) { }
 
   json() {
     return JSON.stringify({

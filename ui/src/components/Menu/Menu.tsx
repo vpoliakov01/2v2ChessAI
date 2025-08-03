@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { movesToPGN } from '../../common';
 import { useBoardStateContext } from '../../context/BoardStateContext';
-import { Message, MessageType } from '../../ws';
+import { Message, MessageType } from '../../utils';
 import { CollapsibleBlock } from '../CollapsibleBlock';
 import { MoveTable } from '../MoveTable';
 import { Settings } from '../Settings';

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { BOARD_SIZE, Color, Move, movesEqual, positionsEqual } from '../../common';
+import { BOARD_SIZE, Color, Move, movesEqual, positionsEqual, positionToPGN } from '../../common';
 import { Square } from '../Square';
 import { ScoreDisplay } from '../ScoreDisplay';
 import { PlayerIndicator } from '../PlayerIndicator';
@@ -52,18 +52,18 @@ export function ChessBoard() {
     }
 
     if (displaySettings.onMoveHover === 'arrow') {
-      arrows.push({ from: hoveredMove.move.from, to: hoveredMove.move.to, color: hoveredMove.color });
+      arrows.push({ move: hoveredMove.move, color: hoveredMove.color });
     }
   }
 
   if (isDrawingArrow && arrowStart && arrowEnd) {
-    arrows.push({ from: arrowStart, to: arrowEnd, color: activePlayer });
+    arrows.push({ move: new Move(arrowStart, arrowEnd), color: activePlayer });
   }
 
   const arrowSquares = new Map<string, number>();
   for (const arrow of arrows) {
-    for (const square of [arrow.from, arrow.to]) {
-      const key = `${square.row}:${square.col}`;
+    for (const square of [arrow.move.from, arrow.move.to]) {
+      const key = positionToPGN(square);
       arrowSquares.set(key, (arrowSquares.get(key) ?? 0) + 1);
     }
   }
@@ -122,9 +122,7 @@ export function ChessBoard() {
   };
 
   const getLabel = (row: number, col: number): string => {
-    const aCode = 'a'.charCodeAt(0);
-
-    const label = `${String.fromCharCode(aCode + col)}${BOARD_SIZE - row}`;
+    const label = positionToPGN({ row, col });
 
     switch (displaySettings.showLabels) {
       case 'all':
@@ -184,11 +182,10 @@ export function ChessBoard() {
           {arrows.map((arrow, index) => {
             return (
               <Arrow
-                key={`arrow-${arrow.from.row}:${arrow.from.col}->${arrow.to.row}:${arrow.to.col}-${index}`}
-                from={arrow.from}
-                to={arrow.to}
+                key={`arrow-${arrow.move.toPGN()}-${index}`}
+                move={arrow.move}
                 color={arrow.color}
-                short={(arrowSquares.get(`${arrow.to.row}:${arrow.to.col}`) ?? 0) > 1}
+                short={(arrowSquares.get(positionToPGN(arrow.move.to)) ?? 0) > 1}
               />
             );
           })}

@@ -10,13 +10,8 @@ interface MoveTableProps {
   handleSetCurrentMove: (moveIndex: number) => void;
 }
 
-export function MoveTable({moves, currentMove, handleSetCurrentMove}: MoveTableProps) {
+export function MoveTable({ moves, currentMove, handleSetCurrentMove }: MoveTableProps) {
   const { displaySettings, setHoveredMove } = useBoardStateContext();
-  const toPGN = (move: Move) => {
-    const toFile = (col: number) => String.fromCharCode(col + 'a'.charCodeAt(0));
-    const toRank = (row: number) => BOARD_SIZE - row;
-    return `${toFile(move.from.col)}${toRank(move.from.row)}-${toFile(move.to.col)}${toRank(move.to.row)}`;
-  };
 
   useEffect(() => {
     const handleArrowPress = (e: KeyboardEvent) => {
@@ -63,16 +58,16 @@ export function MoveTable({moves, currentMove, handleSetCurrentMove}: MoveTableP
 
   const rows = [];
   for (let i = 0; i < moves.length; i += 4) {
-    const cells = Array.from({length: 4}).map((_, j) => (
+    const cells = Array.from({ length: 4 }).map((_, j) => (
       i + j < moves.length ? (
         <td
           className={`${styles.moveCell} ${i + j === currentMove ? styles.currentMove : ''}`}
-          key={`${i}-${toPGN(moves[i+j])}`}
+          key={`${i}-${moves[i + j].toPGN()}`}
           onClick={() => handleSetCurrentMove(i + j)}
           onMouseEnter={() => handleMouseEnter(i + j)}
           onMouseLeave={() => handleMouseLeave(i + j)}
         >
-          {toPGN(moves[i+j])}
+          {moves[i + j].toPGN()}
         </td>
       ) : (
         <td key={`${i}-${j}`}></td>
@@ -87,9 +82,9 @@ export function MoveTable({moves, currentMove, handleSetCurrentMove}: MoveTableP
   }
 
   return (
-        <table className={styles.moveTable}
-     onMouseLeave={() => handleSetCurrentMove(moves.length - 1)}
-     >
+    <table className={styles.moveTable}
+      onMouseLeave={() => handleSetCurrentMove(moves.length - 1)}
+    >
       <thead>
         {rows}
       </thead>
