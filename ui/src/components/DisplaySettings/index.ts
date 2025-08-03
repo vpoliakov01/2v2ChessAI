@@ -1,2 +1,2 @@
-export { DisplaySettings, defaultDisplaySettings } from './DisplaySettings';
+export { DisplaySettings, defaultDisplaySettings, loadDisplaySettingsFromStorage } from './DisplaySettings';
 export type { DisplaySettingsState } from './DisplaySettings';

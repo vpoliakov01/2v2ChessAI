@@ -6,17 +6,44 @@ import { Checkbox } from '../Checkbox';
 import { NumberInput } from '../NumberInput';
 import styles from './Settings.module.css';
 
+const SETTINGS_STORAGE_KEY = 'chess-game-settings';
+
+const defaultSettings: GameSettings = {
+  humanPlayers: [0, 2],
+  depth: 6,
+  captureDepth: 8,
+  evalLimit: 0,
+};
+
+function loadSettingsFromStorage(): GameSettings {
+  const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
+  let storedSettings: Partial<GameSettings> = {};
+
+  if (stored) {
+    storedSettings = JSON.parse(stored);
+  }
+
+  return {
+    ...defaultSettings,
+    ...storedSettings,
+  };
+}
+
+function saveSettingsToStorage(settings: GameSettings) {
+  localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+}
+
 export function Settings() {
   const { sendMessage } = useBoardStateContext();
-  const [settings, setSettings] = useState<GameSettings>({
-    humanPlayers: [0, 2],
-    depth: 6,
-    captureDepth: 8,
-    evalLimit: 0,
-  });
+  const [settings, setSettings] = useState<GameSettings>(loadSettingsFromStorage);
 
   useEffect(() => {
-    sendMessage(new Message(MessageType.SetSettings, settings));
+    const engineSettings = {
+      ...settings,
+      evalLimit: settings.evalLimit * 1000,
+    };
+    sendMessage(new Message(MessageType.SetSettings, engineSettings));
+    saveSettingsToStorage(settings);
   }, [settings, sendMessage]);
 
   return (
@@ -67,7 +94,7 @@ export function Settings() {
                 <NumberInput
                   value={settings.depth}
                   onChange={(value) => setSettings({ ...settings, depth: value })}
-                  min={1}
+                  max={settings.captureDepth}
                 />
               </td>
               <td>Forcing:</td>
@@ -84,7 +111,7 @@ export function Settings() {
               <td>
                 <NumberInput
                   value={settings.evalLimit}
-                  onChange={(value) => setSettings({ ...settings, evalLimit: value * 1000 })}
+                  onChange={(value) => setSettings({ ...settings, evalLimit: value })}
                   min={0}
                   editable={true}
                   disableButtons={true}

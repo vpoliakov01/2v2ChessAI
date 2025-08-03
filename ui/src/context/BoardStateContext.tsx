@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode, useState } from 'react';
 import { useBoardState } from '../hooks/useBoardState';
-import { DisplaySettingsState, defaultDisplaySettings } from '../components/DisplaySettings';
+import { DisplaySettingsState, loadDisplaySettingsFromStorage } from '../components/DisplaySettings';
 import { Color, Move } from '../common';
 
 type HoveredMove = {
@@ -27,7 +27,7 @@ export const useBoardStateContext = () => {
 
 export const BoardStateProvider = ({ children }: { children: ReactNode }) => {
   const boardState = useBoardState();
-  const [displaySettings, setDisplaySettings] = useState<DisplaySettingsState>(defaultDisplaySettings);
+  const [displaySettings, setDisplaySettings] = useState<DisplaySettingsState>(loadDisplaySettingsFromStorage);
   const [hoveredMove, setHoveredMove] = useState<HoveredMove | null>(null);
   return (
     <BoardStateContext.Provider value={{ ...boardState, displaySettings, setDisplaySettings, hoveredMove, setHoveredMove }}>

@@ -18,12 +18,37 @@ export const defaultDisplaySettings: DisplaySettingsState = {
   onMoveHover: 'arrow',
 };
 
+const DISPLAY_SETTINGS_STORAGE_KEY = 'chess-display-settings';
+
+export function loadDisplaySettingsFromStorage(): DisplaySettingsState {
+  const stored = localStorage.getItem(DISPLAY_SETTINGS_STORAGE_KEY);
+  let storedSettings: Partial<DisplaySettingsState> = {};
+
+  if (stored) {
+    storedSettings = JSON.parse(stored);
+  }
+
+  return {
+    ...defaultDisplaySettings,
+    ...storedSettings,
+  };
+}
+
+function saveDisplaySettingsToStorage(settings: DisplaySettingsState) {
+  localStorage.setItem(DISPLAY_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+}
+
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 export function DisplaySettings() {
   const { displaySettings, setDisplaySettings } = useBoardStateContext();
+
+  // Update localStorage whenever settings change
+  React.useEffect(() => {
+    saveDisplaySettingsToStorage(displaySettings);
+  }, [displaySettings]);
 
   return (
     <div className={styles.displaySettings}>
