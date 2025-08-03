@@ -1,1 +1,1 @@
-export { Arrow, type ArrowProps } from './Arrow';
+export * from './Arrow';

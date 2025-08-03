@@ -4,7 +4,7 @@ import { BOARD_SIZE, Color, Move, movesEqual, positionsEqual, positionToPGN } fr
 import { Square } from '../Square';
 import { ScoreDisplay } from '../ScoreDisplay';
 import { PlayerIndicator } from '../PlayerIndicator';
-import { Arrow, ArrowProps } from '../Arrow';
+import { ArrowContainer } from '../Arrow';
 import { useBoardStateContext } from '../../context/BoardStateContext';
 import styles from './ChessBoard.module.css';
 
@@ -20,17 +20,12 @@ export function ChessBoard() {
     setSelectedSquare,
     displaySettings,
     hoveredMove,
-    drawnArrows,
-    isDrawingArrow,
-    arrowStart,
-    arrowEnd,
     handleSquareRightMouseDown,
     handleSquareMouseEnter,
     handleSquareRightMouseUp,
     handleSquareLeftClick
   } = useBoardStateContext();
 
-  const arrows: ArrowProps[] = [...drawnArrows];
   const higlightedSquares: { row: number, col: number, color: Color }[] = [];
   for (let i = moves.length - 1; i >= 0 && i > moves.length - 5; i--) {
     const move = moves[i];
@@ -49,22 +44,6 @@ export function ChessBoard() {
     if (displaySettings.onMoveHover === 'highlight') {
       higlightedSquares.push({ ...hoveredMove.move.from, color: hoveredMove.color });
       higlightedSquares.push({ ...hoveredMove.move.to, color: hoveredMove.color });
-    }
-
-    if (displaySettings.onMoveHover === 'arrow') {
-      arrows.push({ move: hoveredMove.move, color: hoveredMove.color });
-    }
-  }
-
-  if (isDrawingArrow && arrowStart && arrowEnd) {
-    arrows.push({ move: new Move(arrowStart, arrowEnd), color: activePlayer });
-  }
-
-  const arrowSquares = new Map<string, number>();
-  for (const arrow of arrows) {
-    for (const square of [arrow.move.from, arrow.move.to]) {
-      const key = positionToPGN(square);
-      arrowSquares.set(key, (arrowSquares.get(key) ?? 0) + 1);
     }
   }
 
@@ -179,16 +158,7 @@ export function ChessBoard() {
           <div className={styles.centerMarker} />
 
           {/* Arrows */}
-          {arrows.map((arrow, index) => {
-            return (
-              <Arrow
-                key={`arrow-${arrow.move.toPGN()}-${index}`}
-                move={arrow.move}
-                color={arrow.color}
-                short={(arrowSquares.get(positionToPGN(arrow.move.to)) ?? 0) > 1}
-              />
-            );
-          })}
+          <ArrowContainer />
         </div>
         <PlayerIndicator color={activePlayer} />
       </div>

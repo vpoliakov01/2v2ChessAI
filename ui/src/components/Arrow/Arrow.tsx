@@ -1,6 +1,7 @@
 import React from 'react';
-import { BOARD_SIZE, Color, colorCode, Move } from '../../common';
+import { BOARD_SIZE, Color, colorCode, Move, positionToPGN } from '../../common';
 import styles from './Arrow.module.css';
+import { useBoardStateContext } from '../../context/BoardStateContext';
 
 export interface ArrowProps {
     move: Move;
@@ -41,24 +42,80 @@ export function Arrow({ move, color, short = false }: ArrowProps) {
 
     if (distance === 0) { // Draw a circle if it's a single square highlight
         return (
-            <div className={styles.arrowContainer}>
-                <svg
-                    className={styles.arrowSvg}
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
-                >
-                    <circle
-                        cx={fromX}
-                        cy={fromY}
-                        r={100 / BOARD_SIZE / 2 * 0.95}
-                        fill="none"
-                        stroke={strokeColor}
-                        strokeWidth={0.5}
-                        opacity={opacity}
-                    />
-                </svg>
-            </div >
+            <circle
+                cx={fromX}
+                cy={fromY}
+                r={100 / BOARD_SIZE / 2 * 0.92}
+                fill="none"
+                stroke={strokeColor}
+                strokeWidth={0.45}
+                opacity={opacity}
+            />
         );
+    }
+
+    return (
+        <>
+            <defs>
+                <marker
+                    id={`arrowhead-${move.toPGN()}`}
+                    orient="auto"
+                    overflow="visible"
+                    markerWidth={arrowHeadWidth}
+                    markerHeight={arrowHeadLength}
+                    refX={short ? squareSize * 0.16 : squareSize * 0.08}
+                    refY={arrowHeadWidth}
+                >
+                    <path
+                        d={`M0,0 V${arrowHeadWidth * 2} L${arrowHeadLength},${arrowHeadWidth} Z`}
+                        fill={strokeColor}
+                    />
+                </marker>
+            </defs>
+            <line
+                x1={fromX}
+                y1={fromY}
+                x2={arrowBaseX}
+                y2={arrowBaseY}
+                stroke={strokeColor}
+                strokeWidth={arrowWidth}
+                strokeLinecap="round"
+                opacity={opacity}
+                markerEnd={`url(#arrowhead-${move.toPGN()})`}
+            />
+        </>
+    );
+}
+
+export function ArrowContainer() {
+    const {
+        drawnArrows,
+        isDrawingArrow,
+        arrowStart,
+        arrowEnd,
+        hoveredMove,
+        activePlayer,
+        displaySettings,
+    } = useBoardStateContext();
+
+    const arrows: ArrowProps[] = drawnArrows.map(arrow => ({ move: new Move(arrow.move.from, arrow.move.to), color: arrow.color }));
+
+    if (isDrawingArrow && arrowStart && arrowEnd) {
+        arrows.push({ move: new Move(arrowStart, arrowEnd), color: activePlayer });
+    }
+
+    if (hoveredMove) {
+        if (displaySettings.onMoveHover === 'arrow') {
+            arrows.push({ move: hoveredMove.move, color: hoveredMove.color });
+        }
+    }
+
+    const arrowSquares = new Map<string, number>();
+    for (const arrow of arrows) {
+        for (const square of [arrow.move.from, arrow.move.to]) {
+            const key = positionToPGN(square);
+            arrowSquares.set(key, (arrowSquares.get(key) ?? 0) + 1);
+        }
     }
 
     return (
@@ -68,35 +125,16 @@ export function Arrow({ move, color, short = false }: ArrowProps) {
                 viewBox="0 0 100 100"
                 preserveAspectRatio="none"
             >
-                <defs>
-                    <marker
-                        id={`arrowhead-${move.toPGN()}`}
-                        orient="auto"
-                        overflow="visible"
-                        markerWidth={arrowHeadWidth}
-                        markerHeight={arrowHeadLength}
-                        refX={short ? squareSize * 0.16 : squareSize * 0.08}
-                        refY={arrowHeadWidth}
-                    >
-                        <path
-                            d={`M0,0 V${arrowHeadWidth * 2} L${arrowHeadLength},${arrowHeadWidth} Z`}
-                            fill={strokeColor}
+                {arrows.map((arrow, index) => {
+                    return (
+                        <Arrow
+                            key={`arrow-${arrow.move.toPGN()}-${index}`}
+                            move={arrow.move}
+                            color={arrow.color}
+                            short={(arrowSquares.get(positionToPGN(arrow.move.to)) ?? 0) > 1}
                         />
-                    </marker>
-                </defs>
-
-                {/* Arrow line with marker */}
-                <line
-                    x1={fromX}
-                    y1={fromY}
-                    x2={arrowBaseX}
-                    y2={arrowBaseY}
-                    stroke={strokeColor}
-                    strokeWidth={arrowWidth}
-                    strokeLinecap="round"
-                    opacity={opacity}
-                    markerEnd={`url(#arrowhead-${move.toPGN()})`}
-                />
+                    );
+                })}
             </svg>
         </div>
     );
