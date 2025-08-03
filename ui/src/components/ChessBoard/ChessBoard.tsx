@@ -78,6 +78,8 @@ export function ChessBoard() {
     if (selectedSquare) {
       if (movePiece(new Move(selectedSquare, newPosition), true)) {
         setSelectedSquare(null);
+      } else if (selectedSquare.col === col && selectedSquare.row === row) {
+        setSelectedSquare(null);
       } else if (board[row][col]?.color === activePlayer) {
         setSelectedSquare(newPosition);
       }
