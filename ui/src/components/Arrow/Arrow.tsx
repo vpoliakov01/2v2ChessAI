@@ -105,7 +105,7 @@ export function ArrowContainer() {
     }
 
     if (hoveredMove) {
-        if (displaySettings.onMoveHover === 'arrow') {
+        if (['arrow', 'highlight+'].includes(displaySettings.onMoveHover)) {
             arrows.push({ move: hoveredMove.move, color: hoveredMove.color });
         }
     }

@@ -3,7 +3,7 @@ import { useBoardStateContext } from '../../context/BoardStateContext';
 import styles from './DisplaySettings.module.css';
 
 const showLabelsOptions = ['all', 'border', 'pieces', 'moves', 'moves+', 'none'] as const;
-const onMoveHoverOptions = ['set board', 'arrow', 'highlight', 'none'] as const;
+const onMoveHoverOptions = ['set board', 'arrow', 'highlight', 'highlight+', 'none'] as const;
 
 type ShowLabels = typeof showLabelsOptions[number];
 type OnMoveHover = typeof onMoveHoverOptions[number];
@@ -15,7 +15,7 @@ export interface DisplaySettingsState {
 
 export const defaultDisplaySettings: DisplaySettingsState = {
   showLabels: 'moves',
-  onMoveHover: 'arrow',
+  onMoveHover: 'highlight+',
 };
 
 const DISPLAY_SETTINGS_STORAGE_KEY = 'chess-display-settings';

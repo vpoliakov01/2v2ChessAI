@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { Move, PlayerColors } from '../../common';
-import { BOARD_SIZE } from '../../common';
 import { useBoardStateContext } from '../../context/BoardStateContext';
 import styles from './MoveTable.module.css';
 
@@ -31,6 +30,7 @@ export function MoveTable({ moves, currentMove, handleSetCurrentMove }: MoveTabl
     switch (displaySettings.onMoveHover) {
       case 'arrow':
       case 'highlight':
+      case 'highlight+':
         setHoveredMove({ move: moves[moveIndex], color: PlayerColors[moveIndex % 4] });
         break;
       case 'set board':
@@ -46,6 +46,7 @@ export function MoveTable({ moves, currentMove, handleSetCurrentMove }: MoveTabl
     switch (displaySettings.onMoveHover) {
       case 'arrow':
       case 'highlight':
+      case 'highlight+':
         setHoveredMove(null);
         break;
       case 'set board':

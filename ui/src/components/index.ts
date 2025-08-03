@@ -6,7 +6,6 @@ export * from './PlayerIndicator';
 export * from './Arrow';
 export * from './MoveTable';
 export * from './DisplaySettings';
-export type { DisplaySettingsState } from './DisplaySettings';
 export * from './Menu';
 export * from './Settings';
 export * from './CollapsibleBlock';
