@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Message, MessageType, GameSettings, loadSettingsFromStorage, saveSettingsToStorage } from '../../utils';
+import { Message, MessageType, GameSettings, GameStateManager } from '../../utils';
 import { useBoardStateContext } from '../../context/BoardStateContext';
 import { Color, PlayerColors, colorCode } from '../../common';
 import { Checkbox } from '../Checkbox';
@@ -8,7 +8,7 @@ import styles from './Settings.module.css';
 
 export function Settings() {
   const { sendMessage } = useBoardStateContext();
-  const [settings, setSettings] = useState<GameSettings>(loadSettingsFromStorage);
+  const [settings, setSettings] = useState<GameSettings>(GameStateManager.loadSettings);
 
   useEffect(() => {
     const engineSettings = {
@@ -16,7 +16,7 @@ export function Settings() {
       evalLimit: settings.evalLimit * 1000,
     };
     sendMessage(new Message(MessageType.SetSettings, engineSettings));
-    saveSettingsToStorage(settings);
+    GameStateManager.saveSettings(settings);
   }, [settings, sendMessage]);
 
   return (

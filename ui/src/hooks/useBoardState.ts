@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Color, PlayerColors, PieceType, Position, MoveInfo, Move, movesEqual, movesToPGN, BOARD_SIZE, CORNER_SIZE, PGNMove, formatNumber } from '../common';
+import { Color, PlayerColors, PieceType, Position, MoveInfo, Move, movesEqual, BOARD_SIZE, CORNER_SIZE, PGNMove, formatNumber } from '../common';
 import { ArrowProps } from '../components/Arrow';
-import { BoardStateStorage, BoardPosition, SavedBoardState, MessageType, Message, BestMoveResponse, SaveGameResponse, LoadGameResponse, loadSettingsFromStorage } from '../utils';
+import { MessageType, Message, BestMoveResponse, SaveGameResponse, LoadGameResponse, GameStateManager, GameSyncService, BoardPosition } from '../utils';
 
 // Initialize the 14x14 board with cut corners
 function createEmptyBoard(): BoardPosition {
@@ -71,40 +71,20 @@ function setPieces(board: BoardPosition): BoardPosition {
 
 
 
-function getDefaultBoardState(): SavedBoardState {
-  return {
-    board: createEmptyBoard(),
-    activePlayer: Color.Red,
-    allMoves: [],
-    currentMove: -1,
-    score: 0,
-    pgn: '',
-    drawnArrows: [],
-  };
-}
 
-function loadBoardStateFromStorage(): SavedBoardState {
-  const loadedState = BoardStateStorage.load();
-  return loadedState || getDefaultBoardState();
-}
-
-function saveBoardStateToStorage(state: SavedBoardState) {
-  BoardStateStorage.store(state);
-}
 
 export function useBoardState() {
-  // Load initial state from localStorage
-  const savedState = loadBoardStateFromStorage();
+  const initialState = GameStateManager.load();
 
-  const [board, setBoard] = useState<BoardPosition>(savedState.board);
-  const [activePlayer, setActivePlayer] = useState<Color>(savedState.activePlayer);
+  const [board, setBoard] = useState<BoardPosition>(initialState.board);
+  const [activePlayer, setActivePlayer] = useState<Color>(initialState.activePlayer);
   const [selectedSquare, setSelectedSquare] = useState<Position | null>(null);
-  const [allMoves, setAllMoves] = useState<MoveInfo[]>(savedState.allMoves);
-  const [currentMove, setCurrentMove] = useState<number>(savedState.currentMove);
+  const [allMoves, setAllMoves] = useState<MoveInfo[]>(initialState.allMoves);
+  const [currentMove, setCurrentMove] = useState<number>(initialState.currentMove);
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
-  const [score, setScore] = useState<number>(savedState.score);
-  const [pgn, setPgn] = useState<string>(savedState.pgn);
-  const [drawnArrows, setDrawnArrows] = useState<ArrowProps[]>(savedState.drawnArrows);
+  const [score, setScore] = useState<number>(typeof initialState.score === 'number' ? initialState.score : 0);
+  const [pgn, setPgn] = useState<string>(initialState.pgn);
+  const [drawnArrows, setDrawnArrows] = useState<ArrowProps[]>(initialState.drawnArrows);
   const [isDrawingArrow, setIsDrawingArrow] = useState<boolean>(false);
   const [arrowStart, setArrowStart] = useState<Position | null>(null);
   const [arrowEnd, setArrowEnd] = useState<Position | null>(null);
@@ -121,22 +101,18 @@ export function useBoardState() {
   }, [wsRef]);
 
   function resetBoard() {
-    const defaultState = getDefaultBoardState();
-    setBoard(defaultState.board);
-    setActivePlayer(defaultState.activePlayer);
+    setBoard(createEmptyBoard());
+    setActivePlayer(Color.Red);
     setSelectedSquare(null);
     setAvailableMoves([]);
-    setPgn(defaultState.pgn);
-    setScore(defaultState.score);
-    setCurrentMove(defaultState.currentMove);
-    setDrawnArrows(defaultState.drawnArrows);
+    setPgn('');
+    setScore(0);
+    setCurrentMove(0);
+    setDrawnArrows([]);
     setIsDrawingArrow(false);
     setArrowStart(null);
     setArrowEnd(null);
-    // Do not setAllMoves.
-
-    // Clear localStorage when resetting board
-    BoardStateStorage.clear();
+    GameStateManager.clear();
   }
 
   const replayMoves = useCallback((pastMoves: Move[], currentMove: number) => {
@@ -236,22 +212,11 @@ export function useBoardState() {
   }, [isDrawingArrow, arrowStart, activePlayer]);
 
   const handleSquareLeftClick = useCallback(() => {
-    // Clear all arrows on left click
     setDrawnArrows([]);
   }, []);
 
-  // Save board state to localStorage whenever relevant state changes
   useEffect(() => {
-    const currentBoardState: SavedBoardState = {
-      board,
-      activePlayer,
-      allMoves,
-      currentMove,
-      score,
-      pgn,
-      drawnArrows,
-    };
-    saveBoardStateToStorage(currentBoardState);
+    GameStateManager.save({ board, activePlayer, allMoves, currentMove, score, pgn, drawnArrows });
   }, [board, activePlayer, allMoves, currentMove, score, pgn, drawnArrows]);
 
   useEffect(() => {
@@ -260,43 +225,13 @@ export function useBoardState() {
 
     ws.onopen = () => {
       console.log('connected');
-      console.log(
-        'move'.padEnd(8),
-        'time'.padStart(6),
-        'score'.padStart(9),
-        'evals'.padStart(8),
-        'avg'.padStart(6),
-      );
-
-
-      if (ws.readyState === WebSocket.OPEN) {
-        const settings = loadSettingsFromStorage();
-        const engineSettings = {
-          ...settings,
-          evalLimit: settings.evalLimit * 1000, // Convert to milliseconds for engine
-        };
-
-        ws.send(new Message(MessageType.SetSettings, engineSettings).json());
-
-        const savedState = loadBoardStateFromStorage();
-        const pgnToLoad = savedState.pgn || movesToPGN(savedState.allMoves);
-        ws.send(new Message(MessageType.LoadGame, pgnToLoad).json());
-
-        if (savedState.currentMove !== savedState.allMoves.length - 1) {
-          ws.send(new Message(MessageType.SetCurrentMove, savedState.currentMove).json());
-        }
-      }
-
-      console.log('Engine state synchronized with localStorage data');
+      console.log('move'.padEnd(8), 'time'.padStart(6), 'score'.padStart(9), 'evals'.padStart(8), 'avg'.padStart(6));
+      GameSyncService.syncWithEngine(ws);
     };
 
-    ws.onclose = () => {
-      console.log('disconnected');
-    };
+    ws.onclose = () => console.log('disconnected');
 
-    return () => {
-      ws.close();
-    };
+    return () => ws.close();
   }, []);
 
   useEffect(() => {

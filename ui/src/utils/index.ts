@@ -1,4 +1,3 @@
-export * from './BoardStateStorage';
-export type { BoardPosition, SavedBoardState } from './BoardStateStorage';
 export * from './ws';
-export * from './SettingsStorage';
+export * from './GameStateManager';
+export * from './GameSyncService';

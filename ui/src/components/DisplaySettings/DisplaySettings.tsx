@@ -1,42 +1,12 @@
 import React from 'react';
 import { useBoardStateContext } from '../../context/BoardStateContext';
+import { GameStateManager, ShowLabels, OnMoveHover } from '../../utils';
 import styles from './DisplaySettings.module.css';
 
-const showLabelsOptions = ['all', 'border', 'pieces', 'moves', 'moves+', 'none'] as const;
-const onMoveHoverOptions = ['set board', 'arrow', 'highlight', 'highlight+', 'none'] as const;
+const showLabelsOptions: ShowLabels[] = ['all', 'border', 'pieces', 'moves', 'moves+', 'none'];
+const onMoveHoverOptions: OnMoveHover[] = ['set board', 'arrow', 'highlight', 'highlight+', 'none'];
 
-type ShowLabels = typeof showLabelsOptions[number];
-type OnMoveHover = typeof onMoveHoverOptions[number];
 
-export interface DisplaySettingsState {
-  showLabels: ShowLabels;
-  onMoveHover: OnMoveHover;
-}
-
-export const defaultDisplaySettings: DisplaySettingsState = {
-  showLabels: 'moves',
-  onMoveHover: 'highlight+',
-};
-
-const DISPLAY_SETTINGS_STORAGE_KEY = 'chess-display-settings';
-
-export function loadDisplaySettingsFromStorage(): DisplaySettingsState {
-  const stored = localStorage.getItem(DISPLAY_SETTINGS_STORAGE_KEY);
-  let storedSettings: Partial<DisplaySettingsState> = {};
-
-  if (stored) {
-    storedSettings = JSON.parse(stored);
-  }
-
-  return {
-    ...defaultDisplaySettings,
-    ...storedSettings,
-  };
-}
-
-function saveDisplaySettingsToStorage(settings: DisplaySettingsState) {
-  localStorage.setItem(DISPLAY_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-}
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -47,7 +17,7 @@ export function DisplaySettings() {
 
   // Update localStorage whenever settings change
   React.useEffect(() => {
-    saveDisplaySettingsToStorage(displaySettings);
+    GameStateManager.saveDisplaySettings(displaySettings);
   }, [displaySettings]);
 
   return (
