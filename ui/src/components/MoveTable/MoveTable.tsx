@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Move, PlayerColors } from '../../common';
 import { useBoardStateContext } from '../../context/BoardStateContext';
 import styles from './MoveTable.module.css';
@@ -11,6 +11,7 @@ interface MoveTableProps {
 
 export function MoveTable({ moves, currentMove, handleSetCurrentMove }: MoveTableProps) {
   const { displaySettings, setHoveredMove } = useBoardStateContext();
+  const [selectedMove, setSelectedMove] = useState<number | null>(null);
 
   useEffect(() => {
     const handleArrowPress = (e: KeyboardEvent) => {
@@ -27,6 +28,10 @@ export function MoveTable({ moves, currentMove, handleSetCurrentMove }: MoveTabl
   }, [moves, currentMove, handleSetCurrentMove]);
 
   const handleMouseEnter = (moveIndex: number) => {
+    if (selectedMove !== null) {
+      return;
+    }
+
     switch (displaySettings.onMoveHover) {
       case 'arrow':
       case 'highlight':
@@ -50,11 +55,28 @@ export function MoveTable({ moves, currentMove, handleSetCurrentMove }: MoveTabl
         setHoveredMove(null);
         break;
       case 'set board':
-        // Handled onMouseLeave the table.
+        // Handled by handleTableMouseLeave.
         break;
       case 'none':
         break;
     }
+  }
+
+  const handleTableMouseLeave = () => {
+    if (selectedMove !== currentMove) {
+      if (displaySettings.onMoveHover === 'set board') {
+        handleSetCurrentMove(moves.length - 1);
+      }
+    }
+    if (selectedMove !== null) {
+      handleSetCurrentMove(selectedMove);
+      setSelectedMove(null);
+    }
+  }
+
+  const handleClick = (moveIndex: number) => {
+    setSelectedMove(moveIndex);
+    handleSetCurrentMove(moveIndex);
   }
 
   const rows = [];
@@ -64,7 +86,7 @@ export function MoveTable({ moves, currentMove, handleSetCurrentMove }: MoveTabl
         <td
           className={`${styles.moveCell} ${i + j === currentMove ? styles.currentMove : ''}`}
           key={`${i}-${moves[i + j].toPGN()}`}
-          onClick={() => handleSetCurrentMove(i + j)}
+          onClick={() => handleClick(i + j)}
           onMouseEnter={() => handleMouseEnter(i + j)}
           onMouseLeave={() => handleMouseLeave(i + j)}
         >
@@ -84,7 +106,7 @@ export function MoveTable({ moves, currentMove, handleSetCurrentMove }: MoveTabl
 
   return (
     <table className={styles.moveTable}
-      onMouseLeave={() => handleSetCurrentMove(moves.length - 1)}
+      onMouseLeave={handleTableMouseLeave}
     >
       <thead>
         {rows}

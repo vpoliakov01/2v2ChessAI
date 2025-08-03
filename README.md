@@ -44,11 +44,9 @@ Some more positions reached by the engine playing itself:
 
 ## TODO:
 ### UI:
-* Fix issues with set board on hover
 * Reconnect on ws disconnect
 * Add toggle for game / analysis
 * Add more settings
-* Refactor context / state management (?)
 
 ### Engine:
 * Support castling

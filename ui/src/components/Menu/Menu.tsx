@@ -15,25 +15,25 @@ export function Menu() {
 
   const pgn = userPGN != null ? userPGN : movesToPGN(allMoves);
 
-  function handleNewGame(event: React.MouseEvent<HTMLButtonElement>) {
+  const handleNewGame = (event: React.MouseEvent<HTMLButtonElement>) => {
     sendMessage(new Message(MessageType.NewGame, null));
     event.stopPropagation();
   }
 
-  function handleCopy(event: React.MouseEvent<HTMLButtonElement>) {
+  const handleCopy = (event: React.MouseEvent<HTMLButtonElement>) => {
     navigator.clipboard.writeText(movesToPGN(allMoves));
     setPGNBlockCollapsed(false);
     event.stopPropagation();
   }
 
-  function handleLoad(event: React.MouseEvent<HTMLButtonElement>) {
+  const handleLoad = (event: React.MouseEvent<HTMLButtonElement>) => {
     sendMessage(new Message(MessageType.LoadGame, pgn));
     setUserPGN(null);
     setPGNBlockCollapsed(true);
     event.stopPropagation();
   }
 
-  function handleSetCurrentMove(moveIndex: number) {
+  const handleSetCurrentMove = (moveIndex: number) => {
     setCurrentMove(moveIndex);
     sendMessage(new Message(MessageType.SetCurrentMove, moveIndex));
   }
