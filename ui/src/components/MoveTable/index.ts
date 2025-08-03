@@ -1,1 +1,1 @@
-export { MoveTable } from './MoveTable';
+export * from './MoveTable';

@@ -1,1 +1,1 @@
-export { CollapsibleBlock } from './CollapsibleBlock';
+export * from './CollapsibleBlock';

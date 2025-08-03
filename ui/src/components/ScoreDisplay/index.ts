@@ -1,1 +1,1 @@
-export { ScoreDisplay } from './ScoreDisplay';
+export * from './ScoreDisplay';

@@ -1,1 +1,1 @@
-export { PlayerIndicator } from './PlayerIndicator';
+export * from './PlayerIndicator';
