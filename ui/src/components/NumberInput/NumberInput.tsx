@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './NumberInput.module.css';
 
 interface NumberInputProps {
@@ -14,6 +14,11 @@ interface NumberInputProps {
 
 export function NumberInput({ value, onChange, min = 0, max = Infinity, step = 1, editable = false, disableButtons = false, width = 28 }: NumberInputProps) {
   const [editValue, setEditValue] = useState(value.toString());
+
+  // Sync internal state when value prop changes
+  useEffect(() => {
+    setEditValue(value.toString());
+  }, [value]);
 
   const increment = () => {
     if (value + step <= max) {

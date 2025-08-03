@@ -93,16 +93,16 @@ export function Settings() {
               <td>
                 <NumberInput
                   value={settings.depth}
-                  onChange={(value) => setSettings({ ...settings, depth: value })}
-                  max={settings.captureDepth}
+                  onChange={(value) => setSettings({ ...settings, depth: value, captureDepth: Math.max(value, settings.captureDepth) })}
+                  min={1}
                 />
               </td>
               <td>Forcing:</td>
               <td>
                 <NumberInput
                   value={settings.captureDepth}
-                  onChange={(value) => setSettings({ ...settings, captureDepth: value })}
-                  min={settings.depth}
+                  onChange={(value) => setSettings({ ...settings, captureDepth: value, depth: Math.min(value, settings.depth) })}
+                  min={1}
                 />
               </td>
             </tr>
