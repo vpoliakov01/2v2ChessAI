@@ -42,6 +42,11 @@ func (s *TestSuite) SetupTest() {
 1. h2-h3 b9-c9 i13-i12 m8-l8
 2. g1-j4 a8-d11 e13-e12 m5-l5
 3. e2-e3 d11-g8 h14-k11 n7-l9`, // 4 queens in the middle, bishops ready
+		`
+1. j2-j3 b5-c5 j14-i12 n5-l6
+2. e2-e3 a6-f1 e13-e12 m7-k7
+3. g1-f1 a5-c4 j13-j12 n10-l9
+4. f1-c4 b7-c7 h13-h12 m5-l5`, // 6/10 engine game
 	}
 	for _, pgn := range pgns {
 		game, err := game.LoadPGN(pgn)

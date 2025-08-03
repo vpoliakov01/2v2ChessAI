@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Color, PlayerColors, Piece, PieceType, Position, MoveInfo, Move, movesEqual, BOARD_SIZE, CORNER_SIZE, PGNMove, formatNumber } from '../common';
+import { Color, PlayerColors, PieceType, Position, MoveInfo, Move, movesEqual, BOARD_SIZE, CORNER_SIZE, PGNMove, formatNumber } from '../common';
 import { MessageType, Message, BestMoveResponse, SaveGameResponse, LoadGameResponse } from '../ws';
-
 import { ArrowProps } from '../components/Arrow';
-
-export type BoardPosition = (Piece | null | undefined)[][];
+import { BoardStateStorage, BoardPosition, SavedBoardState } from '../utils';
 
 // Initialize the 14x14 board with cut corners
 function createEmptyBoard(): BoardPosition {
@@ -72,16 +70,42 @@ function setPieces(board: BoardPosition): BoardPosition {
   return board;
 }
 
+
+
+function getDefaultBoardState(): SavedBoardState {
+  return {
+    board: createEmptyBoard(),
+    activePlayer: Color.Red,
+    allMoves: [],
+    currentMove: -1,
+    score: 0,
+    pgn: '',
+    drawnArrows: [],
+  };
+}
+
+function loadBoardStateFromStorage(): SavedBoardState {
+  const loadedState = BoardStateStorage.load();
+  return loadedState || getDefaultBoardState();
+}
+
+function saveBoardStateToStorage(state: SavedBoardState) {
+  BoardStateStorage.store(state);
+}
+
 export function useBoardState() {
-  const [board, setBoard] = useState<BoardPosition>(createEmptyBoard());
-  const [activePlayer, setActivePlayer] = useState<Color>(Color.Red);
+  // Load initial state from localStorage
+  const savedState = loadBoardStateFromStorage();
+
+  const [board, setBoard] = useState<BoardPosition>(savedState.board);
+  const [activePlayer, setActivePlayer] = useState<Color>(savedState.activePlayer);
   const [selectedSquare, setSelectedSquare] = useState<Position | null>(null);
-  const [allMoves, setAllMoves] = useState<MoveInfo[]>([]);
-  const [currentMove, setCurrentMove] = useState<number>(-1);
+  const [allMoves, setAllMoves] = useState<MoveInfo[]>(savedState.allMoves);
+  const [currentMove, setCurrentMove] = useState<number>(savedState.currentMove);
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
-  const [score, setScore] = useState<number>(0);
-  const [pgn, setPgn] = useState<string>('');
-  const [drawnArrows, setDrawnArrows] = useState<ArrowProps[]>([]);
+  const [score, setScore] = useState<number>(savedState.score);
+  const [pgn, setPgn] = useState<string>(savedState.pgn);
+  const [drawnArrows, setDrawnArrows] = useState<ArrowProps[]>(savedState.drawnArrows);
   const [isDrawingArrow, setIsDrawingArrow] = useState<boolean>(false);
   const [arrowStart, setArrowStart] = useState<Position | null>(null);
   const [arrowEnd, setArrowEnd] = useState<Position | null>(null);
@@ -98,18 +122,22 @@ export function useBoardState() {
   }, [wsRef]);
 
   function resetBoard() {
-    setBoard(createEmptyBoard());
-    setActivePlayer(Color.Red);
+    const defaultState = getDefaultBoardState();
+    setBoard(defaultState.board);
+    setActivePlayer(defaultState.activePlayer);
     setSelectedSquare(null);
     setAvailableMoves([]);
-    setPgn('');
-    setScore(0);
-    setCurrentMove(-1);
-    setDrawnArrows([]);
+    setPgn(defaultState.pgn);
+    setScore(defaultState.score);
+    setCurrentMove(defaultState.currentMove);
+    setDrawnArrows(defaultState.drawnArrows);
     setIsDrawingArrow(false);
     setArrowStart(null);
     setArrowEnd(null);
     // Do not setAllMoves.
+
+    // Clear localStorage when resetting board
+    BoardStateStorage.clear();
   }
 
   const replayMoves = useCallback((pastMoves: Move[], currentMove: number) => {
@@ -218,6 +246,20 @@ export function useBoardState() {
     // Clear all arrows on left click
     setDrawnArrows([]);
   }, []);
+
+  // Save board state to localStorage whenever relevant state changes
+  useEffect(() => {
+    const currentBoardState: SavedBoardState = {
+      board,
+      activePlayer,
+      allMoves,
+      currentMove,
+      score,
+      pgn,
+      drawnArrows,
+    };
+    saveBoardStateToStorage(currentBoardState);
+  }, [board, activePlayer, allMoves, currentMove, score, pgn, drawnArrows]);
 
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8080/ws');

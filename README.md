@@ -44,6 +44,7 @@ Some more positions reached by the engine playing itself:
 
 ## TODO:
 ### UI:
+* Reconnect on ws disconnect
 * Fix issues with set board on hover
 * Add toggle for game / analysis
 * Add more settings
