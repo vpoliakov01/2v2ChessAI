@@ -1,6 +1,8 @@
 package play
 
 import (
+	"sync"
+
 	"github.com/gofiber/websocket/v2"
 	"github.com/vpoliakov01/2v2ChessAI/engine/ai"
 	"github.com/vpoliakov01/2v2ChessAI/engine/game"
@@ -8,13 +10,13 @@ import (
 
 // Config is the config for the game.
 type Config struct {
-	Depth        int
-	CaptureDepth int
-	HumanPlayers []game.Player
-	MoveLimit    int    // Number of moves to play before stopping.
-	EvalLimit    int    // Max number of evaluations to perform per move.
-	Evaluation   bool   // Whether to display the evaluation of the position.
-	Load         string // PGN file to load.
+	Depth        int           `json:"depth"`
+	CaptureDepth int           `json:"captureDepth"`
+	HumanPlayers []game.Player `json:"humanPlayers"`
+	MoveLimit    int           `json:"moveLimit"`  // Number of moves to play before stopping.
+	EvalLimit    int           `json:"evalLimit"`  // Max number of evaluations to perform per move.
+	Evaluation   bool          `json:"evaluation"` // Whether to display the evaluation of the position.
+	Load         string        `json:"load"`       // PGN file to load.
 }
 
 type Connection struct {
@@ -24,6 +26,7 @@ type Connection struct {
 	engine *ai.AI
 
 	pauseEngine chan struct{}
+	writeLock   sync.Mutex
 }
 
 func NewConnection(c *websocket.Conn, cfg *Config) *Connection {

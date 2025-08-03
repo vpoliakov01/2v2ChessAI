@@ -1,37 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Message, MessageType, GameSettings } from '../../utils';
+import { Message, MessageType, GameSettings, loadSettingsFromStorage, saveSettingsToStorage } from '../../utils';
 import { useBoardStateContext } from '../../context/BoardStateContext';
 import { Color, PlayerColors, colorCode } from '../../common';
 import { Checkbox } from '../Checkbox';
 import { NumberInput } from '../NumberInput';
 import styles from './Settings.module.css';
-
-const SETTINGS_STORAGE_KEY = 'chess-game-settings';
-
-const defaultSettings: GameSettings = {
-  humanPlayers: [0, 2],
-  depth: 6,
-  captureDepth: 8,
-  evalLimit: 0,
-};
-
-function loadSettingsFromStorage(): GameSettings {
-  const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
-  let storedSettings: Partial<GameSettings> = {};
-
-  if (stored) {
-    storedSettings = JSON.parse(stored);
-  }
-
-  return {
-    ...defaultSettings,
-    ...storedSettings,
-  };
-}
-
-function saveSettingsToStorage(settings: GameSettings) {
-  localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-}
 
 export function Settings() {
   const { sendMessage } = useBoardStateContext();

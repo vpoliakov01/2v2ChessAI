@@ -57,6 +57,9 @@ func (c *Connection) ProcessMessage(msg *Message) {
 }
 
 func (c *Connection) processSetSettings(cfg Config) {
+	log.Printf("Processing settings: Depth=%d, CaptureDepth=%d, HumanPlayers=%v, EvalLimit=%d",
+		cfg.Depth, cfg.CaptureDepth, cfg.HumanPlayers, cfg.EvalLimit)
+
 	if len(c.cfg.HumanPlayers) == 0 {
 		c.pauseEngine <- struct{}{}
 	}

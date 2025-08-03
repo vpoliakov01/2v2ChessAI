@@ -35,11 +35,11 @@ export function movesEqual(a: Move, b: Move): boolean {
 }
 
 export function movesToPGN(moves: Move[]): string {
-    let pgn = "";
+    let pgn = '';
 
     for (let i = 0; i < moves.length; i += 4) {
         if (i > 0 && i % 4 === 0) {
-            pgn += "\n";
+            pgn += '\n';
         }
         pgn += `${i / 4 + 1}.`;
         for (let j = 0; j < 4 && i + j < moves.length; j++) {

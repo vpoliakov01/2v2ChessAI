@@ -14,7 +14,9 @@ func (c *Connection) SendMessage(messageType MessageType, data interface{}) {
 		log.Fatalf("error marshalling message: %v", err)
 	}
 
+	c.writeLock.Lock()
 	err = c.conn.WriteMessage(websocket.TextMessage, bytes)
+	c.writeLock.Unlock()
 	if err != nil {
 		log.Println("write:", err)
 		return

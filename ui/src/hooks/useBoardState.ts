@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Color, PlayerColors, PieceType, Position, MoveInfo, Move, movesEqual, BOARD_SIZE, CORNER_SIZE, PGNMove, formatNumber } from '../common';
+import { Color, PlayerColors, PieceType, Position, MoveInfo, Move, movesEqual, movesToPGN, BOARD_SIZE, CORNER_SIZE, PGNMove, formatNumber } from '../common';
 import { ArrowProps } from '../components/Arrow';
-import { BoardStateStorage, BoardPosition, SavedBoardState, MessageType, Message, BestMoveResponse, SaveGameResponse, LoadGameResponse } from '../utils';
+import { BoardStateStorage, BoardPosition, SavedBoardState, MessageType, Message, BestMoveResponse, SaveGameResponse, LoadGameResponse, loadSettingsFromStorage } from '../utils';
 
 // Initialize the 14x14 board with cut corners
 function createEmptyBoard(): BoardPosition {
@@ -266,7 +266,28 @@ export function useBoardState() {
         'score'.padStart(9),
         'evals'.padStart(8),
         'avg'.padStart(6),
-      )
+      );
+
+
+      if (ws.readyState === WebSocket.OPEN) {
+        const settings = loadSettingsFromStorage();
+        const engineSettings = {
+          ...settings,
+          evalLimit: settings.evalLimit * 1000, // Convert to milliseconds for engine
+        };
+
+        ws.send(new Message(MessageType.SetSettings, engineSettings).json());
+
+        const savedState = loadBoardStateFromStorage();
+        const pgnToLoad = savedState.pgn || movesToPGN(savedState.allMoves);
+        ws.send(new Message(MessageType.LoadGame, pgnToLoad).json());
+
+        if (savedState.currentMove !== savedState.allMoves.length - 1) {
+          ws.send(new Message(MessageType.SetCurrentMove, savedState.currentMove).json());
+        }
+      }
+
+      console.log('Engine state synchronized with localStorage data');
     };
 
     ws.onclose = () => {
