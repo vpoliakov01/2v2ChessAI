@@ -3,7 +3,6 @@ package play
 import (
 	"sync"
 
-	"github.com/gofiber/websocket/v2"
 	"github.com/vpoliakov01/2v2ChessAI/engine/ai"
 	"github.com/vpoliakov01/2v2ChessAI/engine/game"
 )
@@ -19,23 +18,33 @@ type Config struct {
 	Load         string        `json:"load"`       // PGN file to load.
 }
 
+// MessageWriter is the minimal interface Connection needs from a websocket
+// connection. It allows tests to substitute a mock writer.
+type MessageWriter interface {
+	WriteMessage(messageType int, data []byte) error
+}
+
 type Connection struct {
-	conn   *websocket.Conn
+	conn   MessageWriter
 	cfg    *Config
 	gs     *game.GameSession
 	engine *ai.AI
 
-	pauseEngine chan struct{}
-	writeLock   sync.Mutex
+	setHumanPlayersCh chan []game.Player
+	writeLock         sync.Mutex
 }
 
-func NewConnection(c *websocket.Conn, cfg *Config) *Connection {
+func NewConnection(c MessageWriter, cfg *Config) *Connection {
+	return newConnection(c, cfg)
+}
+
+func newConnection(c MessageWriter, cfg *Config) *Connection {
 	connection := &Connection{
-		conn:        c,
-		cfg:         cfg,
-		gs:          game.SetupBoard(cfg.Load),
-		engine:      ai.New(cfg.Depth, cfg.CaptureDepth, cfg.EvalLimit),
-		pauseEngine: make(chan struct{}),
+		conn:              c,
+		cfg:               cfg,
+		gs:                game.SetupBoard(cfg.Load),
+		engine:            ai.New(cfg.Depth, cfg.CaptureDepth, cfg.EvalLimit),
+		setHumanPlayersCh: make(chan []game.Player, 10),
 	}
 
 	return connection

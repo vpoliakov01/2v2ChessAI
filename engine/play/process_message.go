@@ -1,31 +1,19 @@
 package play
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"math"
+	"runtime/debug"
 	"slices"
 	"time"
 
+	"github.com/vpoliakov01/2v2ChessAI/engine/ai"
 	g "github.com/vpoliakov01/2v2ChessAI/engine/game"
 )
 
-// CastData marshals data and unmarshals it into the given type.
-func CastData[T any](data interface{}) (T, error) {
-	bytes, err := json.Marshal(data)
-	if err != nil {
-		return *new(T), fmt.Errorf("error marshalling data: %v", err)
-	}
-	var unmarshalled T
-	err = json.Unmarshal(bytes, &unmarshalled)
-	if err != nil {
-		return *new(T), fmt.Errorf("error unmarshalling data: %v", err)
-	}
-	return unmarshalled, nil
-}
-
 func (c *Connection) ProcessMessage(msg *Message) {
+	log.Printf("Processing message: %v", msg)
 	switch msg.Type {
 	case MessageTypeSetSettings:
 		cfg, err := CastData[Config](msg.Data)
@@ -60,20 +48,28 @@ func (c *Connection) processSetSettings(cfg Config) {
 	log.Printf("Processing settings: Depth=%d, CaptureDepth=%d, HumanPlayers=%v, EvalLimit=%d",
 		cfg.Depth, cfg.CaptureDepth, cfg.HumanPlayers, cfg.EvalLimit)
 
-	if len(c.cfg.HumanPlayers) == 0 {
-		c.pauseEngine <- struct{}{}
+	if !AreHumanPlayersEqual(c.cfg.HumanPlayers, cfg.HumanPlayers) {
+		c.cfg.HumanPlayers = cfg.HumanPlayers
+
+		if slices.Contains(cfg.HumanPlayers, c.gs.ActivePlayer) {
+			c.setHumanPlayersCh <- cfg.HumanPlayers
+			c.engine.Stop()
+		}
 	}
 
 	c.cfg = &cfg
 	c.engine.Depth = cfg.Depth
 	c.engine.CaptureDepth = cfg.CaptureDepth
+
 	if cfg.EvalLimit == 0 {
-		c.engine.EvalLimit = math.MaxInt
+		c.engine.EvalLimit = ai.MaxEvalLimit
 	} else {
 		c.engine.EvalLimit = cfg.EvalLimit
 	}
 
-	c.playUntilPlayerMove()
+	if !AreHumanPlayersEqual(c.cfg.HumanPlayers, cfg.HumanPlayers) && !slices.Contains(cfg.HumanPlayers, c.gs.ActivePlayer) {
+		c.playUntilPlayerMove()
+	}
 }
 
 func (c *Connection) processGetAvailableMoves() {
@@ -93,6 +89,7 @@ func (c *Connection) processPlayerMove(move PGNMove) {
 		c.SendMessage(MessageTypeInvalidMove, err.Error())
 		return
 	}
+
 	game.Play(gameMove)
 	game.Board.Draw()
 
@@ -139,41 +136,55 @@ func (c *Connection) processSetCurrentMove(moveIndex int) {
 		PastMoves:   PGNMovesFromGameMoves(c.gs.PastMoves),
 		CurrentMove: c.gs.CurrentMove,
 	})
-	c.playUntilPlayerMove()
+	c.processGetAvailableMoves()
 }
 
 // playUntilPlayerMove proceeds until the active player is a human player.
 func (c *Connection) playUntilPlayerMove() {
-	if len(c.cfg.HumanPlayers) == 0 {
-		go c.playEngineMoves()
-	} else {
-		c.playEngineMoves()
-	}
-
-	c.processGetAvailableMoves()
+	snapshot := c.gs.Copy()
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("panic in playUntilPlayerMove goroutine: %v\n%s", r, debug.Stack())
+			}
+		}()
+		c.playEngineMoves(snapshot)
+		c.processGetAvailableMoves()
+	}()
 }
 
-func (c *Connection) playEngineMoves() {
-	game := c.gs
+// playEngineMoves plays engine moves until the active player is a human player.
+func (c *Connection) playEngineMoves(game *g.GameSession) {
 	for !slices.Contains(c.cfg.HumanPlayers, game.ActivePlayer) {
-		select {
-		case <-c.pauseEngine:
+		now := time.Now()
+		moveNumber := game.MoveNumber
+		bestMove, score, err := c.engine.GetBestMove(game.Game)
+		if err != nil {
+			log.Printf("Error getting best move: %v", err)
 			return
-		default:
-			now := time.Now()
-			bestMove, score, err := c.engine.GetBestMove(game.Game)
-			elapsed := time.Since(now)
-			if err != nil {
-				log.Printf("Error getting best move: %v", err)
+		}
+
+		elapsed := time.Since(now)
+
+		select {
+		case humanPlayers := <-c.setHumanPlayersCh:
+			c.cfg.HumanPlayers = humanPlayers
+
+			if slices.Contains(humanPlayers, game.ActivePlayer) {
 				return
 			}
+		default:
 			c.SendMessage(MessageTypeEngineMove, BestMoveResponse{
 				Move:        PGNMoveFromGameMove(*bestMove),
+				MoveNumber:  moveNumber,
 				Score:       math.Round(score*float64(game.ActivePlayer.Team())*100) / 100,
 				Time:        math.Round(elapsed.Seconds()*100) / 100,
 				Evaluations: c.engine.EvalsCount,
 			})
+
 			game.Play(*bestMove)
+			c.gs = game.Copy()
+
 			fmt.Println("Move number:", game.MoveNumber)
 			fmt.Println("Active player:", game.ActivePlayer)
 			fmt.Println("Score:", score)

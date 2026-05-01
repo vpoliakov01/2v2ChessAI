@@ -20,6 +20,7 @@ export interface BestMoveResponse {
   score: number;
   time: number;
   evaluations: number;
+  moveNumber: number;
 }
 
 export interface SaveGameResponse {

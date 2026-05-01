@@ -101,6 +101,6 @@ func (p Piece) PieceType() PieceType {
 	case KindKing:
 		return King(p)
 	default:
-		panic("unsupported piece")
+		panic(fmt.Sprintf("unsupported piece: %v", p))
 	}
 }

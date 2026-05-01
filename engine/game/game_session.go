@@ -1,6 +1,9 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // GameSession represents a game with additional metadata.
 type GameSession struct {
@@ -43,4 +46,13 @@ func (g *GameSession) SetCurrentMove(moveIndex int) error {
 	}
 
 	return nil
+}
+
+// Copy returns a deep copy of the game session.
+func (g *GameSession) Copy() *GameSession {
+	return &GameSession{
+		Game:        g.Game.Copy(),
+		CurrentMove: g.CurrentMove,
+		PastMoves:   slices.Clone(g.PastMoves),
+	}
 }

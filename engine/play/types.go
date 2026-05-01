@@ -31,6 +31,7 @@ type PGNMove string
 
 type BestMoveResponse struct {
 	Move        PGNMove `json:"move"`
+	MoveNumber  int     `json:"moveNumber"`
 	Score       float64 `json:"score"`
 	Time        float64 `json:"time"`
 	Evaluations int     `json:"evaluations"`

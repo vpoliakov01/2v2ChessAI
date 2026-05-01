@@ -11,6 +11,7 @@ import (
 )
 
 var (
+	MaxEvalLimit = int(1e12)
 	ErrGameEnded = errors.New("the game has ended")
 	ErrNoMoves   = errors.New("no move can be made in this position")
 	cpus         = runtime.NumCPU()
@@ -61,6 +62,7 @@ func New(depth, captureDepth, evalLimit int) *AI {
 		}
 	}()
 
+	// Collect best move indexes for evaluation analytics.
 	go func() {
 		for {
 			data := <-ai.bestMoveIndexesCh
@@ -91,6 +93,11 @@ func (ai *AI) GetBestMove(g *game.Game) (bestMove *game.Move, score float64, err
 	}
 
 	return bestMove, score, nil
+}
+
+// Stop stops GetBestMove by overriding the EvalLimit.
+func (ai *AI) Stop() {
+	ai.evalsCountCh <- ai.EvalLimit - ai.EvalsCount
 }
 
 // Negamax (minimax + negation) recursively finds the position to which

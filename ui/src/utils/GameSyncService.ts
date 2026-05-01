@@ -4,7 +4,11 @@ import { movesToPGN } from '../common';
 
 export class GameSyncService {
     static async syncWithEngine(ws: WebSocket): Promise<void> {
-        if (ws.readyState !== WebSocket.OPEN) return;
+        console.log('Syncing with the engine...');
+        if (ws.readyState !== WebSocket.OPEN) {
+            console.warn('WebSocket is not open');
+            return;
+        }
 
         const state = GameStateManager.load();
         const settings = GameStateManager.loadSettings();
@@ -31,7 +35,5 @@ export class GameSyncService {
         } else {
             ws.send(JSON.stringify({ type: MessageType.NewGame, data: {} }));
         }
-
-        ws.send(JSON.stringify({ type: MessageType.GetAvailableMoves, data: {} }));
     }
 }
