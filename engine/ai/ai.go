@@ -150,7 +150,7 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextM
 
 	nextMoveIndex := 0
 
-	numMovesToCheck := getNumMovesToCheck(len(moves), depth, ai.Depth, ai.CaptureDepth)
+	numMovesToCheck := getNumMovesToCheck(len(moves), depth, ai.Depth)
 
 	for i := range moves[:numMovesToCheck] {
 		score := moveEvalEstimates[moves[i]].score
@@ -189,21 +189,12 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (nextM
 
 // getNumMovesToCheck returns the number of most promising moves to check.
 // The idea is to ignore moves that look bad to begin with.
-func getNumMovesToCheck(numMoves, depth, depthLimit, captureDepthLimit int) int {
-	if depth >= depthLimit {
-		n := 3
-		if captureDepthLimit-depth >= 4 {
-			return numMoves
-		}
-		if numMoves < n {
-			return numMoves
-		}
-		return n
+func getNumMovesToCheck(numMoves, depth, depthLimit int) int {
+	if depth >= depthLimit { // If in the capture depth territory, check all moves.
+		return numMoves
 	}
 
-	if depth >= 3 {
-		return numMoves / 4
-	} else if depth >= 2 {
+	if depth >= 4 {
 		return numMoves / 2
 	} else {
 		return numMoves
