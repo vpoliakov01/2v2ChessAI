@@ -4,17 +4,27 @@ type Pawn Piece
 
 var _ PieceType = (*Pawn)(nil)
 
+var (
+	pawnMoveDirs = [4][3][2]int{
+		{{1, 0}, {1, -1}, {1, 1}},
+		{{0, 1}, {-1, 1}, {1, 1}},
+		{{-1, 0}, {-1, -1}, {-1, 1}},
+		{{0, -1}, {-1, -1}, {1, -1}},
+	}
+	pawnCaptureDirs = [4][2][2]int{
+		{{1, -1}, {1, 1}},
+		{{-1, 1}, {1, 1}},
+		{{-1, -1}, {-1, 1}},
+		{{-1, -1}, {1, -1}},
+	}
+)
+
 // GetMoves returns the moves the piece can make.
 func (p Pawn) GetMoves(board *Board, from Square) []Square {
 	player := Piece(board.GetPiece(from)).Player()
 
 	// Move directions depend on which player's pawn it is.
-	dirs := [][][]int{
-		{{1, 0}, {1, -1}, {1, 1}},
-		{{0, 1}, {-1, 1}, {1, 1}},
-		{{-1, 0}, {-1, -1}, {-1, 1}},
-		{{0, -1}, {-1, -1}, {1, -1}},
-	}[player]
+	dirs := pawnMoveDirs[player]
 	moves := []Square{}
 
 	// Move forward by 1.
@@ -54,27 +64,18 @@ func (p Pawn) GetMoves(board *Board, from Square) []Square {
 }
 
 // GetStrength returns an estimate of the piece's strength.
-func (p Pawn) GetStrength(board *Board, numMoves int, square Square, piecesLeft int) float64 {
+func (p Pawn) GetStrength(board *Board, square Square, player Player) float64 {
 	// Check pawn structure.
-	player := Piece(p).Player()
-	dirs := [][][]int{
-		{{-1, -1}, {-1, 1}},
-		{{-1, -1}, {1, -1}},
-		{{1, -1}, {1, 1}},
-		{{-1, 1}, {1, 1}},
-	}[player]
+	dirs := pawnCaptureDirs[player]
 
-	coef := 0.5
+	coef := 0.9
 	for _, dir := range dirs {
-		behind := square.Add(dir[0], dir[1])
-		if !behind.IsValid() || board.IsEmpty(behind) {
+		inFront := square.Add(dir[0], dir[1])
+		if !inFront.IsValid() || board.IsEmpty(inFront) {
 			continue
 		}
 
-		pieceBehind := Piece(board.GetPiece(behind))
-		if Piece(p) == pieceBehind { // If there is same player's pawn behind.
-			coef += 0.5
-		}
+		coef += 0.2
 	}
 
 	return Strength[KindPawn] * coef

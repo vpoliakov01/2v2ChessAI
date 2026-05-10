@@ -25,8 +25,8 @@ func (ai *AI) PrintBestMoveIndexes() {
 			break
 		}
 
-		humanIndex := 1 + float64(ai.BestMoveIndexes[i].IndexSum)/float64(ai.BestMoveIndexes[i].Count)
-		maxHumanIndex := 1 + ai.BestMoveIndexes[i].MaxIndex
+		avgIndex := 1 + float64(ai.BestMoveIndexes[i].IndexSum)/float64(ai.BestMoveIndexes[i].Count)
+		maxIndex := 1 + ai.BestMoveIndexes[i].MaxIndex
 		moves := float64(ai.BestMoveIndexes[i].TotalMoves) / float64(ai.BestMoveIndexes[i].Count)
 
 		if i == ai.Depth {
@@ -34,12 +34,12 @@ func (ai *AI) PrintBestMoveIndexes() {
 		}
 
 		fmt.Printf(
-			"\t%v: %5.2f (%v) / %5.2f = %5.2f (total: %v)\n",
+			"\t%v: %5.2f (%-1v) / %5.2f = %5.2f (total: %v)\n",
 			i,
-			humanIndex,
-			maxHumanIndex,
+			avgIndex,
+			maxIndex,
 			moves,
-			humanIndex/moves,
+			avgIndex/moves,
 			ai.BestMoveIndexes[i].Count,
 		)
 	}

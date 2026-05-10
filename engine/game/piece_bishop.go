@@ -12,6 +12,6 @@ func (p Bishop) GetMoves(board *Board, from Square) []Square {
 }
 
 // GetStrength returns an estimate of the piece's strength.
-func (p Bishop) GetStrength(board *Board, numMoves int, square Square, piecesLeft int) float64 {
-	return Strength[KindBishop] * CalculateBonusCoef(numMoves, 2, 12, GetBalanceBonus(square))
+func (p Bishop) GetStrength(board *Board, square Square, player Player) float64 {
+	return StrengthPrecomputed[KindBishop][square.Rank][square.File]
 }

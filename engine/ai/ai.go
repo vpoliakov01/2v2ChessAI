@@ -218,14 +218,11 @@ func (ai *AI) EvaluateCurrent(g *game.Game) float64 {
 		piecesLeft += len(g.Board.PieceSquares[player])
 	}
 
-	moves := g.GetMoves()
-
 	// For each piece, run piece strength evaluation.
 	for player := range g.Board.PieceSquares {
 		for square := range g.Board.PieceSquares[player] {
 			piece := game.Piece(g.Board.GetPiece(square)).PieceType()
-			numMoves := len(moves[square])
-			playerStrengths[player] += piece.GetStrength(g.Board, numMoves, square, piecesLeft)
+			playerStrengths[player] += piece.GetStrength(g.Board, square, player)
 		}
 	}
 

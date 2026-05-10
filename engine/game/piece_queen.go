@@ -12,7 +12,6 @@ func (p Queen) GetMoves(board *Board, from Square) []Square {
 }
 
 // GetStrength returns an estimate of the piece's strength.
-func (p Queen) GetStrength(board *Board, numMoves int, square Square, piecesLeft int) float64 {
-	progression := 1 - float64(piecesLeft)/PiecesAtTheStart
-	return Strength[KindQueen] * CalculateBonusCoef(numMoves, 2, 30, GetCenterBonus(square)*(1-progression)+GetBalanceBonus(square)*progression)
+func (p Queen) GetStrength(board *Board, square Square, player Player) float64 {
+	return StrengthPrecomputed[KindQueen][square.Rank][square.File]
 }

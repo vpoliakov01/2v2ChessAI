@@ -15,7 +15,10 @@ func (p King) GetMoves(board *Board, from Square) []Square {
 }
 
 // GetStrength returns an estimate of the piece's strength.
-func (p King) GetStrength(board *Board, numMoves int, square Square, piecesLeft int) float64 {
-	progression := 1 - float64(piecesLeft)/PiecesAtTheStart
-	return Strength[KindKing] * CalculateBonusCoef(numMoves, 2, 30, GetEdgeBonus(square)*(1-progression)+GetBalanceBonus(square)*progression)
+func (p King) GetStrength(board *Board, square Square, player Player) float64 {
+	if player.Team() == 1 {
+		return StrengthPrecomputed[KindKing][square.Rank][square.File]
+	} else {
+		return StrengthPrecomputed[KindKing][square.File][square.Rank] // Flip for Blue/Green perspective.
+	}
 }
