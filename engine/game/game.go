@@ -32,6 +32,10 @@ func New() *Game {
 
 // GetMoves returns all moves for the active player.
 func (g *Game) GetMoves() MoveMap {
+	if g.HasEnded() {
+		return MoveMap{}
+	}
+
 	if g.MoveMap != nil {
 		return *g.MoveMap
 	}

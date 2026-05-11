@@ -35,7 +35,7 @@ func Test(t *testing.T) {
 }
 
 func (s *TestSuite) SetupTest() {
-	s.engine = New(3, 6, 0)
+	s.engine = New(3, 6, 0, WithEnableDebug(true))
 
 	testGames := []TestGame{
 		{
@@ -116,14 +116,14 @@ func (s *TestSuite) TestEngineDepthsPerformance() {
 		// {2, 7},
 		// {2, 8},
 		// {3, 5},
-		{3, 6},
+		// {3, 6},
 		// {3, 7},
 		// {3, 8},
 		// {3, 9},
 		// {4, 5},
 		// {4, 6},
 		// {4, 7},
-		// {4, 8},
+		{4, 8},
 		// {5, 5},
 		// {5, 6},
 		// {5, 7},
@@ -138,7 +138,7 @@ func (s *TestSuite) TestEngineDepthsPerformance() {
 
 		for _, d := range depths {
 			start := time.Now()
-			engine := New(d.depth, d.captureDepth, 0)
+			engine := New(d.depth, d.captureDepth, 0, WithEnableDebug(true))
 
 			bestMoves := []*game.Move{}
 			scores := []float64{}
@@ -166,8 +166,8 @@ func (s *TestSuite) TestEngineDepthsPerformance() {
 				t.Seconds(),
 				t.Seconds()/float64(moves),
 				float64(t)/float64(last),
-				engine.EvalsCount,
-				float64(t.Microseconds())/float64(engine.EvalsCount),
+				engine.EvalsCount(),
+				float64(t.Microseconds())/float64(engine.EvalsCount()),
 			)
 			last = t
 			engine.PrintBestMoveIndexes()
@@ -244,7 +244,8 @@ func (s *TestSuite) TestMultithreading() {
 	moves := 1
 	engine := New(4, 6, 0)
 
-	for i := 1; i <= cpus; i++ {
+	fmt.Printf("Testing with %v CPUs\n", cpus)
+	for i := 1; i <= cpus; i *= 2 {
 		runtime.GOMAXPROCS(i)
 
 		startTime := time.Now()
@@ -260,8 +261,13 @@ func (s *TestSuite) TestMultithreading() {
 			g.Play(*move)
 		}
 
-		times = append(times, time.Since(startTime))
-		fmt.Printf("%v CPU: %v\n", i, times[i-1])
+		t := time.Since(startTime)
+		times = append(times, t)
+		fmt.Printf("%v CPU: %v\n", i, t)
+
+		if i != cpus && i*2 > cpus && cpus > 8 {
+			i = cpus / 2
+		}
 	}
 
 	s.Require().Less(times[len(times)-1], times[0])

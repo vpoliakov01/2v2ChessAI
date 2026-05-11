@@ -1,4 +1,4 @@
-import { PGNMove } from '../common';
+import { Color, PGNMove } from '../common';
 
 export enum MessageType {
   SetSettings = 'setSettings',
@@ -13,6 +13,7 @@ export enum MessageType {
   LoadGame = 'loadGame',
   LoadGameResponse = 'loadGameResponse',
   SetCurrentMove = 'setCurrentMove',
+  GameEnded = 'gameEnded',
 }
 
 export interface BestMoveResponse {
@@ -39,7 +40,12 @@ export interface GameSettings {
   evalLimit: number;
 }
 
-type MessageData = PGNMove | PGNMove[] | BestMoveResponse | SaveGameResponse | LoadGameResponse | GameSettings | string | number | null;
+export interface GameEndedResponse {
+  king: string;
+  winner: string;
+}
+
+type MessageData = PGNMove | PGNMove[] | BestMoveResponse | SaveGameResponse | LoadGameResponse | GameSettings | GameEndedResponse | string | number | null;
 
 export class Message {
   constructor(public type: MessageType, public data: MessageData) { }

@@ -2,7 +2,6 @@ package ai
 
 import (
 	"fmt"
-	"time"
 )
 
 type AvgAcc struct {
@@ -19,7 +18,8 @@ type BestMoveIndexes struct {
 }
 
 func (ai *AI) PrintBestMoveIndexes() {
-	time.Sleep(time.Millisecond)
+	ai.bestMoveIndexesMutex.Lock()
+	defer ai.bestMoveIndexesMutex.Unlock()
 	for i := range ai.BestMoveIndexes {
 		if ai.BestMoveIndexes[i].Count == 0 {
 			break
@@ -34,7 +34,7 @@ func (ai *AI) PrintBestMoveIndexes() {
 		}
 
 		fmt.Printf(
-			"\t%v: %5.2f (%-1v) / %5.2f = %5.2f (total: %v)\n",
+			"\t%v: %5.2f (%2d) / %5.2f = %5.2f (total: %v)\n",
 			i,
 			avgIndex,
 			maxIndex,

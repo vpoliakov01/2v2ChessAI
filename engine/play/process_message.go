@@ -48,7 +48,8 @@ func (c *Connection) processSetSettings(cfg Config) {
 	log.Printf("Processing settings: Depth=%d, CaptureDepth=%d, HumanPlayers=%v, EvalLimit=%d",
 		cfg.Depth, cfg.CaptureDepth, cfg.HumanPlayers, cfg.EvalLimit)
 
-	if !AreHumanPlayersEqual(c.cfg.HumanPlayers, cfg.HumanPlayers) {
+	humanPlayersChanged := !AreHumanPlayersEqual(c.cfg.HumanPlayers, cfg.HumanPlayers)
+	if humanPlayersChanged {
 		c.cfg.HumanPlayers = cfg.HumanPlayers
 
 		if slices.Contains(cfg.HumanPlayers, c.gs.ActivePlayer) {
@@ -67,7 +68,7 @@ func (c *Connection) processSetSettings(cfg Config) {
 		c.engine.EvalLimit = cfg.EvalLimit
 	}
 
-	if !AreHumanPlayersEqual(c.cfg.HumanPlayers, cfg.HumanPlayers) && !slices.Contains(cfg.HumanPlayers, c.gs.ActivePlayer) {
+	if humanPlayersChanged && !slices.Contains(cfg.HumanPlayers, c.gs.ActivePlayer) {
 		c.playUntilPlayerMove()
 	}
 }
@@ -149,6 +150,24 @@ func (c *Connection) playUntilPlayerMove() {
 			}
 		}()
 		c.playEngineMoves(snapshot)
+
+		if c.gs.HasEnded() {
+			winningTeam := c.gs.Winner
+			losingKing := g.Player(0)
+			for player := range c.gs.Board.PieceSquares {
+				if !c.gs.HasKing(player) {
+					losingKing = player
+					break
+				}
+			}
+
+			c.SendMessage(MessageTypeGameEnded, GameEndedResponse{
+				King:   losingKing.String(),
+				Winner: winningTeam.String(),
+			})
+			return
+		}
+
 		c.processGetAvailableMoves()
 	}()
 }
@@ -179,7 +198,7 @@ func (c *Connection) playEngineMoves(game *g.GameSession) {
 				MoveNumber:  moveNumber,
 				Score:       math.Round(score*float64(game.ActivePlayer.Team())*100) / 100,
 				Time:        math.Round(elapsed.Seconds()*100) / 100,
-				Evaluations: c.engine.EvalsCount,
+				Evaluations: c.engine.EvalsCount(),
 			})
 
 			game.Play(*bestMove)
@@ -189,7 +208,7 @@ func (c *Connection) playEngineMoves(game *g.GameSession) {
 			fmt.Println("Active player:", game.ActivePlayer)
 			fmt.Println("Score:", score)
 			fmt.Println("Time:", elapsed)
-			fmt.Println("Evaluations:", c.engine.EvalsCount)
+			fmt.Println("Evaluations:", c.engine.EvalsCount())
 			game.Board.Draw()
 		}
 	}

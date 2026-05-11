@@ -20,6 +20,21 @@ func (t Team) Opposite() Team {
 	return t * -1
 }
 
+func (p Player) String() string {
+	switch p {
+	case 0:
+		return "Red"
+	case 1:
+		return "Blue"
+	case 2:
+		return "Yellow"
+	case 3:
+		return "Green"
+	default:
+		panic("unsupported player")
+	}
+}
+
 // String implements the Stringer interface.
 func (t Team) String() string {
 	switch t {

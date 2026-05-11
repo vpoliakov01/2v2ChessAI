@@ -20,6 +20,7 @@ const (
 	MessageTypeLoadGameResponse    MessageType = "loadGameResponse"
 	MessageTypeNewGame             MessageType = "newGame"
 	MessageTypeSetCurrentMove      MessageType = "setCurrentMove"
+	MessageTypeGameEnded           MessageType = "gameEnded"
 )
 
 type Message struct {
@@ -44,6 +45,11 @@ type SaveGameResponse struct {
 type LoadGameResponse struct {
 	PastMoves   []PGNMove `json:"pastMoves"`
 	CurrentMove int       `json:"currentMove"`
+}
+
+type GameEndedResponse struct {
+	King   string `json:"king"`
+	Winner string `json:"winner"`
 }
 
 func GameMoveFromPGN(pgn PGNMove) game.Move {

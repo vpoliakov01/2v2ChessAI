@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useReducer } from 'react';
 import { Position, Move, movesEqual, PGNMove } from '../common';
 import { ArrowProps } from '../components/Arrow';
-import { MessageType, Message, BestMoveResponse, SaveGameResponse, LoadGameResponse, GameStateManager, GameSyncService } from '../utils';
+import { MessageType, Message, BestMoveResponse, SaveGameResponse, LoadGameResponse, GameStateManager, GameSyncService, GameEndedResponse } from '../utils';
 import { gameReducer, loadInitialState } from './gameReducer';
 
 export function useBoardState() {
@@ -130,6 +130,11 @@ export function useBoardState() {
         case MessageType.LoadGameResponse: {
           const loadData = message.data as LoadGameResponse;
           dispatch({ type: 'replayMoves', pastMoves: loadData.pastMoves.map(Move.fromPGN), currentMove: loadData.currentMove });
+          break;
+        }
+        case MessageType.GameEnded: {
+          const gameEndedData = message.data as GameEndedResponse;
+          alert(`${gameEndedData.king} king has fallen! ${gameEndedData.winner} is victorious!`);
           break;
         }
         default:
