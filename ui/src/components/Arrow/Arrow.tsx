@@ -95,7 +95,6 @@ export function ArrowContainer() {
         arrowEnd,
         hoveredMove,
         activePlayer,
-        displaySettings,
     } = useBoardStateContext();
 
     const arrows: ArrowProps[] = drawnArrows.map(arrow => ({ move: new Move(arrow.move.from, arrow.move.to), color: arrow.color }));
@@ -105,9 +104,7 @@ export function ArrowContainer() {
     }
 
     if (hoveredMove) {
-        if (['arrow', 'highlight+'].includes(displaySettings.onMoveHover)) {
-            arrows.push({ move: hoveredMove.move, color: hoveredMove.color });
-        }
+        arrows.push({ move: hoveredMove.move, color: hoveredMove.color });
     }
 
     const arrowSquares = new Map<string, number>();

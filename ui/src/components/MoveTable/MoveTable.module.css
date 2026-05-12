@@ -27,6 +27,21 @@
   border-radius: 2px;
 }
 
+.inactiveCell {
+  width: 85px;
+  padding: 5px;
+  opacity: 0.3;
+  cursor: default;
+}
+
+.nonInteractive {
+  cursor: default;
+}
+
+.nonInteractive:hover {
+  background-color: transparent;
+}
+
 /* Player colors */
 .moveCell:nth-child(2) {
   color: var(--color-red);

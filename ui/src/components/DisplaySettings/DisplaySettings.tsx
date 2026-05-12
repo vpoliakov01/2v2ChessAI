@@ -1,10 +1,11 @@
 import React from 'react';
 import { useBoardStateContext } from '../../context/BoardStateContext';
-import { GameStateManager, ShowLabels, OnMoveHover } from '../../utils';
+import { GameStateManager, ShowLabels } from '../../utils';
+import { Color, colorCode } from '../../common';
+import { Checkbox } from '../Checkbox';
 import styles from './DisplaySettings.module.css';
 
 const showLabelsOptions: ShowLabels[] = ['all', 'border', 'pieces', 'moves', 'moves+', 'none'];
-const onMoveHoverOptions: OnMoveHover[] = ['set board', 'arrow', 'highlight', 'highlight+', 'none'];
 
 
 
@@ -39,16 +40,14 @@ export function DisplaySettings() {
               </td>
             </tr>
             <tr>
-              <td>On move hover:</td>
+              <td>Show Continuation:</td>
               <td>
-                <select
-                  value={displaySettings.onMoveHover}
-                  onChange={(e) => setDisplaySettings({ ...displaySettings, onMoveHover: e.target.value as OnMoveHover })}
-                >
-                  {onMoveHoverOptions.map(option => (
-                    <option key={option} value={option}>{capitalize(option)}</option>
-                  ))}
-                </select>
+                <Checkbox
+                  checked={displaySettings.showContinuation}
+                  onChange={(checked) => setDisplaySettings({ ...displaySettings, showContinuation: checked })}
+                  background={colorCode(Color.DarkGray)}
+                  borderColor={colorCode(Color.DarkGray)}
+                />
               </td>
             </tr>
           </tbody>

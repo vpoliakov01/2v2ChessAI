@@ -21,6 +21,8 @@ const (
 	MessageTypeNewGame             MessageType = "newGame"
 	MessageTypeSetCurrentMove      MessageType = "setCurrentMove"
 	MessageTypeGameEnded           MessageType = "gameEnded"
+	MessageTypeProcessing          MessageType = "processing"
+	MessageTypeStoppedProcessing   MessageType = "stoppedProcessing"
 )
 
 type Message struct {

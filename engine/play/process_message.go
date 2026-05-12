@@ -45,9 +45,6 @@ func (c *Connection) ProcessMessage(msg *Message) {
 }
 
 func (c *Connection) processSetSettings(cfg Config) {
-	log.Printf("Processing settings: Depth=%d, CaptureDepth=%d, HumanPlayers=%v, EvalLimit=%d",
-		cfg.Depth, cfg.CaptureDepth, cfg.HumanPlayers, cfg.EvalLimit)
-
 	humanPlayersChanged := !AreHumanPlayersEqual(c.cfg.HumanPlayers, cfg.HumanPlayers)
 	if humanPlayersChanged {
 		c.cfg.HumanPlayers = cfg.HumanPlayers
@@ -175,15 +172,17 @@ func (c *Connection) playUntilPlayerMove() {
 // playEngineMoves plays engine moves until the active player is a human player.
 func (c *Connection) playEngineMoves(game *g.GameSession) {
 	for !slices.Contains(c.cfg.HumanPlayers, game.ActivePlayer) {
+		c.SendMessage(MessageTypeProcessing, nil)
 		now := time.Now()
 		moveNumber := game.MoveNumber
 		continuation, score, err := c.engine.GetBestMove(game.Game)
 		if err != nil {
 			log.Printf("Error getting best move: %v", err)
+			c.SendMessage(MessageTypeStoppedProcessing, nil)
 			return
 		}
-		bestMove := continuation[0]
 
+		bestMove := continuation[0]
 		elapsed := time.Since(now)
 
 		select {
@@ -191,6 +190,7 @@ func (c *Connection) playEngineMoves(game *g.GameSession) {
 			c.cfg.HumanPlayers = humanPlayers
 
 			if slices.Contains(humanPlayers, game.ActivePlayer) {
+				c.SendMessage(MessageTypeStoppedProcessing, nil)
 				return
 			}
 		default:

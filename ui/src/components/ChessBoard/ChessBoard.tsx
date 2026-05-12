@@ -41,10 +41,8 @@ export function ChessBoard() {
   }
 
   if (hoveredMove) {
-    if (['highlight', 'highlight+'].includes(displaySettings.onMoveHover)) {
-      higlightedSquares.push({ ...hoveredMove.move.from, color: hoveredMove.color });
-      higlightedSquares.push({ ...hoveredMove.move.to, color: hoveredMove.color });
-    }
+    higlightedSquares.push({ ...hoveredMove.move.from, color: hoveredMove.color });
+    higlightedSquares.push({ ...hoveredMove.move.to, color: hoveredMove.color });
   }
 
   const handleSquareClick = (row: number, col: number) => {

@@ -1,4 +1,4 @@
-import { Piece, Color, MoveInfo } from '../common';
+import { Piece, Color, Move, MoveInfo } from '../common';
 import { ArrowProps } from '../components/Arrow';
 import { GameSettings } from './ws';
 
@@ -22,7 +22,7 @@ export type OnMoveHover = typeof onMoveHoverOptions[number];
 
 export interface DisplaySettingsState {
     showLabels: ShowLabels;
-    onMoveHover: OnMoveHover;
+    showContinuation: boolean;
 }
 
 export class GameStateManager {
@@ -40,7 +40,7 @@ export class GameStateManager {
 
     static readonly defaultDisplaySettings: DisplaySettingsState = {
         showLabels: 'moves',
-        onMoveHover: 'highlight+',
+        showContinuation: false,
     };
 
     static load(): SavedBoardState {
@@ -129,6 +129,9 @@ export class GameStateManager {
     }
 
     private static deserialize(data: any): SavedBoardState {
+        const deserializeContinuation = (raw: any): Move[] =>
+            Array.isArray(raw) ? raw.map((m: any) => new Move(m.from, m.to)) : [];
+
         return {
             board: Array.isArray(data.board)
                 ? data.board.map((row: any) =>
@@ -139,9 +142,13 @@ export class GameStateManager {
                 : GameStateManager.getDefault().board,
             activePlayer: data.activePlayer || Color.Red,
             allMoves: Array.isArray(data.allMoves)
-                ? data.allMoves.map((move: any) =>
-                    new MoveInfo(move.from, move.to, move.piece, move.capturedPiece)
-                )
+                ? data.allMoves.map((move: any) => {
+                    const info = new MoveInfo(move.from, move.to, move.piece, move.capturedPiece);
+                    if (Array.isArray(move.continuation)) {
+                        info.continuation = deserializeContinuation(move.continuation);
+                    }
+                    return info;
+                })
                 : [],
             currentMove: data.currentMove || 0,
             score: data.score || 0,

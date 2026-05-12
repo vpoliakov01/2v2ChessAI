@@ -5,6 +5,8 @@ import { BOARD_SIZE } from './constants';
 export type PGNMove = string;
 
 export class Move {
+    public continuation?: Move[];
+
     constructor(public from: Position, public to: Position) { }
 
     static fromPGN(pgn: PGNMove): Move {

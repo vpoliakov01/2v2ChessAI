@@ -76,7 +76,7 @@ export interface GameState {
 }
 
 export type GameAction =
-  | { type: 'movePiece'; move: Move; playerMove?: boolean }
+  | { type: 'movePiece'; move: Move; playerMove?: boolean; continuation?: Move[] }
   | { type: 'engineMove'; moveData: BestMoveResponse }
   | { type: 'setAvailableMoves'; moves: Move[] }
   | { type: 'setScore'; score: number }
@@ -119,7 +119,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const playerMove = action.playerMove ?? false;
 
       const baseMoves = state.allMoves.slice(0, state.currentMove + 1);
-      const newAllMoves = [...baseMoves, new MoveInfo(from, to, state.board[from.row][from.col]!, state.board[to.row][to.col] ?? null)];
+      const newMoveInfo = new MoveInfo(from, to, state.board[from.row][from.col]!, state.board[to.row][to.col] ?? null);
+      if (action.continuation) {
+        newMoveInfo.continuation = action.continuation;
+      }
+      const newAllMoves = [...baseMoves, newMoveInfo];
 
       if (state.currentMove < baseMoves.length - 1 && !playerMove) {
         return { ...state, allMoves: newAllMoves };
@@ -153,10 +157,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         formatNumber(evaluations / 1000, 5, 2, 'k'),
         formatNumber(time / evaluations * 1e6, 4, 0, 'μs'),
       );
-      console.log(continuation.map(Move.fromPGN).map(m => m.toPGN()).join(' '));
-      const pngMove = Move.fromPGN(move);
+      const continuationMoves = continuation.map(Move.fromPGN);
+      console.log(continuationMoves.map(m => m.toPGN()).join(' '));
+      const pngMove = continuationMoves[0];
       const afterMove = gameReducer(state, { type: 'movePiece', move: pngMove });
-      return { ...afterMove, score };
+      const updatedAllMoves = [...afterMove.allMoves];
+      const lastIdx = updatedAllMoves.length - 1;
+      if (lastIdx >= 0) {
+        updatedAllMoves[lastIdx].continuation = continuationMoves;
+      }
+      return { ...afterMove, allMoves: updatedAllMoves, score };
     }
 
     case 'setAvailableMoves':
@@ -180,7 +190,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       for (let i = 0; i < action.pastMoves.length; i++) {
         const { from, to } = action.pastMoves[i];
-        newMoves.push(new MoveInfo(from, to, newBoard[from.row][from.col]!, newBoard[to.row][to.col] ?? null));
+        const newMove = new MoveInfo(from, to, newBoard[from.row][from.col]!, newBoard[to.row][to.col] ?? null);
+
+        const existing = state.allMoves[i];
+        const matchesExisting = existing
+          && existing.from.row === from.row && existing.from.col === from.col
+          && existing.to.row === to.row && existing.to.col === to.col;
+        if (matchesExisting) {
+          newMove.continuation = existing.continuation;
+        }
+
+        newMoves.push(newMove);
         newBoard[to.row][to.col] = newBoard[from.row][from.col];
         newBoard[from.row][from.col] = null;
 

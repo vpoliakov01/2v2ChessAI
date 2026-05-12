@@ -57,6 +57,16 @@ export function useBoardState() {
     return true;
   }, [isValidMove, sendMessage]);
 
+  // Plays continuation moves [1..upToIndex] from the current position, attaching the
+  // remaining slice of the continuation to each appended move so it can be re-displayed.
+  const playContinuationFromCurrent = useCallback((continuation: Move[], upToIndex: number) => {
+    for (let i = 1; i <= upToIndex && i < continuation.length; i++) {
+      const move = continuation[i];
+      sendMessage(new Message(MessageType.PlayerMove, move.toPGN()));
+      dispatch({ type: 'movePiece', move, playerMove: true, continuation: continuation.slice(i) });
+    }
+  }, [sendMessage]);
+
   // Arrow drawing
   const handleSquareRightMouseDown = useCallback((position: Position) => {
     setIsDrawingArrow(true);
@@ -137,6 +147,12 @@ export function useBoardState() {
           alert(`${gameEndedData.king} king has fallen! ${gameEndedData.winner} is victorious!`);
           break;
         }
+        case MessageType.Processing:
+          console.log('Thinking...');
+          break;
+        case MessageType.StoppedProcessing:
+          console.log('Stopped thinking');
+          break;
         default:
           console.log('unknown message', message);
           break;
@@ -169,6 +185,7 @@ export function useBoardState() {
     arrowEnd,
     setCurrentMove,
     movePiece,
+    playContinuationFromCurrent,
     setPgn,
     setSelectedSquare,
     sendMessage,

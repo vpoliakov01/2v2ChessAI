@@ -14,6 +14,8 @@ export enum MessageType {
   LoadGameResponse = 'loadGameResponse',
   SetCurrentMove = 'setCurrentMove',
   GameEnded = 'gameEnded',
+  Processing = 'processing',
+  StoppedProcessing = 'stoppedProcessing',
 }
 
 export interface BestMoveResponse {
