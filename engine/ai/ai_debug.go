@@ -18,9 +18,11 @@ type BestMoveIndexes struct {
 }
 
 func (ai *AI) PrintBestMoveIndexes() {
-	ai.bestMoveIndexesMutex.Lock()
-	defer ai.bestMoveIndexesMutex.Unlock()
+	fmt.Println("        dep best max    moves    ratio total")
 	for i := range ai.BestMoveIndexes {
+		if i == 0 {
+			continue
+		}
 		if ai.BestMoveIndexes[i].Count == 0 {
 			break
 		}
@@ -29,12 +31,8 @@ func (ai *AI) PrintBestMoveIndexes() {
 		maxIndex := 1 + ai.BestMoveIndexes[i].MaxIndex
 		moves := float64(ai.BestMoveIndexes[i].TotalMoves) / float64(ai.BestMoveIndexes[i].Count)
 
-		if i == ai.Depth {
-			fmt.Println("\t----------------------")
-		}
-
 		fmt.Printf(
-			"\t%v: %5.2f (%2d) / %5.2f = %5.2f (total: %v)\n",
+			"\t%v: %5.2f (%2d) / %5.2f = %5.2f  %v\n",
 			i,
 			avgIndex,
 			maxIndex,
@@ -42,6 +40,10 @@ func (ai *AI) PrintBestMoveIndexes() {
 			avgIndex/moves,
 			ai.BestMoveIndexes[i].Count,
 		)
+
+		if i == ai.Depth {
+			fmt.Println("\t----------------------")
+		}
 	}
 	fmt.Println()
 }

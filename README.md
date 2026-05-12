@@ -48,6 +48,15 @@ Some more positions reached by the engine playing itself:
 * Add more settings
 
 ### Engine:
+* Multithreading on the 1st level only
+    * Reuse reusable data
+* Filter moves returning captures, development moves, and king safety moves
+    * Prune:
+        * All (?) moves for 1
+        * 8 moves for 2-4
+        * 6 for 5-8
+        * 4 for 8-12
+        * 2 for 12-16
 * Support castling
 * Support forced calculation for checks
 * Test with very sophisticated position evaluation
@@ -58,33 +67,3 @@ Some more positions reached by the engine playing itself:
 * Dockerize (1 for ui, 1 for the engine)
 * UI/Engine desync handling
 * Update readme
-
-
-FIX THE ISSUE WITH THE RECKLESS CAPTURES AND LACK OF TAKE BACKS
-
-1. e2-e3 b10-c10 e13-e12 m5-l5
-2. f1-b5 a6-b5 f14-a9 m8-l8
-3. j1-i3 a8-a9 j13-j12 n6-j2
-4. i1-j2 a5-c4 g13-g12 n7-h13
-5. e1-f3 a9-f14 g14-h13 m10-l10
-6. d2-d3 f14-f13 h13-h12 n9-i14
-7. d3-c4 f13-g12 h12-i11 n10-l11
-8. d1-d11 b5-k14 h14-h3 l11-k13
-9. k2-k4 g12-h11 h3-h11 k13-l11
-10. d11-b11 k14-h11 i11-h11 l11-j12
-11. b11-a11 b8-c8 h11-h12 j12-i10
-12. a11-a10 a7-b8 h12-g13 i10-g11
-13. a10-a4 b6-c6 e14-f12 g11-e12
-14. a4-b4 b8-a7 d13-e12 i14-d9
-15. k4-l5 a7-a6 d14-d9 m4-l5
-16. b4-a4 a6-b6 d9-b9 n4-i4
-17. k1-k10 b6-c5 b9-b7 i4-i13
-18. a4-a5 c5-d6 g13-h14 i13-i14
-19. k10-c10 c8-d8 h14-i14 n5-l6
-20. c10-c6 d6-c6 b7-b8 l6-k4
-21. i3-k4 c6-c7 j14-i12 l5-k4
-22. j2-d8 c7-b8 f12-d11 n11-n9
-23. h2-h3 b8-c8 i14-j14 n8-n7
-24. g1-d1 c8-b9 d11-e9 m6-l6
-25. d1-d6 b9-a10 e9-f11 n7-n6
-26. a5-a10

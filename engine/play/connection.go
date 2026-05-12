@@ -1,6 +1,7 @@
 package play
 
 import (
+	"context"
 	"sync"
 
 	"github.com/vpoliakov01/2v2ChessAI/engine/ai"
@@ -30,22 +31,16 @@ type Connection struct {
 	gs     *game.GameSession
 	engine *ai.AI
 
-	stopEngineMovesCh chan struct{}
-	writeLock         sync.Mutex
+	engineCancel context.CancelFunc
+	engineMutex  sync.Mutex
+	writeLock    sync.Mutex
 }
 
 func NewConnection(c MessageWriter, cfg *Config) *Connection {
-	return newConnection(c, cfg)
-}
-
-func newConnection(c MessageWriter, cfg *Config) *Connection {
-	connection := &Connection{
-		conn:              c,
-		cfg:               cfg,
-		gs:                game.SetupBoard(cfg.Load),
-		engine:            ai.New(cfg.Depth, cfg.CaptureDepth, cfg.EvalLimit),
-		stopEngineMovesCh: make(chan struct{}, 10),
+	return &Connection{
+		conn:   c,
+		cfg:    cfg,
+		gs:     game.SetupBoard(cfg.Load),
+		engine: ai.New(cfg.Depth, cfg.CaptureDepth, cfg.EvalLimit),
 	}
-
-	return connection
 }

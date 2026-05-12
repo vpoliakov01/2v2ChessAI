@@ -1,6 +1,7 @@
 package play
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math"
@@ -47,7 +48,7 @@ func (c *Connection) ProcessMessage(msg *Message) {
 func (c *Connection) processSetSettings(cfg Config) {
 	humanPlayersChanged := !AreHumanPlayersEqual(c.cfg.HumanPlayers, cfg.HumanPlayers)
 	if humanPlayersChanged {
-		c.stopPlayingEngineMovesIfRunning()
+		c.stopPlayingEngineMovesIfRunning(slices.Contains(cfg.HumanPlayers, c.gs.ActivePlayer))
 		c.cfg.HumanPlayers = cfg.HumanPlayers
 	}
 
@@ -76,7 +77,7 @@ func (c *Connection) processGetAvailableMoves() {
 }
 
 func (c *Connection) processPlayerMove(move PGNMove) {
-	c.stopPlayingEngineMovesIfRunning()
+	c.stopPlayingEngineMovesIfRunning(true)
 	game := c.gs
 
 	gameMove := GameMoveFromPGN(move)
@@ -98,7 +99,7 @@ func (c *Connection) processSaveGame() {
 }
 
 func (c *Connection) processLoadGame(data string) {
-	c.stopPlayingEngineMovesIfRunning()
+	c.stopPlayingEngineMovesIfRunning(true)
 
 	game, err := g.LoadPGN(data)
 	if err != nil {
@@ -115,7 +116,7 @@ func (c *Connection) processLoadGame(data string) {
 }
 
 func (c *Connection) processNewGame() {
-	c.stopPlayingEngineMovesIfRunning()
+	c.stopPlayingEngineMovesIfRunning(true)
 
 	c.gs = g.NewGameSession()
 	c.SendMessage(MessageTypeLoadGameResponse, LoadGameResponse{
@@ -126,7 +127,7 @@ func (c *Connection) processNewGame() {
 }
 
 func (c *Connection) processSetCurrentMove(moveIndex int) {
-	c.stopPlayingEngineMovesIfRunning()
+	c.stopPlayingEngineMovesIfRunning(true)
 
 	err := c.gs.SetCurrentMove(moveIndex)
 	if err != nil {
@@ -143,13 +144,24 @@ func (c *Connection) processSetCurrentMove(moveIndex int) {
 // playUntilPlayerMove proceeds until the active player is a human player.
 func (c *Connection) playUntilPlayerMove() {
 	snapshot := c.gs.Copy()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	c.engineMutex.Lock()
+	c.engineCancel = cancel
+	c.engineMutex.Unlock()
+
 	go func() {
+		defer cancel()
 		defer func() {
 			if r := recover(); r != nil {
 				log.Printf("panic in playUntilPlayerMove goroutine: %v\n%s", r, debug.Stack())
 			}
 		}()
-		c.playEngineMoves(snapshot)
+		c.playEngineMoves(ctx, snapshot)
+
+		if ctx.Err() != nil {
+			return
+		}
 
 		if c.gs.HasEnded() {
 			winningTeam := c.gs.Winner
@@ -172,17 +184,33 @@ func (c *Connection) playUntilPlayerMove() {
 	}()
 }
 
-// stopPlayingEngineMovesIfRunning stops the playing engine moves goroutine if the active player is not a human player.
-func (c *Connection) stopPlayingEngineMovesIfRunning() {
-	if !slices.Contains(c.cfg.HumanPlayers, c.gs.ActivePlayer) {
-		c.stopEngineMovesCh <- struct{}{}
-		c.engine.Stop()
+// stopPlayingEngineMovesIfRunning cancels the currently running engine-moves
+// goroutine (if any) when the active player is not a human player.
+func (c *Connection) stopPlayingEngineMovesIfRunning(condition bool) {
+	if !condition {
+		return
 	}
+
+	c.engineMutex.Lock()
+	cancel := c.engineCancel
+	c.engineCancel = nil
+	c.engineMutex.Unlock()
+
+	if cancel != nil {
+		cancel()
+	}
+	c.engine.Stop()
 }
 
-// playEngineMoves plays engine moves until the active player is a human player.
-func (c *Connection) playEngineMoves(game *g.GameSession) {
+// playEngineMoves plays engine moves until the active player is a human player
+// or the context is cancelled.
+func (c *Connection) playEngineMoves(ctx context.Context, game *g.GameSession) {
 	for !slices.Contains(c.cfg.HumanPlayers, game.ActivePlayer) {
+		if ctx.Err() != nil {
+			c.SendMessage(MessageTypeStoppedProcessing, nil)
+			return
+		}
+
 		c.SendMessage(MessageTypeProcessing, nil)
 		now := time.Now()
 		moveNumber := game.MoveNumber
@@ -193,31 +221,30 @@ func (c *Connection) playEngineMoves(game *g.GameSession) {
 			return
 		}
 
+		if ctx.Err() != nil {
+			c.SendMessage(MessageTypeStoppedProcessing, nil)
+			return
+		}
+
 		bestMove := continuation[0]
 		elapsed := time.Since(now)
 
-		select {
-		case <-c.stopEngineMovesCh:
-			c.SendMessage(MessageTypeStoppedProcessing, nil)
-			return
-		default:
-			c.SendMessage(MessageTypeEngineMove, BestMoveResponse{
-				Continuation: PGNMovesFromGameMoves(continuation),
-				MoveNumber:   moveNumber,
-				Score:        math.Round(score*float64(game.ActivePlayer.Team())*100) / 100,
-				Time:         math.Round(elapsed.Seconds()*100) / 100,
-				Evaluations:  c.engine.EvalsCount(),
-			})
+		c.SendMessage(MessageTypeEngineMove, BestMoveResponse{
+			Continuation: PGNMovesFromGameMoves(continuation),
+			MoveNumber:   moveNumber,
+			Score:        math.Round(score*float64(game.ActivePlayer.Team())*100) / 100,
+			Time:         math.Round(elapsed.Seconds()*100) / 100,
+			Evaluations:  c.engine.EvalsCount,
+		})
 
-			game.Play(bestMove)
-			c.gs = game.Copy()
+		game.Play(bestMove)
+		c.gs = game.Copy()
 
-			fmt.Println("Move number:", game.MoveNumber)
-			fmt.Println("Active player:", game.ActivePlayer)
-			fmt.Println("Score:", score)
-			fmt.Println("Time:", elapsed)
-			fmt.Println("Evaluations:", c.engine.EvalsCount())
-			game.Board.Draw()
-		}
+		fmt.Println("Move number:", game.MoveNumber)
+		fmt.Println("Active player:", game.ActivePlayer)
+		fmt.Println("Score:", score)
+		fmt.Println("Time:", elapsed)
+		fmt.Println("Evaluations:", c.engine.EvalsCount)
+		game.Board.Draw()
 	}
 }

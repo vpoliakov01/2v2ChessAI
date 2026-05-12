@@ -111,8 +111,6 @@ export function loadInitialState(): GameState {
 }
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
-  // console.debug(`Dispatched ${action.type}`.padEnd(30), action);
-
   switch (action.type) {
     case 'movePiece': {
       const { from, to } = action.move;
