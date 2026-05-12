@@ -17,7 +17,7 @@ export enum MessageType {
 }
 
 export interface BestMoveResponse {
-  move: PGNMove;
+  continuation: PGNMove[];
   score: number;
   time: number;
   evaluations: number;

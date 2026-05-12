@@ -139,22 +139,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'engineMove': {
-      const { moveData } = action;
-      if (moveData.moveNumber !== state.allMoves.length + 1) {
-        console.warn(`Ignoring stale engine move ${moveData.move} at moveNumber ${moveData.moveNumber} expected ${state.allMoves.length + 1}`);
+      const { continuation, moveNumber, score, time, evaluations } = action.moveData;
+      const move = continuation[0];
+      if (moveNumber !== state.allMoves.length + 1) {
+        console.warn(`Ignoring stale engine move ${move} at moveNumber ${moveNumber} expected ${state.allMoves.length + 1}`);
         return state;
       }
       console.log('move'.padEnd(8), 'time'.padStart(6), 'score'.padStart(9), 'evals'.padStart(8), 'avg'.padStart(6));
       console.log(
-        moveData.move.padEnd(8),
-        formatNumber(moveData.time, 3, 2, 's'),
-        formatNumber(moveData.score, 5, 2),
-        formatNumber(moveData.evaluations / 1000, 5, 2, 'k'),
-        formatNumber(moveData.time / moveData.evaluations * 1e6, 4, 0, 'μs'),
+        move.padEnd(8),
+        formatNumber(time, 3, 2, 's'),
+        formatNumber(score, 5, 2),
+        formatNumber(evaluations / 1000, 5, 2, 'k'),
+        formatNumber(time / evaluations * 1e6, 4, 0, 'μs'),
       );
-      const move = Move.fromPGN(moveData.move);
-      const afterMove = gameReducer(state, { type: 'movePiece', move });
-      return { ...afterMove, score: moveData.score };
+      console.log(continuation.map(Move.fromPGN).map(m => m.toPGN()).join(' '));
+      const pngMove = Move.fromPGN(move);
+      const afterMove = gameReducer(state, { type: 'movePiece', move: pngMove });
+      return { ...afterMove, score };
     }
 
     case 'setAvailableMoves':

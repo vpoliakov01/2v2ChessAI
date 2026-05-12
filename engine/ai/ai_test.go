@@ -140,16 +140,16 @@ func (s *TestSuite) TestEngineDepthsPerformance() {
 			start := time.Now()
 			engine := New(d.depth, d.captureDepth, 0, WithEnableDebug(true))
 
-			bestMoves := []*game.Move{}
+			continuations := [][]game.Move{}
 			scores := []float64{}
 
 			for i := 0; i < moves; i++ {
-				bestMove, score, err := engine.GetBestMove(g)
+				continuation, score, err := engine.GetBestMove(g)
 				if err != nil {
 					fmt.Println(err)
 					break
 				}
-				bestMoves = append(bestMoves, bestMove)
+				continuations = append(continuations, continuation)
 				scores = append(scores, score)
 			}
 
@@ -158,7 +158,11 @@ func (s *TestSuite) TestEngineDepthsPerformance() {
 				last = t
 			}
 			fmt.Println(name)
-			fmt.Printf("Best moves: %v %.2f\n", bestMoves, scores)
+			if moves == 1 {
+				fmt.Printf("Continuation: %v %.2f\n", continuations[0], scores)
+			} else {
+				fmt.Printf("Continuations: %v %.2f\n", continuations, scores)
+			}
 			fmt.Printf(
 				"Depth: %v/%v    t: %.2fs   t/m: %.2fs   r: %.2fx   e: %v   t/e: %.2fµs\n",
 				d.depth,
@@ -213,7 +217,7 @@ func (s *TestSuite) TestPosition() {
 	g.Board.Draw()
 
 	for i := 0; i < 30; i++ {
-		move, _, err := engine.GetBestMove(g)
+		continuation, _, err := engine.GetBestMove(g)
 		if err != nil {
 			if err == ErrGameEnded {
 				fmt.Printf("%v: Team %v won!\n", i, g.Winner)
@@ -222,6 +226,7 @@ func (s *TestSuite) TestPosition() {
 			}
 			break
 		}
+		move := continuation[0]
 
 		fmt.Println(move)
 
@@ -233,7 +238,7 @@ func (s *TestSuite) TestPosition() {
 			fmt.Printf("%v: P%v's %v takes P%v's %v after %v\n", i, player, piece, opponent, capturedPiece, move)
 		}
 
-		g.Play(*move)
+		g.Play(move)
 		g.Board.Draw()
 	}
 }
@@ -253,12 +258,12 @@ func (s *TestSuite) TestMultithreading() {
 		g := s.games[2].Copy()
 
 		for i := 0; i < moves; i++ {
-			move, _, err := engine.GetBestMove(g)
+			continuation, _, err := engine.GetBestMove(g)
 			if err != nil {
 				fmt.Println(err)
 				break
 			}
-			g.Play(*move)
+			g.Play(continuation[0])
 		}
 
 		t := time.Since(startTime)
@@ -302,8 +307,9 @@ func (s *TestSuite) TestObviousMoves() {
 		}
 		engine := s.engine
 
-		move, _, err := engine.GetBestMove(g)
+		continuation, _, err := engine.GetBestMove(g)
 		s.Require().NoError(err)
+		move := continuation[0]
 		if move.String() != tc.move {
 			fmt.Printf("%v: %v != %v\n", tc.name, move, tc.move)
 			failures++
@@ -321,7 +327,7 @@ func (s *TestSuite) TestGetBestMove() {
 	g := s.games[2].Copy()
 
 	for i := 0; i < 5; i++ {
-		move, score, err := engine.GetBestMove(g)
+		continuation, score, err := engine.GetBestMove(g)
 		if err != nil {
 			if err == ErrGameEnded {
 				fmt.Printf("%v: Team %v won!\n", i, g.Winner)
@@ -330,6 +336,7 @@ func (s *TestSuite) TestGetBestMove() {
 			}
 			break
 		}
+		move := continuation[0]
 
 		piece := game.Piece(g.Board.GetPiece(move.From))
 		if !g.Board.IsEmpty(move.To) {
@@ -339,9 +346,10 @@ func (s *TestSuite) TestGetBestMove() {
 			fmt.Printf("%v: %v moves %v\n", i, piece, move)
 		}
 
-		g.Play(*move)
+		g.Play(move)
 		g.Board.Draw()
 		fmt.Println("Evaluation: ", score)
+		fmt.Println("Continuation: ", continuation)
 	}
 
 	fmt.Println("Depth: ", engine.Depth)

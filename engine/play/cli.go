@@ -31,7 +31,6 @@ func RunCLI(cfg *Config) {
 
 		var move *game.Move
 		var score float64
-		var err error
 		moveStartTime := time.Now()
 
 		if slices.Contains(cfg.HumanPlayers, g.ActivePlayer) { // Human player's turn.
@@ -69,7 +68,7 @@ func RunCLI(cfg *Config) {
 				break
 			}
 		} else { // AI's turn.
-			move, score, err = engine.GetBestMove(g.Game)
+			continuation, s, err := engine.GetBestMove(g.Game)
 			if err != nil {
 				if err == ai.ErrGameEnded {
 					fmt.Printf("%v: Team %v won!\n", i, g.Winner)
@@ -78,9 +77,12 @@ func RunCLI(cfg *Config) {
 				}
 				break
 			}
+			move = &continuation[0]
+			score = s
 
 			if cfg.Evaluation {
 				fmt.Printf("Evaluation: %.3f\n", score*float64(g.ActivePlayer.Team()))
+				fmt.Printf("Continuation: %v\n", continuation)
 			}
 		}
 

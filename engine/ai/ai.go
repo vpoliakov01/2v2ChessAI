@@ -100,8 +100,10 @@ func (ai *AI) recordBestMoveIndex(data BestMoveIndexes) {
 	acc.TotalMoves += data.TotalMoves
 }
 
-// GetBestMove returns the best move for the active player to play.
-func (ai *AI) GetBestMove(g *game.Game) (bestMove *game.Move, score float64, err error) {
+// GetBestMove returns the best move for the active player to play along with
+// the predicted continuation (the principal variation) up to the search depth.
+// The first element of the continuation is the best move itself.
+func (ai *AI) GetBestMove(g *game.Game) (continuation []game.Move, score float64, err error) {
 	ai.evalsCount.Store(0)
 
 	if g.HasEnded() {
@@ -109,19 +111,19 @@ func (ai *AI) GetBestMove(g *game.Game) (bestMove *game.Move, score float64, err
 	}
 
 	forcedMateScore := 1002 - float64(ai.Depth) // No point on trying to improve the score if you are forcing mate.
-	bestMove, score = ai.Negamax(g, 0, 0, ai.EvaluateCurrent(g), -forcedMateScore, forcedMateScore)
-	if bestMove == nil {
+	continuation, score = ai.Negamax(g, 0, 0, ai.EvaluateCurrent(g), -forcedMateScore, forcedMateScore)
+	if len(continuation) == 0 {
 		return nil, 0, ErrNoMoves
 	}
 
-	return bestMove, score, nil
+	return continuation, score, nil
 }
 
 // Negamax (minimax + negation) recursively finds the position to which
 // picking the best move by every player leads.
 // Alpha and beta params are used for alpha-beta pruning (skipping evalution
 // of branches that are guaranteed not to be picked by any of players).
-func (ai *AI) Negamax(g *game.Game, depth, reduction int, eval, alpha, beta float64) (nextMove *game.Move, score float64) {
+func (ai *AI) Negamax(g *game.Game, depth, reduction int, eval, alpha, beta float64) (continuation []game.Move, score float64) {
 	// Instead of calculating checks, just evaluate until king capture.
 	// In 2v2 chess king capture is actually possible since teammate A can
 	// unblock the path between a teammate's B piece and the opponent's king.
@@ -152,6 +154,8 @@ func (ai *AI) Negamax(g *game.Game, depth, reduction int, eval, alpha, beta floa
 	if len(moves) == 0 {
 		return nil, eval
 	}
+
+	var bestContinuation []game.Move
 
 	// Channel for communicating results of position evaluations.
 	c := make(chan moveScore, len(moves))
@@ -202,11 +206,11 @@ func (ai *AI) Negamax(g *game.Game, depth, reduction int, eval, alpha, beta floa
 			depthReduction = 2
 		}
 
-		_, opponentScore := ai.Negamax(gameCopy, depth+1, depthReduction, eval, -beta, -alpha)
+		opponentContinuation, opponentScore := ai.Negamax(gameCopy, depth+1, depthReduction, eval, -beta, -alpha)
 		score := -opponentScore
 
 		if depthReduction > 0 && score > alpha {
-			_, opponentScore = ai.Negamax(gameCopy, depth+1, 0, eval, -beta, -alpha)
+			opponentContinuation, opponentScore = ai.Negamax(gameCopy, depth+1, 0, eval, -beta, -alpha)
 			score = -opponentScore
 		}
 
@@ -219,12 +223,13 @@ func (ai *AI) Negamax(g *game.Game, depth, reduction int, eval, alpha, beta floa
 				MoveIndex:  i,
 				TotalMoves: len(moves),
 			})
-			return &moves[i], beta
+			return append([]game.Move{moves[i]}, opponentContinuation...), beta
 		}
 
 		if score > alpha {
 			alpha = score
 			nextMoveIndex = i
+			bestContinuation = opponentContinuation
 		}
 	}
 
@@ -233,7 +238,7 @@ func (ai *AI) Negamax(g *game.Game, depth, reduction int, eval, alpha, beta floa
 		MoveIndex:  nextMoveIndex,
 		TotalMoves: len(moves),
 	})
-	return &moves[nextMoveIndex], alpha
+	return append([]game.Move{moves[nextMoveIndex]}, bestContinuation...), alpha
 }
 
 func (ai *AI) getDepthReductionThreshold(numMoves, depth int) int {

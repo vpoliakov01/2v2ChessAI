@@ -177,11 +177,12 @@ func (c *Connection) playEngineMoves(game *g.GameSession) {
 	for !slices.Contains(c.cfg.HumanPlayers, game.ActivePlayer) {
 		now := time.Now()
 		moveNumber := game.MoveNumber
-		bestMove, score, err := c.engine.GetBestMove(game.Game)
+		continuation, score, err := c.engine.GetBestMove(game.Game)
 		if err != nil {
 			log.Printf("Error getting best move: %v", err)
 			return
 		}
+		bestMove := continuation[0]
 
 		elapsed := time.Since(now)
 
@@ -194,14 +195,14 @@ func (c *Connection) playEngineMoves(game *g.GameSession) {
 			}
 		default:
 			c.SendMessage(MessageTypeEngineMove, BestMoveResponse{
-				Move:        PGNMoveFromGameMove(*bestMove),
-				MoveNumber:  moveNumber,
-				Score:       math.Round(score*float64(game.ActivePlayer.Team())*100) / 100,
-				Time:        math.Round(elapsed.Seconds()*100) / 100,
-				Evaluations: c.engine.EvalsCount(),
+				Continuation: PGNMovesFromGameMoves(continuation),
+				MoveNumber:   moveNumber,
+				Score:        math.Round(score*float64(game.ActivePlayer.Team())*100) / 100,
+				Time:         math.Round(elapsed.Seconds()*100) / 100,
+				Evaluations:  c.engine.EvalsCount(),
 			})
 
-			game.Play(*bestMove)
+			game.Play(bestMove)
 			c.gs = game.Copy()
 
 			fmt.Println("Move number:", game.MoveNumber)
