@@ -30,7 +30,7 @@ type Connection struct {
 	gs     *game.GameSession
 	engine *ai.AI
 
-	setHumanPlayersCh chan []game.Player
+	stopEngineMovesCh chan struct{}
 	writeLock         sync.Mutex
 }
 
@@ -44,7 +44,7 @@ func newConnection(c MessageWriter, cfg *Config) *Connection {
 		cfg:               cfg,
 		gs:                game.SetupBoard(cfg.Load),
 		engine:            ai.New(cfg.Depth, cfg.CaptureDepth, cfg.EvalLimit),
-		setHumanPlayersCh: make(chan []game.Player, 10),
+		stopEngineMovesCh: make(chan struct{}, 10),
 	}
 
 	return connection

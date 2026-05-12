@@ -47,12 +47,8 @@ func (c *Connection) ProcessMessage(msg *Message) {
 func (c *Connection) processSetSettings(cfg Config) {
 	humanPlayersChanged := !AreHumanPlayersEqual(c.cfg.HumanPlayers, cfg.HumanPlayers)
 	if humanPlayersChanged {
+		c.stopPlayingEngineMovesIfRunning()
 		c.cfg.HumanPlayers = cfg.HumanPlayers
-
-		if slices.Contains(cfg.HumanPlayers, c.gs.ActivePlayer) {
-			c.setHumanPlayersCh <- cfg.HumanPlayers
-			c.engine.Stop()
-		}
 	}
 
 	c.cfg = &cfg
@@ -80,6 +76,7 @@ func (c *Connection) processGetAvailableMoves() {
 }
 
 func (c *Connection) processPlayerMove(move PGNMove) {
+	c.stopPlayingEngineMovesIfRunning()
 	game := c.gs
 
 	gameMove := GameMoveFromPGN(move)
@@ -101,6 +98,8 @@ func (c *Connection) processSaveGame() {
 }
 
 func (c *Connection) processLoadGame(data string) {
+	c.stopPlayingEngineMovesIfRunning()
+
 	game, err := g.LoadPGN(data)
 	if err != nil {
 		log.Printf("Error loading game: %v", err)
@@ -116,6 +115,8 @@ func (c *Connection) processLoadGame(data string) {
 }
 
 func (c *Connection) processNewGame() {
+	c.stopPlayingEngineMovesIfRunning()
+
 	c.gs = g.NewGameSession()
 	c.SendMessage(MessageTypeLoadGameResponse, LoadGameResponse{
 		PastMoves:   PGNMovesFromGameMoves(c.gs.PastMoves),
@@ -125,6 +126,8 @@ func (c *Connection) processNewGame() {
 }
 
 func (c *Connection) processSetCurrentMove(moveIndex int) {
+	c.stopPlayingEngineMovesIfRunning()
+
 	err := c.gs.SetCurrentMove(moveIndex)
 	if err != nil {
 		log.Printf("Error setting current move: %v", err)
@@ -169,6 +172,14 @@ func (c *Connection) playUntilPlayerMove() {
 	}()
 }
 
+// stopPlayingEngineMovesIfRunning stops the playing engine moves goroutine if the active player is not a human player.
+func (c *Connection) stopPlayingEngineMovesIfRunning() {
+	if !slices.Contains(c.cfg.HumanPlayers, c.gs.ActivePlayer) {
+		c.stopEngineMovesCh <- struct{}{}
+		c.engine.Stop()
+	}
+}
+
 // playEngineMoves plays engine moves until the active player is a human player.
 func (c *Connection) playEngineMoves(game *g.GameSession) {
 	for !slices.Contains(c.cfg.HumanPlayers, game.ActivePlayer) {
@@ -186,13 +197,9 @@ func (c *Connection) playEngineMoves(game *g.GameSession) {
 		elapsed := time.Since(now)
 
 		select {
-		case humanPlayers := <-c.setHumanPlayersCh:
-			c.cfg.HumanPlayers = humanPlayers
-
-			if slices.Contains(humanPlayers, game.ActivePlayer) {
-				c.SendMessage(MessageTypeStoppedProcessing, nil)
-				return
-			}
+		case <-c.stopEngineMovesCh:
+			c.SendMessage(MessageTypeStoppedProcessing, nil)
+			return
 		default:
 			c.SendMessage(MessageTypeEngineMove, BestMoveResponse{
 				Continuation: PGNMovesFromGameMoves(continuation),
