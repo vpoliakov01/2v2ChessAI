@@ -125,6 +125,7 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (conti
 
 	for i := range moves {
 		capturedPiece := g.Play(moves[i])
+
 		moveEvalEstimates[moves[i]] = moveScore{moves[i], -ai.EvaluateCurrent(g)}
 		g.UnplayMove(moves[i], capturedPiece)
 	}
@@ -135,7 +136,7 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (conti
 	})
 
 	bestContinuation := []game.Move{}
-	moveIndexesToSearch := ai.GetMoveIndexesToSearch(moves, depth)
+	moveIndexesToSearch := ai.GetMoveIndexesToSearch(g, moves, depth)
 	bestMoveIndex := 0
 	bestScore := -math.MaxFloat64
 
@@ -178,18 +179,24 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (conti
 
 // GetMoveIndexesToSearch returns the indexes of the moves to search.
 // TODO: return mix of captures, development moves, and king safety moves.
-func (ai *AI) GetMoveIndexesToSearch(moves []game.Move, depth int) []int {
+func (ai *AI) GetMoveIndexesToSearch(g *game.Game, moves []game.Move, depth int) []int {
 	indexes := []int{}
-	movesCount := 8 - depth/4*2 // 8 for [1, 4], 6 for [5, 8], 4 for [9, 12], 2 for [13, 16].
+	movesLeft := 8 - depth/4*2 // 8 for [1, 4], 6 for [5, 8], 4 for [9, 12], 2 for [13, 16].
+	capturesLeft := movesLeft/2 + 1
 
-	// captureMoves := []game.Move{}
-	// for _, move := range moves {
-	// 	if !g.Board.GetPiece(move.To).IsEmpty() {
-	// 		captureMoves = append(captureMoves, move)
-	// 	}
-	// }
+	for i, move := range moves {
+		if movesLeft == 0 {
+			return indexes
+		}
 
-	for i := 0; i < movesCount; i++ {
+		if !g.Board.GetPiece(move.To).IsEmpty() { // Capture
+			if capturesLeft == 0 {
+				continue
+			}
+			capturesLeft--
+		}
+
+		movesLeft--
 		indexes = append(indexes, i)
 	}
 
