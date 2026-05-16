@@ -1,0 +1,27 @@
+{
+  "indentWidth": 2,
+  "useTabs": true,
+  "lineWidth": 120,
+  "newLineKind": "lf",
+  "typescript": {
+    "quoteStyle": "preferSingle",
+    "semiColons": "always",
+    "trailingCommas": "onlyMultiLine",
+    "arrowFunction.useParentheses": "preferNone",
+    "typeLiteral.separatorKind": "comma",
+    "preferSingleLine": true,
+    "arrayExpression.preferSingleLine": true,
+    "arrayPattern.preferSingleLine": true,
+    "objectExpression.preferSingleLine": false,
+    "objectPattern.preferSingleLine": true,
+    "memberExpression.linePerExpression": false
+  },
+  "excludes": [
+    "**/node_modules",
+    "**/build",
+    "**/coverage"
+  ],
+  "plugins": [
+    "https://plugins.dprint.dev/typescript-0.95.13.wasm"
+  ]
+}

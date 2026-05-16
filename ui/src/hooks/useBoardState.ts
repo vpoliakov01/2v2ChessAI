@@ -1,197 +1,210 @@
-import { useState, useEffect, useRef, useCallback, useReducer } from 'react';
-import { Position, Move, movesEqual, PGNMove } from '../common';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { Move, movesEqual, PGNMove, Position } from '../common';
 import { ArrowProps } from '../components/Arrow';
-import { MessageType, Message, BestMoveResponse, SaveGameResponse, LoadGameResponse, GameStateManager, GameSyncService, GameEndedResponse } from '../utils';
+import {
+	BestMoveResponse,
+	GameEndedResponse,
+	GameStateManager,
+	GameSyncService,
+	LoadGameResponse,
+	Message,
+	MessageType,
+	SaveGameResponse,
+} from '../utils';
 import { gameReducer, loadInitialState } from './gameReducer';
 
 export function useBoardState() {
-  const [state, dispatch] = useReducer(gameReducer, undefined, loadInitialState);
-  const { board, activePlayer, allMoves, currentMove, availableMoves, score, pgn } = state;
-  const moves = allMoves.slice(0, currentMove + 1);
+	const [state, dispatch] = useReducer(gameReducer, undefined, loadInitialState);
+	const { board, activePlayer, allMoves, currentMove, availableMoves, score, pgn } = state;
+	const moves = allMoves.slice(0, currentMove + 1);
 
-  const [selectedSquare, setSelectedSquare] = useState<Position | null>(null);
-  const [drawnArrows, setDrawnArrows] = useState<ArrowProps[]>(GameStateManager.load().drawnArrows);
-  const [isDrawingArrow, setIsDrawingArrow] = useState<boolean>(false);
-  const [arrowStart, setArrowStart] = useState<Position | null>(null);
-  const [arrowEnd, setArrowEnd] = useState<Position | null>(null);
+	const [selectedSquare, setSelectedSquare] = useState<Position | null>(null);
+	const [drawnArrows, setDrawnArrows] = useState<ArrowProps[]>(GameStateManager.load().drawnArrows);
+	const [isDrawingArrow, setIsDrawingArrow] = useState<boolean>(false);
+	const [arrowStart, setArrowStart] = useState<Position | null>(null);
+	const [arrowEnd, setArrowEnd] = useState<Position | null>(null);
 
-  const wsRef = useRef<WebSocket | null>(null);
+	const wsRef = useRef<WebSocket | null>(null);
 
-  const sendMessage = useCallback((message: Message) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      console.debug(`Sending    ${message.type}`.padEnd(30), message);
-      wsRef.current.send(message.json());
-      return;
-    }
-    
-    setTimeout(() => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        console.debug(`Sending    ${message.type}`.padEnd(30), message);
-        wsRef.current.send(message.json());
-      } else {
-        alert('No WebSocket connection');
-      }
-    }, 10);
-  }, []);
+	const sendMessage = useCallback((message: Message) => {
+		if (wsRef.current?.readyState === WebSocket.OPEN) {
+			console.debug(`Sending    ${message.type}`.padEnd(30), message);
+			wsRef.current.send(message.json());
+			return;
+		}
 
-  const setCurrentMove = useCallback((value: number) => {
-    dispatch({ type: 'setCurrentMove', currentMove: value });
-  }, []);
+		setTimeout(() => {
+			if (wsRef.current?.readyState === WebSocket.OPEN) {
+				console.debug(`Sending    ${message.type}`.padEnd(30), message);
+				wsRef.current.send(message.json());
+			} else {
+				alert('No WebSocket connection');
+			}
+		}, 10);
+	}, []);
 
-  const setPgn = useCallback((value: string) => {
-    dispatch({ type: 'setPgn', pgn: value });
-  }, []);
+	const setCurrentMove = useCallback((value: number) => {
+		dispatch({ type: 'setCurrentMove', currentMove: value });
+	}, []);
 
-  const isValidMove = useCallback((move: Move): boolean => {
-    return availableMoves.some(m => movesEqual(m, move));
-  }, [availableMoves]);
+	const setPgn = useCallback((value: string) => {
+		dispatch({ type: 'setPgn', pgn: value });
+	}, []);
 
-  const movePiece = useCallback((move: Move, playerMove: boolean = false) => {
-    if (playerMove && wsRef.current) {
-      if (!isValidMove(move)) {
-        return false;
-      }
-      sendMessage(new Message(MessageType.PlayerMove, move.toPGN()));
-    }
-    dispatch({ type: 'movePiece', move, playerMove });
-    return true;
-  }, [isValidMove, sendMessage]);
+	const isValidMove = useCallback((move: Move): boolean => {
+		return availableMoves.some(m => movesEqual(m, move));
+	}, [availableMoves]);
 
-  // Plays continuation moves [1..upToIndex] from the current position, attaching the
-  // remaining slice of the continuation to each appended move so it can be re-displayed.
-  const playContinuationFromCurrent = useCallback((continuation: Move[], upToIndex: number) => {
-    for (let i = 1; i <= upToIndex && i < continuation.length; i++) {
-      const move = continuation[i];
-      sendMessage(new Message(MessageType.PlayerMove, move.toPGN()));
-      dispatch({ type: 'movePiece', move, playerMove: true, continuation: continuation.slice(i) });
-    }
-  }, [sendMessage]);
+	const movePiece = useCallback((move: Move, playerMove: boolean = false) => {
+		if (playerMove && wsRef.current) {
+			if (!isValidMove(move)) {
+				return false;
+			}
+			sendMessage(new Message(MessageType.PlayerMove, move.toPGN()));
+		}
+		dispatch({ type: 'movePiece', move, playerMove });
+		return true;
+	}, [isValidMove, sendMessage]);
 
-  // Arrow drawing
-  const handleSquareRightMouseDown = useCallback((position: Position) => {
-    setIsDrawingArrow(true);
-    setArrowStart(position);
-    setArrowEnd(position);
-  }, []);
+	// Plays continuation moves [1..upToIndex] from the current position, attaching the
+	// remaining slice of the continuation to each appended move so it can be re-displayed.
+	const playContinuationFromCurrent = useCallback((continuation: Move[], upToIndex: number) => {
+		for (let i = 1; i <= upToIndex && i < continuation.length; i++) {
+			const move = continuation[i];
+			sendMessage(new Message(MessageType.PlayerMove, move.toPGN()));
+			dispatch({ type: 'movePiece', move, playerMove: true, continuation: continuation.slice(i) });
+		}
+	}, [sendMessage]);
 
-  const handleSquareMouseEnter = useCallback((position: Position) => {
-    if (isDrawingArrow) {
-      setArrowEnd(position);
-    }
-  }, [isDrawingArrow]);
+	// Arrow drawing
+	const handleSquareRightMouseDown = useCallback((position: Position) => {
+		setIsDrawingArrow(true);
+		setArrowStart(position);
+		setArrowEnd(position);
+	}, []);
 
-  const handleSquareRightMouseUp = useCallback((position: Position) => {
-    if (!isDrawingArrow || !arrowStart) {
-      return;
-    }
+	const handleSquareMouseEnter = useCallback((position: Position) => {
+		if (isDrawingArrow) {
+			setArrowEnd(position);
+		}
+	}, [isDrawingArrow]);
 
-    const newArrow: ArrowProps = {
-      move: new Move(arrowStart, position),
-      color: activePlayer
-    };
+	const handleSquareRightMouseUp = useCallback((position: Position) => {
+		if (!isDrawingArrow || !arrowStart) {
+			return;
+		}
 
-    setDrawnArrows(arrows => {
-      const existingIndex = arrows.findIndex(arrow => movesEqual(arrow.move, newArrow.move));
+		const newArrow: ArrowProps = {
+			move: new Move(arrowStart, position),
+			color: activePlayer,
+		};
 
-      if (existingIndex === -1) {
-        return [...arrows, newArrow];
-      }
+		setDrawnArrows(arrows => {
+			const existingIndex = arrows.findIndex(arrow => movesEqual(arrow.move, newArrow.move));
 
-      return arrows.filter((_, index) => index !== existingIndex);
-    });
+			if (existingIndex === -1) {
+				return [...arrows, newArrow];
+			}
 
-    setIsDrawingArrow(false);
-    setArrowStart(null);
-    setArrowEnd(null);
-  }, [isDrawingArrow, arrowStart, activePlayer]);
+			return arrows.filter((_, index) => index !== existingIndex);
+		});
 
-  const handleSquareLeftClick = useCallback(() => {
-    setDrawnArrows([]);
-  }, []);
+		setIsDrawingArrow(false);
+		setArrowStart(null);
+		setArrowEnd(null);
+	}, [isDrawingArrow, arrowStart, activePlayer]);
 
-  useEffect(() => {
-    GameStateManager.save({ board, activePlayer, allMoves, currentMove, score, pgn, drawnArrows });
-  }, [board, activePlayer, allMoves, currentMove, score, pgn, drawnArrows]);
+	const handleSquareLeftClick = useCallback(() => {
+		setDrawnArrows([]);
+	}, []);
 
-  // WebSocket message handler.
-  useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080/ws');
+	useEffect(() => {
+		GameStateManager.save({ board, activePlayer, allMoves, currentMove, score, pgn, drawnArrows });
+	}, [board, activePlayer, allMoves, currentMove, score, pgn, drawnArrows]);
 
-    ws.onopen = () => {
-      wsRef.current = ws;
-      console.log('WS connected');
-      GameSyncService.syncWithEngine(ws);
-    };
+	// WebSocket message handler.
+	useEffect(() => {
+		const ws = new WebSocket('ws://localhost:8080/ws');
 
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data) as Message;
-      console.debug(`Received   ${message.type}`.padEnd(30), message);
+		ws.onopen = () => {
+			wsRef.current = ws;
+			console.log('WS connected');
+			GameSyncService.syncWithEngine(ws);
+		};
 
-      switch (message.type) {
-        case MessageType.AvailableMoves:
-          dispatch({ type: 'setAvailableMoves', moves: (message.data as PGNMove[]).map(Move.fromPGN) });
-          break;
-        case MessageType.EngineMove:
-          dispatch({ type: 'engineMove', moveData: message.data as BestMoveResponse });
-          break;
-        case MessageType.SaveGameResponse:
-          dispatch({ type: 'setPgn', pgn: (message.data as SaveGameResponse).pgn });
-          break;
-        case MessageType.LoadGameResponse: {
-          const loadData = message.data as LoadGameResponse;
-          dispatch({ type: 'replayMoves', pastMoves: loadData.pastMoves.map(Move.fromPGN), currentMove: loadData.currentMove });
-          break;
-        }
-        case MessageType.GameEnded: {
-          const gameEndedData = message.data as GameEndedResponse;
-          alert(`${gameEndedData.king} king has fallen! ${gameEndedData.winner} is victorious!`);
-          break;
-        }
-        case MessageType.Processing:
-          console.log('Thinking...');
-          break;
-        case MessageType.StoppedProcessing:
-          console.log('Stopped thinking');
-          break;
-        default:
-          console.log('unknown message', message);
-          break;
-      }
-    };
+		ws.onmessage = event => {
+			const message = JSON.parse(event.data) as Message;
+			console.debug(`Received   ${message.type}`.padEnd(30), message);
 
-    ws.onclose = () => {
-      if (wsRef.current === ws) {
-        wsRef.current = null;
-      }
-      console.log('WS disconnected');
-    };
+			switch (message.type) {
+				case MessageType.AvailableMoves:
+					dispatch({ type: 'setAvailableMoves', moves: (message.data as PGNMove[]).map(Move.fromPGN) });
+					break;
+				case MessageType.EngineMove:
+					dispatch({ type: 'engineMove', moveData: message.data as BestMoveResponse });
+					break;
+				case MessageType.SaveGameResponse:
+					dispatch({ type: 'setPgn', pgn: (message.data as SaveGameResponse).pgn });
+					break;
+				case MessageType.LoadGameResponse: {
+					const loadData = message.data as LoadGameResponse;
+					dispatch({
+						type: 'replayMoves',
+						pastMoves: loadData.pastMoves.map(Move.fromPGN),
+						currentMove: loadData.currentMove,
+					});
+					break;
+				}
+				case MessageType.GameEnded: {
+					const gameEndedData = message.data as GameEndedResponse;
+					alert(`${gameEndedData.king} king has fallen! ${gameEndedData.winner} is victorious!`);
+					break;
+				}
+				case MessageType.Processing:
+					console.log('Thinking...');
+					break;
+				case MessageType.StoppedProcessing:
+					console.log('Stopped thinking');
+					break;
+				default:
+					console.log('unknown message', message);
+					break;
+			}
+		};
 
-    return () => ws.close();
-  }, [dispatch]);
+		ws.onclose = () => {
+			if (wsRef.current === ws) {
+				wsRef.current = null;
+			}
+			console.log('WS disconnected');
+		};
 
-  return {
-    activePlayer,
-    allMoves,
-    availableMoves,
-    board,
-    currentMove,
-    moves,
-    pgn,
-    score,
-    selectedSquare,
-    drawnArrows,
-    isDrawingArrow,
-    arrowStart,
-    arrowEnd,
-    setCurrentMove,
-    movePiece,
-    playContinuationFromCurrent,
-    setPgn,
-    setSelectedSquare,
-    sendMessage,
-    handleSquareRightMouseDown,
-    handleSquareMouseEnter,
-    handleSquareRightMouseUp,
-    handleSquareLeftClick,
-  };
+		return () => ws.close();
+	}, [dispatch]);
+
+	return {
+		activePlayer,
+		allMoves,
+		availableMoves,
+		board,
+		currentMove,
+		moves,
+		pgn,
+		score,
+		selectedSquare,
+		drawnArrows,
+		isDrawingArrow,
+		arrowStart,
+		arrowEnd,
+		setCurrentMove,
+		movePiece,
+		playContinuationFromCurrent,
+		setPgn,
+		setSelectedSquare,
+		sendMessage,
+		handleSquareRightMouseDown,
+		handleSquareMouseEnter,
+		handleSquareRightMouseUp,
+		handleSquareLeftClick,
+	};
 }
