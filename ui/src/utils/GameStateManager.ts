@@ -35,6 +35,8 @@ export class GameStateManager {
         humanPlayers: [0, 2],
         depth: 4,
         captureDepth: 8,
+        spread: 8,
+        spreadDrop: 2,
         evalLimit: 0,
     };
 

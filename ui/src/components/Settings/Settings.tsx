@@ -80,6 +80,24 @@ export function Settings() {
               </td>
             </tr>
             <tr>
+              <td>Spread:</td>
+              <td>
+                <NumberInput
+                  value={settings.spread}
+                  onChange={(value) => setSettings({ ...settings, spread: value })}
+                  min={1}
+                />
+              </td>
+              <td>Drop:</td>
+              <td>
+                <NumberInput
+                  value={settings.spreadDrop}
+                  onChange={(value) => setSettings({ ...settings, spreadDrop: value })}
+                  min={0}
+                />
+              </td>
+            </tr>
+            <tr>
               <td>Eval Limit, k:</td>
               <td>
                 <NumberInput

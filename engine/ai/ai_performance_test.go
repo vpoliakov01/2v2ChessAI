@@ -63,7 +63,7 @@ func (s *TestSuite) TestEngineDepthsPerformance() {
 
 		for _, d := range depths {
 			start := time.Now()
-			engine := New(d.depth, d.captureDepth, 0, WithEnableDebug(true))
+			engine := New(d.depth, d.captureDepth, DefaultSpread, DefaultSpreadDrop, 0, WithEnableDebug(true))
 
 			continuations := [][]game.Move{}
 			scores := []float64{}

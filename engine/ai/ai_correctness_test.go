@@ -9,7 +9,7 @@ import (
 )
 
 func (s *TestSuite) TestGetBestMove() {
-	engine := New(10, 10, 0, WithEnableDebug(true))
+	engine := New(10, 10, DefaultSpread, DefaultSpreadDrop, 0, WithEnableDebug(true))
 	g := game.New()
 
 	moves := 5
@@ -53,7 +53,7 @@ func (s *TestSuite) TestGetBestMove() {
 }
 
 func (s *TestSuite) TestBestMoveIndexes() {
-	engine := New(12, 12, 0, WithEnableDebug(true))
+	engine := New(12, 12, DefaultSpread, DefaultSpreadDrop, 0, WithEnableDebug(true))
 
 	games := s.solvedGames
 
@@ -91,7 +91,7 @@ func (s *TestSuite) TestPosition() {
 		g.Board.PlacePiece(piece, game.Square{rank, file})
 	}
 
-	engine := New(2, 2, 0)
+	engine := New(2, 2, DefaultSpread, DefaultSpreadDrop, 0)
 	g.Board.Draw()
 
 	for i := 0; i < 30; i++ {

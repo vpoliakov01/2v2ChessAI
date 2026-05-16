@@ -36,7 +36,7 @@ func Test(t *testing.T) {
 }
 
 func (s *TestSuite) SetupTest() {
-	s.engine = New(12, 12, 0, WithEnableDebug(true))
+	s.engine = New(DefaultDepth, DefaultCaptureDepth, DefaultSpread, DefaultSpreadDrop, 0, WithEnableDebug(true))
 
 	games := []test{
 		{

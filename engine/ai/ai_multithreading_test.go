@@ -12,7 +12,7 @@ func (s *TestSuite) TestMultithreading() {
 	cpus := runtime.NumCPU()
 	times := []time.Duration{}
 	moves := 1
-	engine := New(12, 12, 0)
+	engine := New(12, 12, DefaultSpread, DefaultSpreadDrop, 0)
 
 	fmt.Printf("Testing with %v CPUs\n", cpus)
 	for i := 1; i <= cpus; i *= 2 {

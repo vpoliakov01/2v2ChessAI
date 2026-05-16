@@ -55,6 +55,8 @@ func (c *Connection) processSetSettings(cfg Config) {
 	c.cfg = &cfg
 	c.engine.Depth = cfg.Depth
 	c.engine.CaptureDepth = cfg.CaptureDepth
+	c.engine.Spread = cfg.Spread
+	c.engine.SpreadDrop = cfg.SpreadDrop
 
 	if cfg.EvalLimit == 0 {
 		c.engine.EvalLimit = ai.MaxEvalLimit

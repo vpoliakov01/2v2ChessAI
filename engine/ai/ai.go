@@ -15,6 +15,12 @@ var (
 	ErrGameEnded = errors.New("the game has ended")
 	ErrNoMoves   = errors.New("no move can be made in this position")
 	cpus         = runtime.NumCPU()
+
+	DefaultDepth        = 12
+	DefaultCaptureDepth = 12
+	DefaultSpread       = 8
+	DefaultSpreadDrop   = 2
+	DefaultEvalLimit    = MaxEvalLimit
 )
 
 type moveScore struct {
@@ -42,7 +48,7 @@ func init() {
 }
 
 // New creates a new AI.
-func New(depth, captureDepth, evalLimit int, options ...func(*AI)) *AI {
+func New(depth, captureDepth, spread, spreadDrop, evalLimit int, options ...func(*AI)) *AI {
 	if evalLimit == 0 {
 		evalLimit = MaxEvalLimit
 	}
@@ -50,9 +56,9 @@ func New(depth, captureDepth, evalLimit int, options ...func(*AI)) *AI {
 	ai := &AI{
 		Depth:        depth,
 		CaptureDepth: captureDepth,
+		Spread:       spread,
+		SpreadDrop:   spreadDrop,
 		EvalLimit:    evalLimit,
-		Spread:       8,
-		SpreadDrop:   2,
 	}
 	for _, option := range options {
 		option(ai)
@@ -184,6 +190,9 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (conti
 func (ai *AI) GetMoveIndexesToSearch(g *game.Game, moves []game.Move, depth int) []int {
 	indexes := []int{}
 	movesLeft := ai.Spread - depth/4*ai.SpreadDrop
+	if movesLeft < 1 {
+		movesLeft = 1
+	}
 	capturesLeft := movesLeft/2 + 1
 
 	for i, move := range moves {

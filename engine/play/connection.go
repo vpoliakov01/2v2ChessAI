@@ -12,6 +12,8 @@ import (
 type Config struct {
 	Depth        int           `json:"depth"`
 	CaptureDepth int           `json:"captureDepth"`
+	Spread       int           `json:"spread"`
+	SpreadDrop   int           `json:"spreadDrop"`
 	HumanPlayers []game.Player `json:"humanPlayers"`
 	MoveLimit    int           `json:"moveLimit"`  // Number of moves to play before stopping.
 	EvalLimit    int           `json:"evalLimit"`  // Max number of evaluations to perform per move.
@@ -41,6 +43,6 @@ func NewConnection(c MessageWriter, cfg *Config) *Connection {
 		conn:   c,
 		cfg:    cfg,
 		gs:     game.SetupBoard(cfg.Load),
-		engine: ai.New(cfg.Depth, cfg.CaptureDepth, cfg.EvalLimit),
+		engine: ai.New(cfg.Depth, cfg.CaptureDepth, cfg.Spread, cfg.SpreadDrop, cfg.EvalLimit),
 	}
 }

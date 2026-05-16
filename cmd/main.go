@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/vpoliakov01/2v2ChessAI/engine/ai"
 	"github.com/vpoliakov01/2v2ChessAI/engine/game"
 	"github.com/vpoliakov01/2v2ChessAI/engine/play"
 )
@@ -50,6 +51,8 @@ func main() {
 	cfg := play.Config{
 		Depth:        flg.Depth,
 		CaptureDepth: flg.CaptureDepth,
+		Spread:       ai.DefaultSpread,
+		SpreadDrop:   ai.DefaultSpreadDrop,
 		MoveLimit:    flg.Moves,
 		HumanPlayers: humanPlayers,
 		Evaluation:   flg.Evaluation,
