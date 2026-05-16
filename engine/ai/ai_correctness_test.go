@@ -1,0 +1,122 @@
+package ai_test
+
+import (
+	"fmt"
+	"time"
+
+	. "github.com/vpoliakov01/2v2ChessAI/engine/ai"
+	"github.com/vpoliakov01/2v2ChessAI/engine/game"
+)
+
+func (s *TestSuite) TestGetBestMove() {
+	engine := New(10, 10, 0, WithEnableDebug(true))
+	g := game.New()
+
+	moves := 5
+	gameName := "4 queens in the middle, bishops ready"
+	for i := range s.solvedGames {
+		if s.solvedGames[i].name == gameName {
+			g = s.solvedGames[i].Copy()
+		}
+	}
+
+	startTime := time.Now()
+	for i := 0; i < moves; i++ {
+		continuation, score, err := engine.GetBestMove(g)
+		if err != nil {
+			if err == ErrGameEnded {
+				fmt.Printf("%v: Team %v won!\n", i, g.Winner)
+			} else {
+				fmt.Println(err)
+			}
+			break
+		}
+		move := continuation[0]
+
+		piece := game.Piece(g.Board.GetPiece(move.From))
+		if !g.Board.IsEmpty(move.To) {
+			capturedPiece := game.Piece(g.Board.GetPiece(move.To))
+			fmt.Printf("%v: %v takes %v after %v\n", i, piece, capturedPiece, move)
+		} else {
+			fmt.Printf("%v: %v moves %v\n", i, piece, move)
+		}
+
+		g.Play(move)
+		g.Board.Draw()
+		fmt.Printf("Evaluation:    %.2f\n", score)
+		fmt.Println("Continuation: ", continuation)
+	}
+
+	fmt.Println("Depth: ", engine.Depth)
+	fmt.Println("Capture depth: ", engine.CaptureDepth)
+	fmt.Println(time.Since(startTime))
+}
+
+func (s *TestSuite) TestBestMoveIndexes() {
+	engine := New(12, 12, 0, WithEnableDebug(true))
+
+	games := s.solvedGames
+
+	for _, game := range games {
+		g := game.Copy()
+
+		_, _, err := engine.GetBestMove(g)
+		s.Require().NoError(err)
+
+		engine.PrintBestMoveIndexes()
+	}
+}
+
+func (s *TestSuite) TestPosition() {
+	pieces := [][]int{
+		{int(game.NewPiece(0, game.KindKing)), 13, 10},
+		{int(game.NewPiece(0, game.KindPawn)), 13, 9},
+		{int(game.NewPiece(0, game.KindPawn)), 12, 10},
+		{int(game.NewPiece(0, game.KindPawn)), 12, 9},
+		{int(game.NewPiece(1, game.KindKing)), 6, 1},
+		{int(game.NewPiece(2, game.KindKing)), 12, 6},
+		{int(game.NewPiece(3, game.KindKing)), 8, 13},
+		{int(game.NewPiece(2, game.KindQueen)), 9, 12},
+		{int(game.NewPiece(0, game.KindQueen)), 10, 13},
+	}
+
+	g := game.New()
+	g.Board.Clear()
+
+	for i := range pieces {
+		piece := game.Piece(pieces[i][0])
+		rank := pieces[i][1]
+		file := pieces[i][2]
+
+		g.Board.PlacePiece(piece, game.Square{rank, file})
+	}
+
+	engine := New(2, 2, 0)
+	g.Board.Draw()
+
+	for i := 0; i < 30; i++ {
+		continuation, _, err := engine.GetBestMove(g)
+		if err != nil {
+			if err == ErrGameEnded {
+				fmt.Printf("%v: Team %v won!\n", i, g.Winner)
+			} else {
+				fmt.Println(err)
+			}
+			break
+		}
+		move := continuation[0]
+
+		fmt.Println(move)
+
+		if !g.Board.IsEmpty(move.To) {
+			capturedPiece := game.Piece(g.Board.GetPiece(move.To))
+			opponent := capturedPiece.Player()
+			piece := game.Piece(g.Board.GetPiece(move.From))
+			player := piece.Player()
+			fmt.Printf("%v: P%v's %v takes P%v's %v after %v\n", i, player, piece, opponent, capturedPiece, move)
+		}
+
+		g.Play(move)
+		g.Board.Draw()
+	}
+}

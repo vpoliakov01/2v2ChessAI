@@ -2,9 +2,7 @@ package ai_test
 
 import (
 	"fmt"
-	"runtime"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -26,7 +24,7 @@ type GameTest struct {
 	score    *float64
 }
 
-type TestGame struct {
+type test struct {
 	name     string
 	bestMove string
 	score    float64
@@ -38,9 +36,9 @@ func Test(t *testing.T) {
 }
 
 func (s *TestSuite) SetupTest() {
-	s.engine = New(3, 6, 0, WithEnableDebug(true))
+	s.engine = New(12, 12, 0, WithEnableDebug(true))
 
-	games := []TestGame{
+	games := []test{
 		{
 			name:     "Mate in 1 (g1-a7)",
 			bestMove: "g1-a7",
@@ -132,283 +130,7 @@ func (s *TestSuite) SetupTest() {
 	}
 }
 
-func (s *TestSuite) TestEngineDepthsPerformance() {
-	r := s.Require()
-
-	moves := 1
-	cpus := runtime.NumCPU()
-	runtime.GOMAXPROCS(cpus)
-
-	depths := []struct {
-		depth        int
-		captureDepth int
-	}{
-		// {2, 2},
-		// {3, 3},
-		// {4, 4},
-		// {5, 5},
-		// {6, 6},
-		// {7, 7},
-		// {8, 8},
-		// {9, 9},
-		// {10, 10},
-		// {11, 11},
-		{12, 12},
-		// {13, 13},
-		// {14, 14},
-		// {15, 15},
-		// {16, 16},
-		// {2, 5},
-		// {2, 6},
-		// {2, 7},
-		// {2, 8},
-		// {3, 5},
-		// {3, 6},
-		// {3, 7},
-		// {3, 8},
-		// {3, 9},
-		// {4, 5},
-		// {4, 6},
-		// {4, 7},
-		// {4, 8},
-		// {5, 5},
-		// {5, 6},
-		// {5, 7},
-		// {6, 8},
-	}
-
-	games := append(s.openGames, s.solvedGames...)
-
-	last := time.Duration(0)
-	totalStart := time.Now()
-	for _, testGame := range games {
-		g := testGame.Game.Copy()
-		name := testGame.name
-
-		for _, d := range depths {
-			start := time.Now()
-			engine := New(d.depth, d.captureDepth, 0, WithEnableDebug(true))
-
-			continuations := [][]game.Move{}
-			scores := []float64{}
-
-			for i := 0; i < moves; i++ {
-				continuation, score, err := engine.GetBestMove(g)
-				if err != nil {
-					fmt.Println(err)
-					break
-				}
-				continuations = append(continuations, continuation)
-				scores = append(scores, score)
-			}
-
-			t := time.Since(start)
-			if last == time.Duration(0) {
-				last = t
-			}
-			fmt.Println(name)
-			if moves == 1 {
-				fmt.Printf("Continuation: %v %.2f\n", continuations[0], scores)
-			} else {
-				fmt.Printf("Continuations: %v %.2f\n", continuations, scores)
-			}
-			fmt.Printf(
-				"Depth: %v/%v    t: %.2fs   t/m: %.2fs   r: %.2fx   e: %v   t/e: %.2fµs\n",
-				d.depth,
-				d.captureDepth,
-				t.Seconds(),
-				t.Seconds()/float64(moves),
-				float64(t)/float64(last),
-				engine.EvalsCount,
-				float64(t.Microseconds())/float64(engine.EvalsCount),
-			)
-			last = t
-			engine.PrintBestMoveIndexes()
-
-			if testGame.bestMove != nil {
-				r.Equal(testGame.bestMove.String(), continuations[0][0].String())
-			}
-			if testGame.score != nil && len(scores) > 0 {
-				r.Equal(*testGame.score, scores[0])
-			}
-		}
-	}
-	fmt.Printf("Total time: %.2fs\n", time.Since(totalStart).Seconds())
-}
-
-func (s *TestSuite) TestBestMoveIndexes() {
-	engine := New(2, 2, 0)
-	g := s.solvedGames[2].Copy()
-
-	_, _, err := engine.GetBestMove(g)
-	s.Require().NoError(err)
-	engine.PrintBestMoveIndexes()
-}
-
-func (s *TestSuite) TestPosition() {
-	pieces := [][]int{
-		{int(game.NewPiece(0, game.KindKing)), 13, 10},
-		{int(game.NewPiece(0, game.KindPawn)), 13, 9},
-		{int(game.NewPiece(0, game.KindPawn)), 12, 10},
-		{int(game.NewPiece(0, game.KindPawn)), 12, 9},
-		{int(game.NewPiece(1, game.KindKing)), 6, 1},
-		{int(game.NewPiece(2, game.KindKing)), 12, 6},
-		{int(game.NewPiece(3, game.KindKing)), 8, 13},
-		{int(game.NewPiece(2, game.KindQueen)), 9, 12},
-		{int(game.NewPiece(0, game.KindQueen)), 10, 13},
-	}
-
-	g := game.New()
-	g.Board.Clear()
-
-	for i := range pieces {
-		piece := game.Piece(pieces[i][0])
-		rank := pieces[i][1]
-		file := pieces[i][2]
-
-		g.Board.PlacePiece(piece, game.Square{rank, file})
-	}
-
-	engine := New(2, 2, 0)
-	g.Board.Draw()
-
-	for i := 0; i < 30; i++ {
-		continuation, _, err := engine.GetBestMove(g)
-		if err != nil {
-			if err == ErrGameEnded {
-				fmt.Printf("%v: Team %v won!\n", i, g.Winner)
-			} else {
-				fmt.Println(err)
-			}
-			break
-		}
-		move := continuation[0]
-
-		fmt.Println(move)
-
-		if !g.Board.IsEmpty(move.To) {
-			capturedPiece := game.Piece(g.Board.GetPiece(move.To))
-			opponent := capturedPiece.Player()
-			piece := game.Piece(g.Board.GetPiece(move.From))
-			player := piece.Player()
-			fmt.Printf("%v: P%v's %v takes P%v's %v after %v\n", i, player, piece, opponent, capturedPiece, move)
-		}
-
-		g.Play(move)
-		g.Board.Draw()
-	}
-}
-
-func (s *TestSuite) TestMultithreading() {
-	cpus := runtime.NumCPU()
-	times := []time.Duration{}
-	moves := 1
-	engine := New(12, 12, 0)
-
-	fmt.Printf("Testing with %v CPUs\n", cpus)
-	for i := 1; i <= cpus; i *= 2 {
-		runtime.GOMAXPROCS(i)
-
-		startTime := time.Now()
-
-		g := s.solvedGames[2].Copy()
-
-		for i := 0; i < moves; i++ {
-			continuation, _, err := engine.GetBestMove(g)
-			if err != nil {
-				fmt.Println(err)
-				break
-			}
-			g.Play(continuation[0])
-		}
-
-		t := time.Since(startTime)
-		times = append(times, t)
-		fmt.Printf("%v CPU: %v\n", i, t)
-
-		if i != cpus && i*2 > cpus && cpus > 8 {
-			i = cpus / 2
-		}
-	}
-
-	s.Require().Less(times[len(times)-1], times[0])
-}
-
-func (s *TestSuite) TestObviousMoves() {
-	runtime.GOMAXPROCS(1)
-
-	type testCase struct {
-		name string
-		move string
-	}
-
-	testCases := []testCase{
-		{
-			"Mate in 1 (g1-a7)",
-			"g1-a7",
-		},
-		{
-			"Free queen (a7-b6)",
-			"a7-b6",
-		},
-	}
-	failures := 0
-	for _, tc := range testCases {
-		g := game.New()
-		for _, game := range s.solvedGames {
-			if game.name == tc.name {
-				g = game.Copy()
-				break
-			}
-		}
-		engine := s.engine
-
-		continuation, _, err := engine.GetBestMove(g)
-		s.Require().NoError(err)
-		move := continuation[0]
-		if move.String() != tc.move {
-			fmt.Printf("%v: %v != %v\n", tc.name, move, tc.move)
-			failures++
-			g.Board.Draw()
-		}
-	}
-	s.Require().Equal(0, failures)
-}
-
-func (s *TestSuite) TestGetBestMove() {
-	engine := s.engine
-
-	startTime := time.Now()
-
-	g := s.solvedGames[2].Copy()
-
-	for i := 0; i < 5; i++ {
-		continuation, score, err := engine.GetBestMove(g)
-		if err != nil {
-			if err == ErrGameEnded {
-				fmt.Printf("%v: Team %v won!\n", i, g.Winner)
-			} else {
-				fmt.Println(err)
-			}
-			break
-		}
-		move := continuation[0]
-
-		piece := game.Piece(g.Board.GetPiece(move.From))
-		if !g.Board.IsEmpty(move.To) {
-			capturedPiece := game.Piece(g.Board.GetPiece(move.To))
-			fmt.Printf("%v: %v takes %v after %v\n", i, piece, capturedPiece, move)
-		} else {
-			fmt.Printf("%v: %v moves %v\n", i, piece, move)
-		}
-
-		g.Play(move)
-		g.Board.Draw()
-		fmt.Println("Evaluation: ", score)
-		fmt.Println("Continuation: ", continuation)
-	}
-
-	fmt.Println("Depth: ", engine.Depth)
-	fmt.Println("Capture depth: ", engine.CaptureDepth)
-	fmt.Println(time.Since(startTime))
+func (gt *GameTest) Print(score float64, continuation []game.Move) {
+	fmt.Println(gt.name)
+	fmt.Printf("Continuation: %v %.2f\n", continuation, score)
 }

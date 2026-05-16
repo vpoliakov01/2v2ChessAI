@@ -18,7 +18,7 @@ type BestMoveIndexes struct {
 }
 
 func (ai *AI) PrintBestMoveIndexes() {
-	fmt.Println("        dep best max    moves    ratio total")
+	fmt.Println("         dep best  max   moves    ratio total")
 	for i := range ai.BestMoveIndexes {
 		if i == 0 {
 			continue
@@ -32,7 +32,7 @@ func (ai *AI) PrintBestMoveIndexes() {
 		moves := float64(ai.BestMoveIndexes[i].TotalMoves) / float64(ai.BestMoveIndexes[i].Count)
 
 		fmt.Printf(
-			"\t%v: %5.2f (%2d) / %5.2f = %5.2f  %v\n",
+			"\t %2v:%5.2f (%2d) / %5.2f = %5.2f  %5v\n",
 			i,
 			avgIndex,
 			maxIndex,
@@ -46,4 +46,12 @@ func (ai *AI) PrintBestMoveIndexes() {
 		}
 	}
 	fmt.Println()
+}
+
+func (ai *AI) TotalPossibleEvals() int {
+	total := 1
+	for depth := 1; depth <= ai.Depth; depth++ {
+		total *= ai.Spread - depth/4*ai.SpreadDrop
+	}
+	return total
 }

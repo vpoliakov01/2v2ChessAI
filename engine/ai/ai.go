@@ -24,14 +24,16 @@ type moveScore struct {
 
 // AI is the ai engine used for evaluating the position and picking the best move.
 type AI struct {
-	Depth           int
-	CaptureDepth    int
-	EvalLimit       int
-	BestMoveIndexes []AvgAcc
+	Depth        int
+	CaptureDepth int
+	Spread       int
+	SpreadDrop   int
 
 	EvalsCount int
+	EvalLimit  int
 
-	enableDebug bool
+	BestMoveIndexes []AvgAcc
+	enableDebug     bool
 }
 
 func init() {
@@ -49,6 +51,8 @@ func New(depth, captureDepth, evalLimit int, options ...func(*AI)) *AI {
 		Depth:        depth,
 		CaptureDepth: captureDepth,
 		EvalLimit:    evalLimit,
+		Spread:       8,
+		SpreadDrop:   2,
 	}
 	for _, option := range options {
 		option(ai)
@@ -97,6 +101,8 @@ func (ai *AI) GetBestMove(g *game.Game) (continuation []game.Move, score float64
 		return nil, float64(g.Winner), ErrGameEnded
 	}
 
+	// Run Negamax at depth 5 and use the score to set alpha-beta pruning bounds for the main Negamax search at depth ai.Depth.
+
 	forcedMateScore := 1002 - float64(ai.Depth) // No point on trying to improve the score if you are forcing mate.
 	continuation, score = ai.Negamax(g, 1, ai.EvaluateCurrent(g), -forcedMateScore, forcedMateScore)
 	if len(continuation) == 0 {
@@ -137,14 +143,10 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (conti
 
 	bestContinuation := []game.Move{}
 	moveIndexesToSearch := ai.GetMoveIndexesToSearch(g, moves, depth)
-	bestMoveIndex := 0
+	bestMoveIndex := moveIndexesToSearch[0]
 	bestScore := -math.MaxFloat64
 
 	for _, i := range moveIndexesToSearch {
-		if ai.EvalsCount >= ai.EvalLimit {
-			break
-		}
-
 		move := moves[i]
 		eval := -moveEvalEstimates[move].score
 
@@ -164,7 +166,7 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (conti
 			alpha = bestScore
 		}
 
-		if alpha >= beta {
+		if alpha >= beta || ai.EvalsCount >= ai.EvalLimit {
 			break
 		}
 	}
@@ -181,7 +183,7 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (conti
 // TODO: return mix of captures, development moves, and king safety moves.
 func (ai *AI) GetMoveIndexesToSearch(g *game.Game, moves []game.Move, depth int) []int {
 	indexes := []int{}
-	movesLeft := 8 - depth/4*2 // 8 for [1, 4], 6 for [5, 8], 4 for [9, 12], 2 for [13, 16].
+	movesLeft := ai.Spread - depth/4*ai.SpreadDrop
 	capturesLeft := movesLeft/2 + 1
 
 	for i, move := range moves {
