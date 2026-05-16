@@ -38,8 +38,8 @@ type AI struct {
 	EvalsCount int
 	EvalLimit  int
 
-	BestMoveIndexes []AvgAcc
-	enableDebug     bool
+	BestMoves   []AvgAcc
+	enableDebug bool
 }
 
 func init() {
@@ -65,7 +65,7 @@ func New(depth, captureDepth, spread, spreadDrop, evalLimit int, options ...func
 	}
 
 	if ai.enableDebug {
-		ai.BestMoveIndexes = make([]AvgAcc, 100)
+		ai.BestMoves = make([]AvgAcc, 100)
 	}
 
 	return ai
@@ -76,20 +76,6 @@ func WithEnableDebug(enableDebug bool) func(*AI) {
 	return func(ai *AI) {
 		ai.enableDebug = enableDebug
 	}
-}
-
-// recordBestMoveIndex updates per-depth move-ordering analytics. Safe to call
-// from multiple goroutines; only runs when debug analytics are enabled.
-func (ai *AI) recordBestMoveIndex(data BestMoveIndexes) {
-	if !ai.enableDebug {
-		return
-	}
-
-	acc := &ai.BestMoveIndexes[data.Depth]
-	acc.Count++
-	acc.IndexSum += data.MoveIndex
-	acc.MaxIndex = max(acc.MaxIndex, data.MoveIndex)
-	acc.TotalMoves += data.TotalMoves
 }
 
 // Stop stops evaluation of GetBestMove.
@@ -133,34 +119,35 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (conti
 
 	// Get moves to search.
 	moves := g.GetMoves().Flatten()
-	moveEvalEstimates := map[game.Move]moveScore{}
+	moveEvals := make([]moveScore, len(moves))
 
 	for i := range moves {
 		capturedPiece := g.Play(moves[i])
 
-		moveEvalEstimates[moves[i]] = moveScore{moves[i], -ai.EvaluateCurrent(g)}
+		moveEvals[i] = moveScore{moves[i], -ai.EvaluateCurrent(g)}
 		g.UnplayMove(moves[i], capturedPiece)
 	}
 
 	// Sort to process "immediately stronger" moves first.
-	sort.Slice(moves, func(a, b int) bool {
-		return moveEvalEstimates[moves[a]].score > moveEvalEstimates[moves[b]].score
+	sort.Slice(moveEvals, func(a, b int) bool {
+		return moveEvals[a].score > moveEvals[b].score
 	})
 
 	bestContinuation := []game.Move{}
-	moveIndexesToSearch := ai.GetMoveIndexesToSearch(g, moves, depth)
+	moveIndexesToSearch := ai.GetMoveIndexesToSearch(g, moveEvals, depth)
 	bestMoveIndex := moveIndexesToSearch[0]
 	bestScore := -math.MaxFloat64
 
 	for _, i := range moveIndexesToSearch {
-		move := moves[i]
-		eval := -moveEvalEstimates[move].score
+		move := moveEvals[i].move
+		eval := -moveEvals[i].score
 
 		capturedPiece := g.Play(move)
 		opponentContinuation, opponentScore := ai.Negamax(g, depth+1, eval, -beta, -alpha)
 		g.UnplayMove(move, capturedPiece)
 
 		score := -opponentScore
+		moveEvals[i].score = score
 
 		if score > bestScore {
 			bestScore = score
@@ -177,17 +164,21 @@ func (ai *AI) Negamax(g *game.Game, depth int, eval, alpha, beta float64) (conti
 		}
 	}
 
-	ai.recordBestMoveIndex(BestMoveIndexes{
-		Depth:      depth,
-		MoveIndex:  bestMoveIndex,
-		TotalMoves: len(moves),
-	})
+	if ai.enableDebug {
+		ai.recordBestMove(BestMoveData{
+			Depth:      depth,
+			MoveIndex:  bestMoveIndex,
+			TotalMoves: len(moves),
+			ScoreDelta: moveEvals[bestMoveIndex].score - moveEvals[0].score,
+		})
+	}
+
 	return append([]game.Move{moves[bestMoveIndex]}, bestContinuation...), bestScore
 }
 
 // GetMoveIndexesToSearch returns the indexes of the moves to search.
 // TODO: return mix of captures, development moves, and king safety moves.
-func (ai *AI) GetMoveIndexesToSearch(g *game.Game, moves []game.Move, depth int) []int {
+func (ai *AI) GetMoveIndexesToSearch(g *game.Game, moveEvals []moveScore, depth int) []int {
 	indexes := []int{}
 	movesLeft := ai.Spread - depth/4*ai.SpreadDrop
 	if movesLeft < 1 {
@@ -195,12 +186,12 @@ func (ai *AI) GetMoveIndexesToSearch(g *game.Game, moves []game.Move, depth int)
 	}
 	capturesLeft := movesLeft/2 + 1
 
-	for i, move := range moves {
+	for i, moveEval := range moveEvals {
 		if movesLeft == 0 {
 			return indexes
 		}
 
-		if !g.Board.GetPiece(move.To).IsEmpty() { // Capture
+		if !g.Board.GetPiece(moveEval.move.To).IsEmpty() { // Capture
 			if capturesLeft == 0 {
 				continue
 			}

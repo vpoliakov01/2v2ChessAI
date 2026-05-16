@@ -87,9 +87,11 @@ func (s *TestSuite) TestEngineDepthsPerformance() {
 
 			totalPossibleEvals := engine.TotalPossibleEvals()
 			fmt.Printf(
-				"Depth: %v/%v    t: %.2fs   t/m: %.2fs   r: %.2fx   e: %v   p: %.3f%%   t/e: %.2fµs\n",
-				d.depth,
-				d.captureDepth,
+				"Depth: %v/%v   Spread: %v/%v   t: %.2fs   t/m: %.2fs   r: %.2fx   e: %v   p: %.3f%%   t/e: %.2fµs\n",
+				engine.Depth,
+				engine.CaptureDepth,
+				engine.Spread,
+				engine.SpreadDrop,
 				t.Seconds(),
 				t.Seconds()/float64(moves),
 				float64(t)/float64(last),

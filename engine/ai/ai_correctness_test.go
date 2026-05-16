@@ -13,7 +13,7 @@ func (s *TestSuite) TestGetBestMove() {
 	g := game.New()
 
 	moves := 5
-	gameName := "4 queens in the middle, bishops ready"
+	gameName := "Mate in 1 (g1-a7)"
 	for i := range s.solvedGames {
 		if s.solvedGames[i].name == gameName {
 			g = s.solvedGames[i].Copy()
