@@ -49,14 +49,7 @@ Some more positions reached by the engine playing itself:
 
 ### Engine:
 * Multithreading on the 1st level only
-    * Reuse reusable data
 * Filter moves returning captures, development moves, and king safety moves
-    * Prune:
-        * All (?) moves for 1
-        * 8 moves for 2-4
-        * 6 for 5-8
-        * 4 for 8-12
-        * 2 for 12-16
 * Support castling
 * Support forced calculation for checks
 * Test with very sophisticated position evaluation
@@ -65,5 +58,4 @@ Some more positions reached by the engine playing itself:
 
 ### Other:
 * Dockerize (1 for ui, 1 for the engine)
-* UI/Engine desync handling
 * Update readme
