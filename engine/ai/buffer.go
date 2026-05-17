@@ -6,17 +6,20 @@ const (
 	MovesUpperBound = 256
 )
 
-// buffer holds per-depth reusable storage for one search worker to avoid repeated allocations.
+// buffer holds per-worker per-depth reusable storage to avoid repeated allocations.
 type buffer struct {
-	moves               [][]game.Move // candidate moves at each depth
-	moveEvals           [][]moveScore // evaluation of each candidate move
-	moveIndexesToSearch [][]int       // indexes (into moves/moveEvals) selected for deeper search
-	continuation        [][]game.Move // principal variation (predicted line of best play) from each depth down
+	moves               [][]game.Move
+	moveEvals           [][]moveScore
+	moveIndexesToSearch [][]int
+	continuation        [][]game.Move
+
+	evalsCount int
 }
 
-// init populates buffers for searches up to maxDepth. Safe to call repeatedly;
-// it's a no-op once the buffers are already at least maxDepth.
+// init populates buffers for searches up to maxDepth.
 func (buff *buffer) init(maxDepth int) {
+	buff.evalsCount = 0
+
 	if len(buff.moves) >= maxDepth {
 		return
 	}

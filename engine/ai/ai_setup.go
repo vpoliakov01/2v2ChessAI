@@ -3,6 +3,7 @@ package ai
 import (
 	"errors"
 	"fmt"
+	"math"
 	"runtime"
 
 	"github.com/vpoliakov01/2v2ChessAI/engine/game"
@@ -37,7 +38,34 @@ func WithEnableDebug(enableDebug bool) func(*AI) {
 	}
 }
 
-// Stop stops evaluation of GetBestMove.
+// Stop stops the engine.
 func (ai *AI) Stop() {
-	ai.EvalsCount = ai.EvalLimit
+	ai.stopFlag.Store(true)
+}
+
+// loadSharedAlpha returns the current shared root-level alpha as float64.
+func (ai *AI) loadSharedAlpha() float64 {
+	return math.Float64frombits(ai.sharedAlpha.Load())
+}
+
+// raiseSharedAlpha atomically lifts the shared alpha to candidate if candidate is greater.
+func (ai *AI) raiseSharedAlpha(candidate float64) {
+	for { // Retry until success in case it's overwritten by another worker.
+		current := ai.sharedAlpha.Load()
+		if candidate <= math.Float64frombits(current) {
+			return
+		}
+		if ai.sharedAlpha.CompareAndSwap(current, math.Float64bits(candidate)) {
+			return
+		}
+	}
+}
+
+// sumEvalsCounts aggregates per-worker eval counts into ai.EvalsCount for external telemetry.
+func (ai *AI) sumEvalsCounts() {
+	total := 0
+	for i := range ai.buffers {
+		total += ai.buffers[i].evalsCount
+	}
+	ai.EvalsCount = total
 }

@@ -101,7 +101,7 @@ func (s *TestSuite) TestEngineDepthsPerformance() {
 			)
 			last = t
 
-			engine.PrintBestMoveIndexes()
+			engine.PrintBestMoveIndexes(false, true)
 
 			if testGame.bestMove != nil {
 				r.Equal(testGame.bestMove.String(), continuations[0][0].String())

@@ -54,7 +54,7 @@ func (s *TestSuite) TestBestMoveIndexes() {
 		_, _, err := engine.GetBestMove(g.Game)
 		s.Require().NoError(err)
 
-		engine.PrintBestMoveIndexes()
+		engine.PrintBestMoveIndexes(false, true)
 	}
 }
 
