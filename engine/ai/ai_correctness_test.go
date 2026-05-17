@@ -10,19 +10,12 @@ import (
 
 func (s *TestSuite) TestGetBestMove() {
 	engine := New(10, 10, DefaultSpread, DefaultSpreadDrop, 0, WithEnableDebug(true))
-	g := game.New()
-
+	g := s.GetGame("Mate in 1 (g1-a7)").Copy()
 	moves := 5
-	gameName := "Mate in 1 (g1-a7)"
-	for i := range s.solvedGames {
-		if s.solvedGames[i].name == gameName {
-			g = s.solvedGames[i].Copy()
-		}
-	}
 
 	startTime := time.Now()
 	for i := 0; i < moves; i++ {
-		continuation, score, err := engine.GetBestMove(g)
+		continuation, score, err := engine.GetBestMove(g.Game)
 		if err != nil {
 			if err == ErrGameEnded {
 				fmt.Printf("%v: Team %v won!\n", i, g.Winner)
@@ -55,12 +48,10 @@ func (s *TestSuite) TestGetBestMove() {
 func (s *TestSuite) TestBestMoveIndexes() {
 	engine := New(12, 12, DefaultSpread, DefaultSpreadDrop, 0, WithEnableDebug(true))
 
-	games := s.solvedGames
+	for _, gt := range s.solvedGames {
+		g := gt.Copy()
 
-	for _, game := range games {
-		g := game.Copy()
-
-		_, _, err := engine.GetBestMove(g)
+		_, _, err := engine.GetBestMove(g.Game)
 		s.Require().NoError(err)
 
 		engine.PrintBestMoveIndexes()

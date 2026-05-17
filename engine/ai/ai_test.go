@@ -18,7 +18,7 @@ type TestSuite struct {
 }
 
 type GameTest struct {
-	game.Game
+	*game.Game
 	name     string
 	bestMove *game.Move
 	score    *float64
@@ -115,7 +115,7 @@ func (s *TestSuite) SetupTest() {
 		g, err := game.LoadPGN(tg.pgn)
 		s.Require().NoError(err)
 
-		gt := &GameTest{Game: *g.Game, name: tg.name}
+		gt := &GameTest{Game: g.Game, name: tg.name}
 		if tg.score != 0 {
 			gt.score = &tg.score
 		}
@@ -128,6 +128,24 @@ func (s *TestSuite) SetupTest() {
 			s.openGames = append(s.openGames, gt)
 		}
 	}
+}
+
+func (gt *GameTest) Copy() *GameTest {
+	return &GameTest{
+		Game:     gt.Game.Copy(),
+		name:     gt.name,
+		bestMove: gt.bestMove,
+		score:    gt.score,
+	}
+}
+
+func (s *TestSuite) GetGame(name string) *GameTest {
+	for _, gt := range append(s.solvedGames, s.openGames...) {
+		if gt.name == name {
+			return gt.Copy()
+		}
+	}
+	return nil
 }
 
 func (gt *GameTest) Print(score float64, continuation []game.Move) {
