@@ -6,7 +6,9 @@ import {
 	LoadGameResponse,
 	Message,
 	MessageType,
+	playSound,
 	SaveGameResponse,
+	Sound,
 } from '../utils';
 import { gameReducer, loadInitialState } from './gameReducer';
 import { useGameSocket } from './useGameSocket';
@@ -25,6 +27,7 @@ export function useBoardState() {
 				break;
 			case MessageType.EngineMove:
 				dispatch({ type: 'engineMove', moveData: message.data as BestMoveResponse });
+				playSound(Sound.Move);
 				break;
 			case MessageType.SaveGameResponse:
 				dispatch({ type: 'setPgn', pgn: (message.data as SaveGameResponse).pgn });
@@ -40,7 +43,8 @@ export function useBoardState() {
 			}
 			case MessageType.GameEnded: {
 				const gameEndedData = message.data as GameEndedResponse;
-				alert(`${gameEndedData.king} king has fallen! ${gameEndedData.winner} is victorious!`);
+				console.log(`${gameEndedData.king} king has fallen! ${gameEndedData.winner} are victorious!`);
+				playSound(Sound.GameEnd);
 				break;
 			}
 			case MessageType.Processing:
@@ -75,6 +79,7 @@ export function useBoardState() {
 				return false;
 			}
 			sendMessage(new Message(MessageType.PlayerMove, move.toPGN()));
+			playSound(Sound.Move);
 		}
 		dispatch({ type: 'movePiece', move, playerMove });
 		return true;
