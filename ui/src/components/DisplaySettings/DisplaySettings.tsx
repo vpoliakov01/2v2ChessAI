@@ -1,7 +1,7 @@
 import React from 'react';
 import { Color, colorCode } from '../../common';
 import { useBoardStateContext } from '../../context/BoardStateContext';
-import { GameStateManager, ShowLabels } from '../../utils';
+import { ShowLabels } from '../../utils';
 import { Checkbox } from '../Checkbox';
 import styles from './DisplaySettings.module.css';
 
@@ -13,11 +13,6 @@ function capitalize(s: string): string {
 
 export function DisplaySettings() {
 	const { displaySettings, setDisplaySettings } = useBoardStateContext();
-
-	// Update localStorage whenever settings change
-	React.useEffect(() => {
-		GameStateManager.saveDisplaySettings(displaySettings);
-	}, [displaySettings]);
 
 	return (
 		<div className={styles.displaySettings}>

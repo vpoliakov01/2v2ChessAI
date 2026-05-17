@@ -66,6 +66,8 @@ func (c *Connection) processSetSettings(cfg Config) {
 
 	if humanPlayersChanged && !slices.Contains(cfg.HumanPlayers, c.gs.ActivePlayer) {
 		c.playUntilPlayerMove()
+	} else {
+		c.processGetAvailableMoves()
 	}
 }
 

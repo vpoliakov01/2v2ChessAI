@@ -58,11 +58,9 @@ export class GameStateManager {
 		}
 	}
 
-	static save(state: Partial<SavedBoardState>): void {
+	static save(state: SavedBoardState): void {
 		try {
-			const current = GameStateManager.load();
-			const updated = { ...current, ...state };
-			const serialized = GameStateManager.serialize(updated);
+			const serialized = GameStateManager.serialize(state);
 			localStorage.setItem(GameStateManager.STORAGE_KEY, JSON.stringify(serialized));
 		} catch (error) {
 			console.warn('Failed to save state:', error);

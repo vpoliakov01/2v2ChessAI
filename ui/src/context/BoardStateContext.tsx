@@ -1,16 +1,17 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Color, Move } from '../common';
+import { useArrowDrawing } from '../hooks/useArrowDrawing';
 import { useBoardState } from '../hooks/useBoardState';
-import { DisplaySettingsState, GameStateManager } from '../utils';
+import { useDisplaySettings } from '../hooks/useDisplaySettings';
+import { GameStateManager } from '../utils';
 
 type HoveredMove = { move: Move, color: Color };
 
-type BoardStateContextType = ReturnType<typeof useBoardState> & {
-	displaySettings: DisplaySettingsState,
-	setDisplaySettings: React.Dispatch<React.SetStateAction<DisplaySettingsState>>,
-	hoveredMove: HoveredMove | null,
-	setHoveredMove: React.Dispatch<React.SetStateAction<HoveredMove | null>>,
-};
+type BoardStateContextType =
+	& Omit<ReturnType<typeof useBoardState>, 'state'>
+	& ReturnType<typeof useArrowDrawing>
+	& ReturnType<typeof useDisplaySettings>
+	& { hoveredMove: HoveredMove | null, setHoveredMove: React.Dispatch<React.SetStateAction<HoveredMove | null>> };
 
 const BoardStateContext = createContext<BoardStateContextType | null>(null);
 
@@ -23,12 +24,27 @@ export const useBoardStateContext = () => {
 };
 
 export const BoardStateProvider = ({ children }: { children: ReactNode }) => {
-	const boardState = useBoardState();
-	const [displaySettings, setDisplaySettings] = useState<DisplaySettingsState>(GameStateManager.loadDisplaySettings);
+	const { state, ...boardState } = useBoardState();
+	const arrowDrawing = useArrowDrawing(state.activePlayer);
+	const displaySettings = useDisplaySettings();
 	const [hoveredMove, setHoveredMove] = useState<HoveredMove | null>(null);
+
+	const { drawnArrows } = arrowDrawing;
+	useEffect(() => {
+		GameStateManager.save({
+			board: state.board,
+			activePlayer: state.activePlayer,
+			allMoves: state.allMoves,
+			currentMove: state.currentMove,
+			score: state.score,
+			pgn: state.pgn,
+			drawnArrows,
+		});
+	}, [state, drawnArrows]);
+
 	return (
 		<BoardStateContext.Provider
-			value={{ ...boardState, displaySettings, setDisplaySettings, hoveredMove, setHoveredMove }}
+			value={{ ...boardState, ...arrowDrawing, ...displaySettings, hoveredMove, setHoveredMove }}
 		>
 			{children}
 		</BoardStateContext.Provider>

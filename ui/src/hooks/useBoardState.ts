@@ -1,17 +1,15 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useCallback, useReducer, useState } from 'react';
 import { Move, movesEqual, PGNMove, Position } from '../common';
-import { ArrowProps } from '../components/Arrow';
 import {
 	BestMoveResponse,
 	GameEndedResponse,
-	GameStateManager,
-	GameSyncService,
 	LoadGameResponse,
 	Message,
 	MessageType,
 	SaveGameResponse,
 } from '../utils';
 import { gameReducer, loadInitialState } from './gameReducer';
+import { useGameSocket } from './useGameSocket';
 
 export function useBoardState() {
 	const [state, dispatch] = useReducer(gameReducer, undefined, loadInitialState);
@@ -19,29 +17,45 @@ export function useBoardState() {
 	const moves = allMoves.slice(0, currentMove + 1);
 
 	const [selectedSquare, setSelectedSquare] = useState<Position | null>(null);
-	const [drawnArrows, setDrawnArrows] = useState<ArrowProps[]>(GameStateManager.load().drawnArrows);
-	const [isDrawingArrow, setIsDrawingArrow] = useState<boolean>(false);
-	const [arrowStart, setArrowStart] = useState<Position | null>(null);
-	const [arrowEnd, setArrowEnd] = useState<Position | null>(null);
 
-	const wsRef = useRef<WebSocket | null>(null);
-
-	const sendMessage = useCallback((message: Message) => {
-		if (wsRef.current?.readyState === WebSocket.OPEN) {
-			console.debug(`Sending    ${message.type}`.padEnd(30), message);
-			wsRef.current.send(message.json());
-			return;
-		}
-
-		setTimeout(() => {
-			if (wsRef.current?.readyState === WebSocket.OPEN) {
-				console.debug(`Sending    ${message.type}`.padEnd(30), message);
-				wsRef.current.send(message.json());
-			} else {
-				alert('No WebSocket connection');
+	const handleMessage = useCallback((message: Message) => {
+		switch (message.type) {
+			case MessageType.AvailableMoves:
+				dispatch({ type: 'setAvailableMoves', moves: (message.data as PGNMove[]).map(Move.fromPGN) });
+				break;
+			case MessageType.EngineMove:
+				dispatch({ type: 'engineMove', moveData: message.data as BestMoveResponse });
+				break;
+			case MessageType.SaveGameResponse:
+				dispatch({ type: 'setPgn', pgn: (message.data as SaveGameResponse).pgn });
+				break;
+			case MessageType.LoadGameResponse: {
+				const loadData = message.data as LoadGameResponse;
+				dispatch({
+					type: 'replayMoves',
+					pastMoves: loadData.pastMoves.map(Move.fromPGN),
+					currentMove: loadData.currentMove,
+				});
+				break;
 			}
-		}, 10);
+			case MessageType.GameEnded: {
+				const gameEndedData = message.data as GameEndedResponse;
+				alert(`${gameEndedData.king} king has fallen! ${gameEndedData.winner} is victorious!`);
+				break;
+			}
+			case MessageType.Processing:
+				console.log('Thinking...');
+				break;
+			case MessageType.StoppedProcessing:
+				console.log('Stopped thinking');
+				break;
+			default:
+				console.log('unknown message', message);
+				break;
+		}
 	}, []);
+
+	const sendMessage = useGameSocket(handleMessage);
 
 	const setCurrentMove = useCallback((value: number) => {
 		dispatch({ type: 'setCurrentMove', currentMove: value });
@@ -56,7 +70,7 @@ export function useBoardState() {
 	}, [availableMoves]);
 
 	const movePiece = useCallback((move: Move, playerMove: boolean = false) => {
-		if (playerMove && wsRef.current) {
+		if (playerMove) {
 			if (!isValidMove(move)) {
 				return false;
 			}
@@ -76,113 +90,8 @@ export function useBoardState() {
 		}
 	}, [sendMessage]);
 
-	// Arrow drawing
-	const handleSquareRightMouseDown = useCallback((position: Position) => {
-		setIsDrawingArrow(true);
-		setArrowStart(position);
-		setArrowEnd(position);
-	}, []);
-
-	const handleSquareMouseEnter = useCallback((position: Position) => {
-		if (isDrawingArrow) {
-			setArrowEnd(position);
-		}
-	}, [isDrawingArrow]);
-
-	const handleSquareRightMouseUp = useCallback((position: Position) => {
-		if (!isDrawingArrow || !arrowStart) {
-			return;
-		}
-
-		const newArrow: ArrowProps = {
-			move: new Move(arrowStart, position),
-			color: activePlayer,
-		};
-
-		setDrawnArrows(arrows => {
-			const existingIndex = arrows.findIndex(arrow => movesEqual(arrow.move, newArrow.move));
-
-			if (existingIndex === -1) {
-				return [...arrows, newArrow];
-			}
-
-			return arrows.filter((_, index) => index !== existingIndex);
-		});
-
-		setIsDrawingArrow(false);
-		setArrowStart(null);
-		setArrowEnd(null);
-	}, [isDrawingArrow, arrowStart, activePlayer]);
-
-	const handleSquareLeftClick = useCallback(() => {
-		setDrawnArrows([]);
-	}, []);
-
-	useEffect(() => {
-		GameStateManager.save({ board, activePlayer, allMoves, currentMove, score, pgn, drawnArrows });
-	}, [board, activePlayer, allMoves, currentMove, score, pgn, drawnArrows]);
-
-	// WebSocket message handler.
-	useEffect(() => {
-		const ws = new WebSocket('ws://localhost:8080/ws');
-
-		ws.onopen = () => {
-			wsRef.current = ws;
-			console.log('WS connected');
-			GameSyncService.syncWithEngine(ws);
-		};
-
-		ws.onmessage = event => {
-			const message = JSON.parse(event.data) as Message;
-			console.debug(`Received   ${message.type}`.padEnd(30), message);
-
-			switch (message.type) {
-				case MessageType.AvailableMoves:
-					dispatch({ type: 'setAvailableMoves', moves: (message.data as PGNMove[]).map(Move.fromPGN) });
-					break;
-				case MessageType.EngineMove:
-					dispatch({ type: 'engineMove', moveData: message.data as BestMoveResponse });
-					break;
-				case MessageType.SaveGameResponse:
-					dispatch({ type: 'setPgn', pgn: (message.data as SaveGameResponse).pgn });
-					break;
-				case MessageType.LoadGameResponse: {
-					const loadData = message.data as LoadGameResponse;
-					dispatch({
-						type: 'replayMoves',
-						pastMoves: loadData.pastMoves.map(Move.fromPGN),
-						currentMove: loadData.currentMove,
-					});
-					break;
-				}
-				case MessageType.GameEnded: {
-					const gameEndedData = message.data as GameEndedResponse;
-					alert(`${gameEndedData.king} king has fallen! ${gameEndedData.winner} is victorious!`);
-					break;
-				}
-				case MessageType.Processing:
-					console.log('Thinking...');
-					break;
-				case MessageType.StoppedProcessing:
-					console.log('Stopped thinking');
-					break;
-				default:
-					console.log('unknown message', message);
-					break;
-			}
-		};
-
-		ws.onclose = () => {
-			if (wsRef.current === ws) {
-				wsRef.current = null;
-			}
-			console.log('WS disconnected');
-		};
-
-		return () => ws.close();
-	}, [dispatch]);
-
 	return {
+		state,
 		activePlayer,
 		allMoves,
 		availableMoves,
@@ -192,19 +101,11 @@ export function useBoardState() {
 		pgn,
 		score,
 		selectedSquare,
-		drawnArrows,
-		isDrawingArrow,
-		arrowStart,
-		arrowEnd,
 		setCurrentMove,
 		movePiece,
 		playContinuationFromCurrent,
 		setPgn,
 		setSelectedSquare,
 		sendMessage,
-		handleSquareRightMouseDown,
-		handleSquareMouseEnter,
-		handleSquareRightMouseUp,
-		handleSquareLeftClick,
 	};
 }
