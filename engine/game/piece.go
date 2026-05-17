@@ -12,14 +12,6 @@ const (
 	pieceBitMask   = 7 // 00000111.
 )
 
-// PieceType defines functionality a piece should implement.
-type PieceType interface {
-	// GetMoves returns a list of moves the peice could make.
-	GetMoves(board *Board, from Square) []Square
-	// GetStrength returns an estimate of the piece's strength depending on its position and # of pieces left on the board.
-	GetStrength(board *Board, square Square, player Player) float64
-}
-
 type Piece uint8 // Use uint8 to save some space (the board is a [][]Piece).
 
 type PieceKind uint8
@@ -51,6 +43,12 @@ var (
 		2: color.Yellow,
 		3: color.Green,
 	}
+
+	knightDirs = [][2]int{{-2, -1}, {-2, 1}, {-1, -2}, {-1, 2}, {1, -2}, {1, 2}, {2, -1}, {2, 1}}
+	bishopDirs = [][2]int{{-1, -1}, {-1, 1}, {1, -1}, {1, 1}}
+	rookDirs   = [][2]int{{-1, 0}, {0, -1}, {0, 1}, {1, 0}}
+	queenDirs  = [][2]int{{-1, 0}, {0, -1}, {0, 1}, {1, 0}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}}
+	kingDirs   = [][2]int{{-1, 0}, {0, -1}, {0, 1}, {1, 0}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}}
 )
 
 // New creates a new Piece.
@@ -85,21 +83,49 @@ func (p Piece) String() string {
 	}
 }
 
-// PieceType returns the corresponding PieceType implementation for the kind of the piece.
-func (p Piece) PieceType() PieceType {
+// GetMoves appends the moves this piece can make to dst and returns the extended slice.
+// Dispatches on Kind() so the call sites in the search hot path can inline.
+func (p Piece) GetMoves(board *Board, from Square, dst []Square) []Square {
 	switch p.Kind() {
 	case KindPawn:
-		return Pawn(p)
+		return Pawn(p).GetMoves(board, from, dst)
 	case KindKnight:
-		return Knight(p)
+		return GetEnumeratedMoves(board, from, knightDirs, dst)
 	case KindBishop:
-		return Bishop(p)
+		return GetDirectionalMoves(board, from, bishopDirs, dst)
 	case KindRook:
-		return Rook(p)
+		return GetDirectionalMoves(board, from, rookDirs, dst)
 	case KindQueen:
-		return Queen(p)
+		return GetDirectionalMoves(board, from, queenDirs, dst)
 	case KindKing:
-		return King(p)
+		return GetEnumeratedMoves(board, from, kingDirs, dst)
+	default:
+		panic(fmt.Sprintf("unsupported piece: %v", p))
+	}
+}
+
+// GetStrength returns the piece's strength at the given square.
+// Dispatches on Kind() so the call sites in the search hot path can inline.
+func (p Piece) GetStrength(board *Board, square Square, player Player) float64 {
+	switch p.Kind() {
+	case KindPawn:
+		return Pawn(p).GetStrength(board, square, player)
+	case KindKnight:
+		return StrengthPrecomputed[KindKnight][square.Rank][square.File]
+	case KindBishop:
+		return StrengthPrecomputed[KindBishop][square.Rank][square.File]
+	case KindRook:
+		if player.Team() == 1 {
+			return StrengthPrecomputed[KindRook][square.Rank][square.File]
+		}
+		return StrengthPrecomputed[KindRook][square.File][square.Rank]
+	case KindQueen:
+		return StrengthPrecomputed[KindQueen][square.Rank][square.File]
+	case KindKing:
+		if player.Team() == 1 {
+			return StrengthPrecomputed[KindKing][square.Rank][square.File]
+		}
+		return StrengthPrecomputed[KindKing][square.File][square.Rank]
 	default:
 		panic(fmt.Sprintf("unsupported piece: %v", p))
 	}

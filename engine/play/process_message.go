@@ -72,7 +72,7 @@ func (c *Connection) processSetSettings(cfg Config) {
 }
 
 func (c *Connection) processGetAvailableMoves() {
-	gameMoves := c.gs.GetMoves().Flatten()
+	gameMoves := c.gs.GetMoves(nil)
 	moves := make([]PGNMove, len(gameMoves))
 	for i, gameMove := range gameMoves {
 		moves[i] = PGNMoveFromGameMove(gameMove)

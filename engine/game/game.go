@@ -4,16 +4,14 @@ import (
 	"fmt"
 )
 
-// MoveMap represents available moves from each square.
-type MoveMap map[Square][]Square
-
 // Game represents a state of the game.
 type Game struct {
 	ActivePlayer Player
 	Board        *Board
-	Winner       Team     // Red/Yellow win: 1, Blue/Green win: -1.
-	MoveMap      *MoveMap `json:"-"`
+	Winner       Team // Red/Yellow win: 1, Blue/Green win: -1.
 	MoveNumber   int
+
+	squareBuffer []Square `json:"-"` // Reusable per-piece destination buffer for GetMoves; not shared across copies.
 }
 
 // New creates a new Game.
@@ -30,31 +28,25 @@ func New() *Game {
 	return &g
 }
 
-// GetMoves returns all moves for the active player.
-func (g *Game) GetMoves() MoveMap {
+// GetMoves appends all moves available to the active player to dst and returns the extended slice.
+func (g *Game) GetMoves(dst []Move) []Move {
 	if g.HasEnded() {
-		return MoveMap{}
+		return dst
 	}
 
-	if g.MoveMap != nil {
-		return *g.MoveMap
+	for from := range g.Board.PieceSquares[g.ActivePlayer] {
+		piece := g.Board.GetPiece(from)
+		g.squareBuffer = piece.GetMoves(g.Board, from, g.squareBuffer[:0])
+		for _, to := range g.squareBuffer {
+			dst = append(dst, Move{from, to})
+		}
 	}
 
-	moves := MoveMap{}
-
-	for square := range g.Board.PieceSquares[g.ActivePlayer] {
-		piece := Piece(g.Board.GetPiece(square)).PieceType()
-		moves[square] = append(moves[square], piece.GetMoves(g.Board, square)...)
-	}
-
-	g.MoveMap = &moves
-	return moves
+	return dst
 }
 
 // Play plays a move in the game.
 func (g *Game) Play(move Move) Piece {
-	g.MoveMap = nil // After the move is played, MoveMap has to be recalculated.
-
 	capturedPiece := Piece(g.Board.GetPiece(move.To))
 	if !capturedPiece.IsEmpty() {
 		if capturedPiece.Kind() == KindKing {
@@ -79,8 +71,6 @@ func (g *Game) UnplayMove(move Move, capturedPiece Piece) {
 	if !capturedPiece.IsEmpty() && capturedPiece.Kind() == KindKing {
 		g.Winner = 0
 	}
-
-	g.MoveMap = nil
 }
 
 // HasKing checks if the player still has a king.
@@ -103,6 +93,7 @@ func (g *Game) HasEnded() bool {
 func (g *Game) Copy() *Game {
 	newGame := *g
 	newGame.Board = g.Board.Copy()
+	newGame.squareBuffer = nil // Don't share scratch buffer with the source.
 	return &newGame
 }
 
@@ -112,25 +103,11 @@ func (g *Game) ValidateMove(move *Move) error {
 		return fmt.Errorf("move %v is invalid", move)
 	}
 
-	moves := g.GetMoves()
-	for _, to := range moves[move.From] {
-		if to == move.To {
+	for _, m := range g.GetMoves(nil) {
+		if m.From == move.From && m.To == move.To {
 			return nil
 		}
 	}
 
 	return fmt.Errorf("move %v is not available to the player", move)
-}
-
-// Flatten transforms MoveMap into []Move.
-func (m MoveMap) Flatten() []Move {
-	moves := []Move{}
-
-	for from := range m {
-		for _, to := range m[from] {
-			moves = append(moves, Move{from, to})
-		}
-	}
-
-	return moves
 }

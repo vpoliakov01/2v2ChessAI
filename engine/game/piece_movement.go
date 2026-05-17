@@ -1,9 +1,10 @@
 package game
 
-// GetDirectionalMoves returns a list of possible moves in the specified directions.
-// (Used for queens, rooks, and bishops.)
-func GetDirectionalMoves(board *Board, from Square, vectors [][]int) []Square {
-	toSquares := []Square{}
+// GetDirectionalMoves appends valid moves in the given directions (used for queens, rooks, bishops)
+// to dst and returns the extended slice. Each direction is followed until the edge of the board
+// or a blocking piece is reached.
+func GetDirectionalMoves(board *Board, from Square, vectors [][2]int, dst []Square) []Square {
+	fromPlayer := Piece(board.GetPiece(from)).Player()
 
 	for _, vector := range vectors {
 		for dist := 1; ; dist++ {
@@ -12,32 +13,32 @@ func GetDirectionalMoves(board *Board, from Square, vectors [][]int) []Square {
 			if !to.IsValid() {
 				break
 			} else if board.IsEmpty(to) {
-				toSquares = append(toSquares, to)
+				dst = append(dst, to)
 				continue
-			} else if !Piece(board.GetPiece(to)).Player().IsTeamMate(Piece(board.GetPiece(from)).Player()) {
-				toSquares = append(toSquares, to)
+			} else if !Piece(board.GetPiece(to)).Player().IsTeamMate(fromPlayer) {
+				dst = append(dst, to)
 			}
 			break
 		}
 	}
 
-	return toSquares
+	return dst
 }
 
-// GetEnumeratedMoves returns a list of possible produced by adding the specified vectors.
-// (Used for kings and knights.)
-func GetEnumeratedMoves(board *Board, from Square, vectors [][]int) []Square {
-	toSquares := []Square{}
+// GetEnumeratedMoves appends valid moves produced by adding each vector to from (used for kings
+// and knights) to dst and returns the extended slice.
+func GetEnumeratedMoves(board *Board, from Square, vectors [][2]int, dst []Square) []Square {
+	fromPlayer := Piece(board.GetPiece(from)).Player()
 
 	for _, vector := range vectors {
 		to := from.Add(vector[0], vector[1])
 
 		if !to.IsValid() {
 			continue
-		} else if board.IsEmpty(to) || !Piece(board.GetPiece(to)).Player().IsTeamMate(Piece(board.GetPiece(from)).Player()) {
-			toSquares = append(toSquares, to)
+		} else if board.IsEmpty(to) || !Piece(board.GetPiece(to)).Player().IsTeamMate(fromPlayer) {
+			dst = append(dst, to)
 		}
 	}
 
-	return toSquares
+	return dst
 }
