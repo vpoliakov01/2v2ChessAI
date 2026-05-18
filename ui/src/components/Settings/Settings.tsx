@@ -1,23 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Color, colorCode, PlayerColors } from '../../common';
 import { useBoardStateContext } from '../../context/BoardStateContext';
-import { GameSettings, GameStateManager, Message, MessageType } from '../../utils';
 import { Checkbox } from '../Checkbox';
 import { NumberInput } from '../NumberInput';
 import styles from './Settings.module.css';
 
 export function Settings() {
-	const { sendMessage } = useBoardStateContext();
-	const [settings, setSettings] = useState<GameSettings>(GameStateManager.loadSettings);
-
-	useEffect(() => {
-		const engineSettings = {
-			...settings,
-			evalLimit: settings.evalLimit * 1000,
-		};
-		sendMessage(new Message(MessageType.SetSettings, engineSettings));
-		GameStateManager.saveSettings(settings);
-	}, [settings, sendMessage]);
+	const { settings, setSettings } = useBoardStateContext();
 
 	return (
 		<div id='settings' className={styles.settingsContainer}>

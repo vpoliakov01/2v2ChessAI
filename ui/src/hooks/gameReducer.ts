@@ -1,6 +1,16 @@
 import { BOARD_SIZE, Color, CORNER_SIZE, formatNumber, Move, MoveInfo, PieceType, PlayerColors } from '../common';
 import { BestMoveResponse, BoardPosition, GameStateManager } from '../utils';
 
+function replayBoard(allMoves: MoveInfo[], upToMoveIndex: number): BoardPosition {
+	const board = createEmptyBoard();
+	for (let i = 0; i <= upToMoveIndex && i < allMoves.length; i++) {
+		const { from, to } = allMoves[i];
+		board[to.row][to.col] = board[from.row][from.col];
+		board[from.row][from.col] = null;
+	}
+	return board;
+}
+
 export function createEmptyBoard(): BoardPosition {
 	const board: BoardPosition = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
 
@@ -78,6 +88,7 @@ export type GameAction =
 	| { type: 'setScore', score: number }
 	| { type: 'setPgn', pgn: string }
 	| { type: 'setCurrentMove', currentMove: number }
+	| { type: 'setViewMove', currentMove: number }
 	| { type: 'replayMoves', pastMoves: Move[], currentMove: number }
 	| { type: 'reset' };
 
@@ -139,9 +150,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 		case 'engineMove': {
 			const { continuation, moveNumber, score, time, evaluations } = action.moveData;
 			const move = continuation[0];
-			if (moveNumber !== state.allMoves.length + 1) {
+			const expectedFromCurrent = state.currentMove + 2;
+			const expectedAtEnd = state.allMoves.length + 1;
+			if (moveNumber !== expectedFromCurrent && moveNumber !== expectedAtEnd) {
 				console.warn(
-					`Ignoring stale engine move ${move} at moveNumber ${moveNumber} expected ${state.allMoves.length + 1}`,
+					`Ignoring stale engine move ${move} at moveNumber ${moveNumber} expected ${expectedFromCurrent} or ${expectedAtEnd}`,
 				);
 				return state;
 			}
@@ -155,14 +168,38 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 			);
 			const continuationMoves = continuation.map(Move.fromPGN);
 			console.log(continuationMoves.map(m => m.toPGN()).join(' '));
-			const pngMove = continuationMoves[0];
-			const afterMove = gameReducer(state, { type: 'movePiece', move: pngMove });
-			const updatedAllMoves = [...afterMove.allMoves];
-			const lastIdx = updatedAllMoves.length - 1;
-			if (lastIdx >= 0) {
-				updatedAllMoves[lastIdx].continuation = continuationMoves;
+			const { from, to } = continuationMoves[0];
+
+			if (moveNumber === expectedFromCurrent) {
+				const newMoveInfo = new MoveInfo(
+					from,
+					to,
+					state.board[from.row][from.col]!,
+					state.board[to.row][to.col] ?? null,
+				);
+				newMoveInfo.continuation = continuationMoves;
+				const newBoard = state.board.map(row => [...row]);
+				newBoard[to.row][to.col] = newBoard[from.row][from.col];
+				newBoard[from.row][from.col] = null;
+				return {
+					...state,
+					board: newBoard,
+					allMoves: [...state.allMoves.slice(0, state.currentMove + 1), newMoveInfo],
+					currentMove: state.currentMove + 1,
+					activePlayer: PlayerColors[(PlayerColors.indexOf(state.activePlayer) + 1) % PlayerColors.length],
+					score,
+				};
 			}
-			return { ...afterMove, allMoves: updatedAllMoves, score };
+
+			const endBoard = replayBoard(state.allMoves, state.allMoves.length - 1);
+			const newMoveInfo = new MoveInfo(
+				from,
+				to,
+				endBoard[from.row][from.col]!,
+				endBoard[to.row][to.col] ?? null,
+			);
+			newMoveInfo.continuation = continuationMoves;
+			return { ...state, allMoves: [...state.allMoves, newMoveInfo], score };
 		}
 
 		case 'setAvailableMoves':
@@ -176,6 +213,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
 		case 'setCurrentMove':
 			return { ...state, currentMove: action.currentMove };
+
+		case 'setViewMove': {
+			const idx = action.currentMove;
+			const activePlayerIdx = ((idx + 1) % PlayerColors.length + PlayerColors.length) % PlayerColors.length;
+			return {
+				...state,
+				board: replayBoard(state.allMoves, idx),
+				currentMove: idx,
+				activePlayer: PlayerColors[activePlayerIdx],
+			};
+		}
 
 		case 'replayMoves': {
 			const fresh = defaultGameState();

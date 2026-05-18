@@ -65,6 +65,10 @@ export function useBoardState() {
 		dispatch({ type: 'setCurrentMove', currentMove: value });
 	}, []);
 
+	const setViewMove = useCallback((value: number) => {
+		dispatch({ type: 'setViewMove', currentMove: value });
+	}, []);
+
 	const setPgn = useCallback((value: string) => {
 		dispatch({ type: 'setPgn', pgn: value });
 	}, []);
@@ -107,6 +111,7 @@ export function useBoardState() {
 		score,
 		selectedSquare,
 		setCurrentMove,
+		setViewMove,
 		movePiece,
 		playContinuationFromCurrent,
 		setPgn,

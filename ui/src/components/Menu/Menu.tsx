@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { movesToPGN, PlayerColors } from '../../common';
 import { useBoardStateContext } from '../../context/BoardStateContext';
 import { Message, MessageType } from '../../utils';
@@ -13,11 +13,14 @@ export function Menu() {
 		allMoves,
 		currentMove,
 		setCurrentMove,
+		setViewMove,
 		sendMessage,
 		displaySettings,
 		hoveredMove,
 		setHoveredMove,
 		playContinuationFromCurrent,
+		settings,
+		setSettings,
 	} = useBoardStateContext();
 	const [pgnBlockCollapsed, setPGNBlockCollapsed] = useState(false);
 	const [userPGN, setUserPGN] = useState<string | null>(null);
@@ -58,9 +61,22 @@ export function Menu() {
 		event.stopPropagation();
 	};
 
-	const handleSetCurrentMove = (moveIndex: number) => {
+	const handleSetCurrentMove = useCallback((moveIndex: number) => {
 		setCurrentMove(moveIndex);
 		sendMessage(new Message(MessageType.SetCurrentMove, moveIndex));
+	}, [setCurrentMove, sendMessage]);
+
+	const handleSetCurrentMoveFromClick = (moveIndex: number) => {
+		if (settings.humanPlayers.length !== PlayerColors.length) {
+			const newSettings = {
+				...settings,
+				humanPlayers: PlayerColors.map((_, i) => i),
+			};
+
+			sendMessage(new Message(MessageType.SetSettings, { ...newSettings, evalLimit: newSettings.evalLimit * 1000 }));
+			setSettings(newSettings);
+		}
+		handleSetCurrentMove(moveIndex);
 	};
 
 	useEffect(() => {
@@ -94,7 +110,7 @@ export function Menu() {
 		};
 		window.addEventListener('keydown', handler);
 		return () => window.removeEventListener('keydown', handler);
-	}, [currentMove, allMoves, displayedContinuation, continuationAnchor, hoveredMove, setHoveredMove]);
+	}, [currentMove, allMoves, displayedContinuation, continuationAnchor, hoveredMove, setHoveredMove, handleSetCurrentMove]);
 
 	return (
 		<div className={styles.menuContainer}>
@@ -125,7 +141,12 @@ export function Menu() {
 				</CollapsibleBlock>
 				<CollapsibleBlock header='Moves' collapsed={false}>
 					{allMoves.length > 0 && (
-						<MoveTable moves={allMoves} currentMove={currentMove} handleSetCurrentMove={handleSetCurrentMove} />
+						<MoveTable
+							moves={allMoves}
+							currentMove={currentMove}
+							handleSetCurrentMove={handleSetCurrentMoveFromClick}
+							handleSetViewMove={setViewMove}
+						/>
 					)}
 				</CollapsibleBlock>
 				{displaySettings.showContinuation && (

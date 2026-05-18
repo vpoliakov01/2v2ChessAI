@@ -8,17 +8,19 @@ interface MoveTableProps {
 	moves: Move[];
 	currentMove: number;
 	handleSetCurrentMove: (moveIndex: number) => void;
+	handleSetViewMove?: (moveIndex: number) => void;
 	startOffset?: number;
 	overrideHoverMode?: OnMoveHover;
 }
 
 export function MoveTable(
-	{ moves, currentMove, handleSetCurrentMove, startOffset = 0, overrideHoverMode }: MoveTableProps,
+	{ moves, currentMove, handleSetCurrentMove, handleSetViewMove, startOffset = 0, overrideHoverMode }: MoveTableProps,
 ) {
 	const { setHoveredMove, hoveredMove } = useBoardStateContext();
 	const [selectedMove, setSelectedMove] = useState<number | null>(null);
 
 	const hoverMode = overrideHoverMode ?? 'set board';
+	const onHoverSetBoard = handleSetViewMove ?? handleSetCurrentMove;
 
 	const handleMouseEnter = (moveIndex: number) => {
 		if (selectedMove !== null) {
@@ -32,7 +34,7 @@ export function MoveTable(
 				setHoveredMove({ move: moves[moveIndex], color: PlayerColors[(moveIndex + startOffset) % 4] });
 				break;
 			case 'set board':
-				handleSetCurrentMove(moveIndex);
+				onHoverSetBoard(moveIndex);
 				break;
 			case 'none':
 				setHoveredMove(null);
@@ -59,9 +61,13 @@ export function MoveTable(
 		if (hoverMode !== 'set board') {
 			return;
 		}
-		const target = selectedMove ?? moves.length - 1;
+		if (selectedMove !== null) {
+			setSelectedMove(null);
+			return;
+		}
+		const target = moves.length - 1;
 		if (target !== currentMove) {
-			handleSetCurrentMove(target);
+			onHoverSetBoard(target);
 		}
 	};
 
