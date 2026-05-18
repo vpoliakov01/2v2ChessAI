@@ -1,5 +1,5 @@
 import React from 'react';
-import { Color, colorCode, Piece, pieceName } from '../../common';
+import { Color, colorCode, getPieceImage, Piece, pieceName } from '../../common';
 import styles from './Square.module.css';
 
 interface SquareProps {
@@ -49,12 +49,6 @@ export function Square(
 	if (higlighted) {
 		higlightedBackgroundColor = `color-mix(in srgb, ${colorCode(higlighted)} 45%, ${backgroundColor})`;
 	}
-
-	const getPieceImage = (piece: Piece) => {
-		const color = piece.color;
-		const type = piece.type;
-		return `/${color}_${pieceName[type]}.svg`;
-	};
 
 	return (
 		<div

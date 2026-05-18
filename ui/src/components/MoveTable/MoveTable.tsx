@@ -1,12 +1,22 @@
 import React, { useState } from 'react';
-import { Move, PlayerColors } from '../../common';
+import {
+	colorCode,
+	getPieceImage,
+	Move,
+	MoveInfo,
+	pieceFANCharacter,
+	pieceName,
+	PlayerColors,
+	positionToPGN,
+} from '../../common';
 import { useBoardStateContext } from '../../context/BoardStateContext';
-import { OnMoveHover } from '../../utils';
+import { MoveNotation, OnMoveHover } from '../../utils';
 import styles from './MoveTable.module.css';
 
 interface MoveTableProps {
 	moves: Move[];
 	currentMove: number;
+	moveNotation: MoveNotation;
 	handleSetCurrentMove: (moveIndex: number) => void;
 	handleSetViewMove?: (moveIndex: number) => void;
 	startOffset?: number;
@@ -14,7 +24,8 @@ interface MoveTableProps {
 }
 
 export function MoveTable(
-	{ moves, currentMove, handleSetCurrentMove, handleSetViewMove, startOffset = 0, overrideHoverMode }: MoveTableProps,
+	{ moves, currentMove, moveNotation, handleSetCurrentMove, handleSetViewMove, startOffset = 0, overrideHoverMode }:
+		MoveTableProps,
 ) {
 	const { setHoveredMove, hoveredMove } = useBoardStateContext();
 	const [selectedMove, setSelectedMove] = useState<number | null>(null);
@@ -76,6 +87,46 @@ export function MoveTable(
 		handleSetCurrentMove(moveIndex);
 	};
 
+	const formatMoveDisplay = (move: Move): React.ReactNode => {
+		if (move instanceof MoveInfo && move.piece) {
+			switch (moveNotation) {
+				case 'PGN':
+					return <span className={styles.moveText}>{move.toPGN()}</span>;
+				case 'SAN':
+					return <span className={styles.moveText}>{move.toSAN()}</span>;
+				case 'FAN':
+				case 'FAN+':
+				default:
+					const piece = move.piece;
+					const captured = move.capturedPiece;
+
+					return captured
+						? (
+							<>
+								<img className={styles.pieceIcon} alt={`${pieceName[piece.type]}`} src={getPieceImage(piece)} />
+								<span className={styles.captureX}>x</span>
+								{moveNotation === 'FAN+'
+									? (
+										<img
+											className={styles.capturedPieceIcon}
+											alt={`${pieceName[captured.type]}`}
+											src={getPieceImage(captured)}
+										/>
+									)
+									: null}
+								<span className={styles.moveSquare}>{positionToPGN(move.to)}</span>
+							</>
+						)
+						: (
+							<>
+								<img className={styles.pieceIcon} alt={`${pieceName[piece.type]}`} src={getPieceImage(piece)} />
+								<span className={styles.moveSquare}>{positionToPGN(move.to)}</span>
+							</>
+						);
+			}
+		}
+	};
+
 	// Total cells (including the leading inactive padding cells).
 	const totalCells = startOffset + moves.length;
 	// Round down the first row to a multiple of 4 so column colors align to players.
@@ -100,7 +151,7 @@ export function MoveTable(
 					onMouseEnter={() => handleMouseEnter(moveIndex)}
 					onMouseLeave={() => handleMouseLeave(moveIndex)}
 				>
-					{moves[moveIndex].toPGN()}
+					{formatMoveDisplay(moves[moveIndex])}
 				</td>
 			);
 		});

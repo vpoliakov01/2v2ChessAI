@@ -1,4 +1,4 @@
-import { Color, PGNMove } from '../common';
+import { PGNMove } from '../common';
 
 export enum MessageType {
 	SetSettings = 'setSettings',

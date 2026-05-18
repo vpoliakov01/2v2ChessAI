@@ -1,10 +1,11 @@
 import React from 'react';
 import { Color, colorCode } from '../../common';
 import { useBoardStateContext } from '../../context/BoardStateContext';
-import { ShowLabels } from '../../utils';
+import { MoveNotation, ShowLabels } from '../../utils';
 import { Checkbox } from '../Checkbox';
 import styles from './DisplaySettings.module.css';
 
+const moveNotationOptions: MoveNotation[] = ['PGN', 'SAN', 'FAN', 'FAN+'];
 const showLabelsOptions: ShowLabels[] = ['all', 'border', 'pieces', 'moves', 'moves+', 'none'];
 
 function capitalize(s: string): string {
@@ -19,6 +20,18 @@ export function DisplaySettings() {
 			<div className={styles.displaySettingsTable}>
 				<table>
 					<tbody>
+						<tr>
+							<td>Move Notation:</td>
+							<td>
+								<select
+									value={displaySettings.moveNotation}
+									onChange={e =>
+										setDisplaySettings({ ...displaySettings, moveNotation: e.target.value as MoveNotation })}
+								>
+									{moveNotationOptions.map(option => <option key={option} value={option}>{capitalize(option)}</option>)}
+								</select>
+							</td>
+						</tr>
 						<tr>
 							<td>Show labels:</td>
 							<td>

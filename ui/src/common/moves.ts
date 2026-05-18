@@ -1,6 +1,6 @@
 import { BOARD_SIZE } from './constants';
-import { Piece } from './pieces';
-import { Position } from './positions';
+import { Piece, pieceFANCharacter, pieceSANCharacter } from './pieces';
+import { Position, positionToPGN } from './positions';
 
 export type PGNMove = string;
 
@@ -18,9 +18,7 @@ export class Move {
 	}
 
 	toPGN(): PGNMove {
-		const [from, to] = [this.from, this.to].map(pos =>
-			`${String.fromCharCode(pos.col + 'a'.charCodeAt(0))}${BOARD_SIZE - pos.row}`
-		);
+		const [from, to] = [this.from, this.to].map(pos => positionToPGN(pos));
 		return `${from}-${to}`;
 	}
 }
@@ -28,6 +26,18 @@ export class Move {
 export class MoveInfo extends Move {
 	constructor(public from: Position, public to: Position, public piece: Piece, public capturedPiece: Piece | null) {
 		super(from, to);
+	}
+
+	toSAN(): string {
+		let pieceChar = pieceSANCharacter[this.piece.type];
+		const captureChar = this.capturedPiece ? 'x ' : '';
+		return `${pieceChar}${captureChar}${positionToPGN(this.to)}`;
+	}
+
+	toFAN(): string {
+		let pieceChar = pieceFANCharacter[this.piece.type];
+		const captureChar = this.capturedPiece ? 'x' : '';
+		return `${pieceChar}${captureChar}${positionToPGN(this.to)}`;
 	}
 }
 

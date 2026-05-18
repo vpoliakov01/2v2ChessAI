@@ -1,6 +1,25 @@
 import { BOARD_SIZE, Color, CORNER_SIZE, formatNumber, Move, MoveInfo, PieceType, PlayerColors } from '../common';
 import { BestMoveResponse, BoardPosition, GameStateManager } from '../utils';
 
+function convertContinuationToMoveInfo(continuationPGN: string[], startingBoard: BoardPosition): MoveInfo[] {
+	const board = startingBoard.map(row => [...row]);
+	const moveInfos: MoveInfo[] = [];
+
+	for (const pgn of continuationPGN) {
+		const move = Move.fromPGN(pgn);
+		const piece = board[move.from.row][move.from.col];
+		const capturedPiece = board[move.to.row][move.to.col] ?? null;
+
+		moveInfos.push(new MoveInfo(move.from, move.to, piece!, capturedPiece));
+
+		// Update board for next move
+		board[move.to.row][move.to.col] = board[move.from.row][move.from.col];
+		board[move.from.row][move.from.col] = null;
+	}
+
+	return moveInfos;
+}
+
 function replayBoard(allMoves: MoveInfo[], upToMoveIndex: number): BoardPosition {
 	const board = createEmptyBoard();
 	for (let i = 0; i <= upToMoveIndex && i < allMoves.length; i++) {
@@ -166,9 +185,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 				formatNumber(evaluations / 1000, 5, 2, 'k'),
 				formatNumber(time / evaluations * 1e6, 4, 0, 'μs'),
 			);
-			const continuationMoves = continuation.map(Move.fromPGN);
-			console.log(continuationMoves.map(m => m.toPGN()).join(' '));
-			const { from, to } = continuationMoves[0];
+			const { from, to } = Move.fromPGN(continuation[0]);
 
 			if (moveNumber === expectedFromCurrent) {
 				const newMoveInfo = new MoveInfo(
@@ -177,10 +194,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 					state.board[from.row][from.col]!,
 					state.board[to.row][to.col] ?? null,
 				);
-				newMoveInfo.continuation = continuationMoves;
 				const newBoard = state.board.map(row => [...row]);
 				newBoard[to.row][to.col] = newBoard[from.row][from.col];
 				newBoard[from.row][from.col] = null;
+				newMoveInfo.continuation = convertContinuationToMoveInfo(continuation, state.board);
 				return {
 					...state,
 					board: newBoard,
@@ -192,13 +209,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 			}
 
 			const endBoard = replayBoard(state.allMoves, state.allMoves.length - 1);
-			const newMoveInfo = new MoveInfo(
-				from,
-				to,
-				endBoard[from.row][from.col]!,
-				endBoard[to.row][to.col] ?? null,
-			);
-			newMoveInfo.continuation = continuationMoves;
+			const newMoveInfo = new MoveInfo(from, to, endBoard[from.row][from.col]!, endBoard[to.row][to.col] ?? null);
+			newMoveInfo.continuation = convertContinuationToMoveInfo(continuation, endBoard);
 			return { ...state, allMoves: [...state.allMoves, newMoveInfo], score };
 		}
 

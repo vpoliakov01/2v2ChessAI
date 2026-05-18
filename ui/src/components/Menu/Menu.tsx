@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { movesToPGN, PlayerColors } from '../../common';
 import { useBoardStateContext } from '../../context/BoardStateContext';
 import { Message, MessageType } from '../../utils';
@@ -29,8 +29,15 @@ export function Menu() {
 
 	const currentMoveContinuation = allMoves[currentMove]?.continuation;
 	const latestContinuation = allMoves[allMoves.length - 1]?.continuation;
-	const displayedContinuation = currentMoveContinuation ?? latestContinuation ?? [];
-	const continuationAnchor = currentMoveContinuation ? currentMove : allMoves.length - 1;
+	const displayedContinuation = useMemo(() => currentMoveContinuation ?? latestContinuation ?? [], [
+		currentMoveContinuation,
+		latestContinuation,
+	]);
+	const continuationAnchor = useMemo(() => currentMoveContinuation ? currentMove : allMoves.length - 1, [
+		currentMoveContinuation,
+		currentMove,
+		allMoves.length,
+	]);
 
 	const handleContinuationClick = (continuationIndex: number) => {
 		if (continuationIndex < 1) {
@@ -110,7 +117,15 @@ export function Menu() {
 		};
 		window.addEventListener('keydown', handler);
 		return () => window.removeEventListener('keydown', handler);
-	}, [currentMove, allMoves, displayedContinuation, continuationAnchor, hoveredMove, setHoveredMove, handleSetCurrentMove]);
+	}, [
+		currentMove,
+		allMoves,
+		displayedContinuation,
+		continuationAnchor,
+		hoveredMove,
+		setHoveredMove,
+		handleSetCurrentMove,
+	]);
 
 	return (
 		<div className={styles.menuContainer}>
@@ -144,6 +159,7 @@ export function Menu() {
 						<MoveTable
 							moves={allMoves}
 							currentMove={currentMove}
+							moveNotation={displaySettings.moveNotation}
 							handleSetCurrentMove={handleSetCurrentMoveFromClick}
 							handleSetViewMove={setViewMove}
 						/>
@@ -155,6 +171,7 @@ export function Menu() {
 							<MoveTable
 								moves={displayedContinuation}
 								currentMove={-1}
+								moveNotation={displaySettings.moveNotation}
 								handleSetCurrentMove={handleContinuationClick}
 								startOffset={continuationAnchor}
 								overrideHoverMode='highlight+'
