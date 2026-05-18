@@ -16,7 +16,7 @@ export function DisplaySettings() {
 
 	return (
 		<div className={styles.displaySettings}>
-			<div className={styles.settingsTable}>
+			<div className={styles.displaySettingsTable}>
 				<table>
 					<tbody>
 						<tr>

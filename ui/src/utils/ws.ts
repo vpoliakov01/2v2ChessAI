@@ -38,7 +38,6 @@ export interface LoadGameResponse {
 export interface GameSettings {
 	humanPlayers: number[];
 	depth: number;
-	captureDepth: number;
 	spread: number;
 	spreadDrop: number;
 	evalLimit: number;

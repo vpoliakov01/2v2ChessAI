@@ -9,10 +9,9 @@ import (
 
 // AI is the ai engine used for evaluating the position and picking the best move.
 type AI struct {
-	Depth        int
-	CaptureDepth int
-	Spread       int
-	SpreadDrop   int
+	Depth      int
+	Spread     int
+	SpreadDrop int
 
 	EvalsCount int // Populated after GetBestMove returns.
 	EvalLimit  int
@@ -27,17 +26,16 @@ type AI struct {
 }
 
 // New creates a new AI.
-func New(depth, captureDepth, spread, spreadDrop, evalLimit int, options ...func(*AI)) *AI {
+func New(depth, spread, spreadDrop, evalLimit int, options ...func(*AI)) *AI {
 	if evalLimit == 0 {
 		evalLimit = MaxEvalLimit
 	}
 
 	ai := &AI{
-		Depth:        depth,
-		CaptureDepth: captureDepth,
-		Spread:       spread,
-		SpreadDrop:   spreadDrop,
-		EvalLimit:    evalLimit,
+		Depth:      depth,
+		Spread:     spread,
+		SpreadDrop: spreadDrop,
+		EvalLimit:  evalLimit,
 	}
 	for _, option := range options {
 		option(ai)
@@ -98,7 +96,7 @@ func (ai *AI) Negamax(g *game.Game, buffer *buffer, cpu, depth int, eval, alpha,
 	if g.HasEnded() {
 		return float64(-1001 + depth)
 	}
-	if depth > ai.CaptureDepth {
+	if depth > ai.Depth {
 		return eval
 	}
 

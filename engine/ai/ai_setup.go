@@ -15,11 +15,10 @@ var (
 	ErrNoMoves   = errors.New("no move can be made in this position")
 	cpus         = runtime.NumCPU()
 
-	DefaultDepth        = 12
-	DefaultCaptureDepth = 12
-	DefaultSpread       = 8
-	DefaultSpreadDrop   = 2
-	DefaultEvalLimit    = MaxEvalLimit
+	DefaultDepth      = 12
+	DefaultSpread     = 8
+	DefaultSpreadDrop = 2
+	DefaultEvalLimit  = MaxEvalLimit
 )
 
 type moveScore struct {

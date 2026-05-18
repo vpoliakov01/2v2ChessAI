@@ -13,7 +13,7 @@ import (
 func (s *TestSuite) TestMultithreading() {
 	maxCPUs := runtime.NumCPU()
 	moves := 1
-	engine := New(12, 12, DefaultSpread, DefaultSpreadDrop, 0)
+	engine := New(12, DefaultSpread, DefaultSpreadDrop, 0)
 
 	fmt.Printf("Testing with %v CPUs\n", maxCPUs)
 	for i := 0; true; i++ {
@@ -53,7 +53,7 @@ func (s *TestSuite) TestMultithreadingGetBestMove() {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				engine := New(10, 10, DefaultSpread, DefaultSpreadDrop, 0)
+				engine := New(10, DefaultSpread, DefaultSpreadDrop, 0)
 				g := s.GetGame("Free queen (a7-b6)")
 				_, _, err := engine.GetBestMove(g.Game)
 				if err != nil {

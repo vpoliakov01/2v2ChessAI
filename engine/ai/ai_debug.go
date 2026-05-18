@@ -23,7 +23,7 @@ type BestMoveData struct {
 func (ai *AI) InitDebug() {
 	ai.BestMoves = make([][]BestmoveDataAvgAcc, cpus)
 	for i := range ai.BestMoves {
-		ai.BestMoves[i] = make([]BestmoveDataAvgAcc, ai.CaptureDepth+1)
+		ai.BestMoves[i] = make([]BestmoveDataAvgAcc, ai.Depth+1)
 	}
 }
 
@@ -42,7 +42,7 @@ func (ai *AI) PrintBestMoveIndexes(printIndividualCPUs bool, printAllCPUs bool) 
 
 	cpuAcc := make([][]BestmoveDataAvgAcc, cpus)
 	for i := range cpuAcc {
-		cpuAcc[i] = make([]BestmoveDataAvgAcc, ai.CaptureDepth+1)
+		cpuAcc[i] = make([]BestmoveDataAvgAcc, ai.Depth+1)
 	}
 
 	for cpu := range ai.BestMoves {
@@ -104,7 +104,7 @@ func (ai *AI) PrintBestMoveIndexes(printIndividualCPUs bool, printAllCPUs bool) 
 
 	if printAllCPUs {
 		fmt.Println("All CPUs")
-		for depth := 1; depth <= ai.CaptureDepth; depth++ {
+		for depth := 1; depth <= ai.Depth; depth++ {
 			acc := &cpuAcc[0][depth]
 
 			avgIndex := float64(acc.IndexSum) / float64(acc.Count)

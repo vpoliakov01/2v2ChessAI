@@ -122,7 +122,6 @@ func TestProcessSetCurrentMoveOutOfRange(t *testing.T) {
 func TestProcessConcurrencyBotsSwitchToHumans(t *testing.T) {
 	allBots := &play.Config{
 		Depth:        10,
-		CaptureDepth: 16,
 		HumanPlayers: []game.Player{},
 		EvalLimit:    0,
 	}
@@ -146,7 +145,6 @@ func TestProcessConcurrencyBotsSwitchToHumans(t *testing.T) {
 func TestProcessConcurrencyBotsSwitchToPartialHumans(t *testing.T) {
 	allBots := &play.Config{
 		Depth:        4,
-		CaptureDepth: 6,
 		HumanPlayers: []game.Player{},
 		EvalLimit:    0,
 	}
@@ -172,7 +170,6 @@ func TestProcessSetSettingsSameHumanPlayers(t *testing.T) {
 
 	updated := *defaultTestConfig()
 	updated.Depth = 2
-	updated.CaptureDepth = 2
 	updated.EvalLimit = 5
 
 	conn.ProcessMessage(play.MessageTypeSetSettings, updated)

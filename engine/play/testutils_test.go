@@ -44,7 +44,6 @@ type testConnection struct {
 func defaultTestConfig() *play.Config {
 	return &play.Config{
 		Depth:        1,
-		CaptureDepth: 1,
 		HumanPlayers: []game.Player{playerRed, playerBlue, playerYellow, playerGreen},
 		EvalLimit:    1,
 	}

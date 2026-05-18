@@ -15,7 +15,6 @@ export class GameSyncService {
 
 		const engineSettings = {
 			depth: settings.depth,
-			captureDepth: settings.captureDepth,
 			spread: settings.spread,
 			spreadDrop: settings.spreadDrop,
 			humanPlayers: settings.humanPlayers,

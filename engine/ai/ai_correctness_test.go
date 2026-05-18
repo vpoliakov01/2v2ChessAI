@@ -9,7 +9,7 @@ import (
 )
 
 func (s *TestSuite) TestGetBestMove() {
-	engine := New(10, 10, DefaultSpread, DefaultSpreadDrop, 0, WithEnableDebug(true))
+	engine := New(10, DefaultSpread, DefaultSpreadDrop, 0, WithEnableDebug(true))
 	g := s.GetGame("Mate in 1 (g1-a7)").Copy()
 	moves := 5
 
@@ -41,12 +41,11 @@ func (s *TestSuite) TestGetBestMove() {
 	}
 
 	fmt.Println("Depth: ", engine.Depth)
-	fmt.Println("Capture depth: ", engine.CaptureDepth)
 	fmt.Println(time.Since(startTime))
 }
 
 func (s *TestSuite) TestBestMoveIndexes() {
-	engine := New(12, 12, DefaultSpread, DefaultSpreadDrop, 0, WithEnableDebug(true))
+	engine := New(12, DefaultSpread, DefaultSpreadDrop, 0, WithEnableDebug(true))
 
 	for _, gt := range s.solvedGames {
 		g := gt.Copy()
@@ -82,7 +81,7 @@ func (s *TestSuite) TestPosition() {
 		g.Board.PlacePiece(piece, game.Square{rank, file})
 	}
 
-	engine := New(2, 2, DefaultSpread, DefaultSpreadDrop, 0)
+	engine := New(2, DefaultSpread, DefaultSpreadDrop, 0)
 	g.Board.Draw()
 
 	for i := 0; i < 30; i++ {

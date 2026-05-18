@@ -33,8 +33,7 @@ export class GameStateManager {
 
 	static readonly defaultSettings: GameSettings = {
 		humanPlayers: [0, 2],
-		depth: 4,
-		captureDepth: 8,
+		depth: 12,
 		spread: 8,
 		spreadDrop: 2,
 		evalLimit: 0,

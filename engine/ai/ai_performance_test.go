@@ -16,42 +16,22 @@ func (s *TestSuite) TestEngineDepthsPerformance() {
 	cpus := runtime.NumCPU()
 	runtime.GOMAXPROCS(cpus)
 
-	depths := []struct {
-		depth        int
-		captureDepth int
-	}{
-		// {2, 2},
-		// {3, 3},
-		// {4, 4},
-		// {5, 5},
-		// {6, 6},
-		// {7, 7},
-		// {8, 8},
-		// {9, 9},
-		{10, 10},
-		// {11, 11},
-		// {12, 12},
-		// {13, 13},
-		// {14, 14},
-		// {15, 15},
-		// {16, 16},
-		// {2, 5},
-		// {2, 6},
-		// {2, 7},
-		// {2, 8},
-		// {3, 5},
-		// {3, 6},
-		// {3, 7},
-		// {3, 8},
-		// {3, 9},
-		// {4, 5},
-		// {4, 6},
-		// {4, 7},
-		// {4, 8},
-		// {5, 5},
-		// {5, 6},
-		// {5, 7},
-		// {6, 8},
+	depths := []int{
+		// 2,
+		// 3,
+		// 4,
+		// 5,
+		// 6,
+		// 7,
+		// 8,
+		// 9,
+		10,
+		// 11,
+		// 12,
+		// 13,
+		// 14,
+		// 15,
+		// 16,
 	}
 
 	games := append(s.openGames, s.solvedGames...)
@@ -63,7 +43,7 @@ func (s *TestSuite) TestEngineDepthsPerformance() {
 
 		for _, d := range depths {
 			start := time.Now()
-			engine := New(d.depth, d.captureDepth, DefaultSpread, DefaultSpreadDrop, 0, WithEnableDebug(true))
+			engine := New(d, DefaultSpread, DefaultSpreadDrop, 0, WithEnableDebug(true))
 
 			continuations := [][]game.Move{}
 			scores := []float64{}
@@ -87,9 +67,8 @@ func (s *TestSuite) TestEngineDepthsPerformance() {
 
 			totalPossibleEvals := engine.TotalPossibleEvals()
 			fmt.Printf(
-				"Depth: %v/%v   Spread: %v/%v   t: %.2fs   t/m: %.2fs   r: %.2fx   e: %v   p: %.3f%%   t/e: %.2fµs\n",
+				"Depth: %v   Spread: %v/%v   t: %.2fs   t/m: %.2fs   r: %.2fx   e: %v   p: %.3f%%   t/e: %.2fµs\n",
 				engine.Depth,
-				engine.CaptureDepth,
 				engine.Spread,
 				engine.SpreadDrop,
 				t.Seconds(),
